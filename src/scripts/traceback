@@ -1,0 +1,53 @@
+# traceback:   print a traceback using corefile
+# Usage:
+#  traceback [corefile [program]]
+#		program:		
+
+THIS=`basename $0`
+
+if [ "$DEBUG"z != "z" ];then
+	set -x
+fi
+
+Usage() {
+	echo "Usage: $THIS [corefile [program]]" 1>&2
+	exit 1
+}
+
+CORE="core"
+
+GetProgramName() {
+#	PROG=`file $CORE | sed -n "s/.*from[ ]*'\([^ ]*\) .*/\1/p"`
+ 	PROG=`strings $CORE | grep $FROOT | sed -n 2p`
+	if [ "$PROG"z = "z" ];then
+		echo "cannot determine program name that created $CORE" 1>&2
+		exit 1
+	fi
+}
+
+if [ $# = 1 ];then
+	if [ $1 = "?" ];then
+		Usage
+	fi
+fi
+
+case $# in
+	0)	GetProgramName
+		;;
+	1) CORE=$1
+		GetProgramName
+		;;
+	2) CORE=$1
+		PROG=$2
+		;;
+	*) Usage;;
+esac
+
+echo "traceback of $PROG:" 1>&2
+
+gdb $PROG -c $CORE <<@ 1>&2
+bt
+quit
+@
+
+# echo '$C;$q' | adb $OBJ $CORE

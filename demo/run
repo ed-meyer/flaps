@@ -1,0 +1,150 @@
+#!/bin/bash
+# run one or more flaps demo decks
+#
+# An entry is made in a file (log) for each job run
+#
+# controls.fp needs work
+QUICK="bif contour goland lti1 nl1 nl2 nl3 nl4 reed vacm whirl"
+BIGUNS="latent dlm nacpv reduction ss whirlnl"
+ALL="$QUICK $BIGUNS"
+
+usage() {
+	echo "Usage: run [-bpqv] [all] [quick] [file...]" >&2
+	echo "  -b            do not display graphics from vz or matview" >&2
+	echo "  -g            display graphics from vz or matview" >&2
+	echo "  -k            keep the temporary directory" >&2
+	echo "  -v            run under valgrind" >&2
+	echo '  The "all" option runs all available files' >&2
+	echo '  The "quick" option runs all files that run quickly:' >&2
+	echo "     $QUICK" >&2
+	echo "  skipping the long running ones:" >&2
+	echo "     $BIGUNS" >&2
+	echo "Examples:" >&2
+	echo "  run -v nl(2)?    # run nl and nl2 under valgrind" >&2
+	exit 0
+}
+
+# For each file on the command line the following steps are taken:
+# 1) create a directory (file.d)
+# 2) copy the file to the directory
+# 3) cd to the directory and run flaps with output on "out"
+#    and stderr on "err"
+
+trap 'exit 1' INT
+
+LOG="`pwd`/log"
+
+PROCS=1
+flapsOpts=""
+# default: no graphics
+export NOVZ=1
+
+if [[ ! -z $DEBUG ]];then
+	set -x
+fi
+
+if [[ $# = 0 ]];then
+	usage
+fi
+
+if [[ -z $DISPLAY ]];then
+	echo "Warning: the DISPLAY environment variable is not set"
+fi
+
+while getopts ":ghkv" opt
+do
+	case $opt in
+		h) usage
+			;;
+		k) flapsOpts="-k"
+			;;
+		g) unset NOVZ
+			;;
+		v) export DEBUGGER=valgrind
+#			echo "running with valgrind" | tee -a $LOGTMP
+			;;
+		?) usage;;
+	esac
+done
+
+shift $(($OPTIND - 1))
+
+Files="$*"
+if [[ $Files = "" ]];then
+	usage
+fi
+
+if [[ $1 = "all" ]];then
+	Files=$ALL
+fi
+if [[ $1 = "quick" ]];then
+	Files=$QUICK
+fi
+
+for i in $Files;do
+	for j in `ls $i.fp`;do
+		base=`echo $j | sed 's/\.fp//'`
+		dir=${base}.d
+		script=${base}.sh
+		if [ ! -d $dir ];then
+			mkdir $dir
+		fi
+		cp $j $dir
+		cd $dir >/dev/null
+		CWD=`pwd`
+		# Make a script to run flaps...
+  		echo " " >${script}
+  		if [[ ! -z $DEBUG ]];then
+  			echo "export DEBUG=$DEBUG" >> ${script}
+  			echo "set -x" >>${script}
+  			echo "env" >>${script}
+  		fi
+  		echo "base=$base" >>${script}
+  		echo "LOG=$LOG" >>${script}
+  		echo "LOGTMP=log.tmp" >>${script}
+  		if [ "$DISPLAY"z != "z" ];then
+  			echo "export DISPLAY=$DISPLAY" >>${script}
+  		fi
+  		if [ $DEBUGGER"z" = "valgrindz" ];then
+  			echo "export DEBUGGER=valgrind" >>${script}
+  			rm -f valgrind.*
+  		fi
+  		echo "cd $CWD" >>${script}
+  		# logger append LOGTMP to demo/log
+  		echo "echo -n \"$base... \" | tee \$LOGTMP" >>${script}
+  		echo "${FROOT}/bin/flaps ${flapsOpts} $j >out 2>err" >>${script}
+  		echo 'exitstatus=$?' >>${script}
+  		if [ $DEBUGGER"z" = "valgrindz" ];then
+  			echo 'echo -n " (valgrind) " | tee -a $LOGTMP' >> ${script}
+  			echo 'for k in valgrind.*;do' >>${script}
+  				echo '   grep "ERROR SUMMARY: [^0]" $k /dev/null' >>${script}
+  				echo '   if [ $? = 0 ];then' >>${script}
+  					echo '      sed -n "10p" $k' >>${script}
+  				echo "      fi" >>${script}
+  			echo "done" >>${script}
+  		fi
+		# seach output file for error messages printed with flaps::error (Error)
+		echo 'grep -lq Error out' >> ${script}
+		echo 'if [ $? = 0 ]; then' >> ${script}
+		echo '   exitstatus=1' >> ${script}
+		echo 'fi' >> ${script}
+		# seach output file 'no start points'
+		echo "grep -ilq 'no start point' out" >> ${script}
+		echo 'if [ $? = 0 ]; then' >> ${script}
+		echo '   exitstatus=1' >> ${script}
+		echo 'fi' >> ${script}
+		# flaps writes the total cpu time (for all programs) to stderr
+		echo 'cputime=$(grep "cpu time" err)' >>${script}
+  		echo 'if [ $exitstatus != 0 ];then' >>${script}
+  		echo '   echo "failed `date`" | tee -a $LOGTMP' >>${script}
+  		echo 'else' >>${script}
+		echo '   echo "success `date` $cputime" | tee -a $LOGTMP' >>${script}
+  		echo 'fi' >>${script}
+  		echo '$FROOT/bin/logger $LOG $LOGTMP' >>${script}
+  		echo 'exit $exitstatus' >>${script}
+  		# run the script
+  		chmod 755 ${script}
+  		./${script}
+		cd ..
+	done
+done

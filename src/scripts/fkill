@@ -1,0 +1,39 @@
+#!/bin/sh
+# kill a currently running flaps process or selectively kill
+# all flaps processes
+# Usage: fkill [job] [job] ...
+#        job:   job number from the spy command
+
+if [ $DEBUG"z" != "z" ];then
+	set -x
+fi
+
+Usage() {
+	echo "Usage: $0 job_number" >&2
+	exit 1
+}
+
+# Ask the user before killing all jobs
+if [ $# -eq 0 ];then
+	for g in `spy -j`
+	do
+		echo "kill job $g? [y/n]"
+		read resp
+		if [ $resp = 'y' ];then
+			echo "==============   killing flaps Job $g:"
+			for i in `ps -e -o "%r %p  %c" | grep $g | cut -d" " -f2`;do
+				echo "killing $i"
+				kill -9 $i
+			done
+		fi
+	done
+else
+	for g in "$@"
+	do
+		echo "==============   killing flaps Job $g:"
+		for i in `ps -e -o "%r %p  %c" | grep $g | cut -d" " -f2`;do
+			echo "killing $i"
+			kill -9 $i
+		done
+	done
+fi

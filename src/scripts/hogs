@@ -1,0 +1,16 @@
+
+# list sorted disk usage
+# Usage: hogs [-?] [directory]
+
+THIS="`basename $0`"
+
+usage() {
+echo "Usage: $THIS [directory]" >&2
+exit 1
+}
+
+if [[ $# = 1 && $1 = '-?'  ]];then
+	usage
+fi
+
+du -k $* | sort -rn

@@ -1,0 +1,156 @@
+
+aerospace-03-00012.pdf: Tang, D. and Dowell, E.H. "Experimental aeroelastic
+models design and wind tunnel testing for correlation with new theory",
+Aerospace 2016, 3(2), 12; doi:10.3390/aerospace3020012
+
+beyond_perturbation/*.pdf:  "Beyond Perturbation, Introduction to the
+Homotopy Analysis Method", Shijun Liao
+
+aberth1994.pdf
+
+airfoil_motion_in_subsonic_flow.pdf:
+
+analysis_and_computation_of_nonlinear_dynamic_response.pdf: "Analysis and computation
+of nonlinear dynamic response of a two-degree-of-freedom system and its application
+to aeroelasticity", Lee, B.H.K., Gong, L., and Wong, Y.S., J. Fluids and Structures,
+(1997) 11, pp 225-246
+(time-domain with 2 nonlinearities)
+
+appl_of_homotopy.pdf: "Application of Homotopy Analysis Method in Nonlinear
+Oscillations", Liao, Shi-Jun and Chwang, A.T., Transactions of the ASME, V 65,
+Dec 1998
+
+
+beran.pdf
+bhatia.pdf
+bif_anal_airfoils.pdf
+bifurcation_analysis.pdf
+
+block.pdf:  Block, J.J. and Strganac, T.W., "Applied active control
+   for a nonlinear aeroelastic structure", J. Guidance, Control, and Dynamics,
+	Vol. 21, No. 6, November-December 1998
+	(experimental with nl stiffness and damping in control system)
+
+chen.pdf: Chen, Y.M. and Liu, J.K., "Homotopy analysis method for limit cycle
+oscillations of an airfoil with cubic nonlinearities", J. Vibration and Control,
+(semi-analytical method)
+
+chen2012.pdf: Chen, Y.M., Liu, J.K., and Meng, G., "Incremental harmonic balance method for nonlinear flutter of an
+airfoil with uncertain-but-bounded parameters", Applied Mathematical Modelling 36(2012) 657-667
+good list of references
+
+
+compact_methodology_for_computing_limit_cycle.pdf: Epureanu, B.I. and
+Dowell, E.H., J. Aircraft Vol 40(5) Sept 2003.
+(Time domain analysis with reduced-order modelling)
+
+dimitriadis1.pdf: "Continuation of Higher-Order Harmonic Balance
+for Nonlinear Aeroelastic Systems", Dimitriadis, G., J. Aircraft,
+Vol. 45(2), March-April 2008, pp. 523-537
+(practical for large systems? gives an explanation of Popov's simplification; explains
+why pseudo-arclength is superior; single nonlinearity? example airplane with control
+surfaces. What is the difference between this and my method?)
+
+dimitriadis2.pdf: "Bifurcation Analysis of Aircraft with Structural
+Nonlinearity and Freeplay Using Numerical Continuation", Dimitriadis, G.,
+J. Aircraft Vol 45, No. 3, May-June 2008, pp. 893-905
+
+dowell1.pdf: "Nonlinear Aeroelasticity and Unsteady Aerodynamics", Dowell, E.H.,
+and Tang, D., AIAA Journal Vol 40(9) Sept 2002
+
+dowell2.pdf: "Nonlinear Aeroelasticity", Dowell, E.H., Edwards, J., and
+Strganac, T., J. Aircraft Vol 40(5) Sept-Oct 2003
+
+equivalent_linearization.pdf: "Equivalent linearization method for the flutter
+system of an airfoil with multiple nonlinearities", Chen, F.X., et. al.,
+Communications in Nonlinear science and numerical simulations, v 17 2012,
+pp. 4529-4535
+
+FEAPpv.pdf:  FEAPpv user manual
+
+flutter_of_an_airfoil_with_a_cubic_restoring_force.pdf: Lee, B.H.K., and
+   Jiang, L.Y., J. Fluids and Structures Vol 13 (1999)
+   (time-domain analysis)
+
+Franek.pdf: slides of a talk by Peter franek and Stefan Ratschan,
+"Topological degree calculation based on interval arithmetic"
+
+friedmann.pdf: "Renaissance of Aeroelasticity and its future", Friedmann, P.P.
+
+henshaw.pdf: "Non-linear aeroelastic prediction for aircraft applications",
+Henshaw, M.J.deC., et.al., Progress in aerospace sciences, Vol 43, 2007
+Survey of available and promising methods
+
+homotopy_analysis_lco.pdf: Chen, Y.M. and Liu, J.K. "Homotopy analysis method for limit cycle flutter
+of airfoils", Applied Mathematics and Computation, V 203 pp 854-863 2008
+homotopy analysis method (HAM) applied to a 2dof airfoil
+
+homotopy_analysis_method_nonlinear_diff_eq.pdf: Liao, S. "Homotopy Analysis Method in
+nonlinear differential equations", Springer 2012.
+Book on HAM
+
+Identification_of_Limit_Cycles.pdf:
+
+identification_limit_cycles.pdf: "Identification of limit cycles for
+piecewise nonlinear aeroelastic systems", Jones, D.P., et.al.,
+J. Fluids and Structures, Vol 23 (2007) pp 1012-1028
+(time-domain with discontinuous nonlinearities)
+
+
+Incremental harmonic balance method for nonlinear flutter of an airfoil with uncertain-but-bounded parameters.pdf:
+
+johnson.pdf: "Comparison of static and dynamic neural networks for limit
+cycle oscillation prediction", Johnson, M.R., and Denegri, C.M.,
+J Aircraft Vol 40(1) Jan-Feb 2003
+Discussion of huge quantities of time-domain analyses neceessary
+
+lee1986.pdf: Lee, C.L., "An iterative procedure for nonlinear flutter analysis", AIAA Journal Vol. 24, No. 5,
+    may 1986, pp. 833-840
+	 doi: 10.2514/3.9352
+	 (iterative procedure to treat multiple nonlinearities)
+
+livne.pdf
+noble_thesis.pdf
+
+nonlinear_aeroelastic_analysis_of_airfoils.pdf
+
+nonlinear_flutter_analysis_for_the_scaled_f-35.pdf: Chen, P.C.,
+Ritz, E., and Lindsley, N., J. Aircraft, Vol 51(3) May 2014.
+They argue that lco on the f35 depends on ht loading in addition to
+freeplay so the MIL-SPEC needs to be modified
+
+PatilHodgesCesnik2000.pdf
+   (HALE analysis: stall, high-aspect flexible wing)
+
+patil.pdf: patil, M.J., Hodges, D.H., and Cesnik, C.E.S.,
+   "Nonlinear aeroelasticity and flight dynamics of high-altitude
+	long-endurance aircraft", AIAA paper 99-1470, 40th Structures,
+	Structural Dynamics and Materials conference, April 12-15, 1999
+	(linearized at nonlinear equilibrium including geometrical nonlinearity)
+
+p89-smith.pdf
+post_critical.pdf
+relationship_homotopy_harmonic_balance.pdf
+the_aeroelastic_response.pdf
+The Computer Journal-1981-Bowyer-162-6.pdf
+theory_of_prob_one_homotopies.pdf
+
+trickey2002.pdf: Trickey, S.T., Virgin, L.N., and Dowell, E.H.,
+   "The stability of limit-cycle oscillations in a nonlinear
+	 aeroelastic system", Proceedings: Mathematical, Physical and
+	 Engineering Sciences, Vol. 458 No. 2025 (Sept. 8, 2002) pp. 2203-2226
+
+using_automatic_differentiation.pdf
+
+
+zhou2005incremental.pdf:
+@article{zhou2005incremental,
+  title={Incremental harmonic balance method for predicting amplitudes of a multi-dof non-linear wheel shimmy system with combined Coulomb and quadratic damping},
+  author={Zhou, JX and Zhang, L},
+  journal={Journal of sound and vibration},
+  volume={279},
+  number={1},
+  pages={403--416},
+  year={2005},
+  publisher={Elsevier}
+}

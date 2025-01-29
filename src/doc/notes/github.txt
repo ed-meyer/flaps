@@ -1,0 +1,43 @@
+
+Notes on using github
+
+to set up ssh with github
+-------------------------
+   ssh-keygen      (take defaults, no passwd)
+	start agent: eval $(ssh-agent -s)
+	add pub key: ssh-add
+	add to github:  click on picture in upper-right,
+	    choose settings -> ssh and gpg keys -> new ssh key ->
+		 paste .pub key
+
+To clone flaps into "directory" (default:flaps)
+-----------------------------------------------
+if ssh is set up:
+   git clone git@github.com:eem2314/flaps.git [directory]
+using https:
+   git clone https://github.com/eem2314/flaps.git [directory] (requires passwd)
+
+It is best to build flaps in a separate directory from the cloned
+repository; to create a "build" directory tree with all files in
+"flaps" linked to the "build" directory tree:
+-----------------------------------------------------------
+flaps/src/scripts/mklinks flaps build
+
+some useful git commands:
+-------------------------
+   git add file1 file2 ...
+	git status
+	git commit -a
+	git push
+	git pull
+	git rm
+	git mv
+	git checkout -b name     (create a branch and checkout)
+
+	# to merge branch 'name' into master:
+	git checkout master
+	git merge name
+   git restore file1 file2 ...
+
+	# to discard changes to files
+	git restore file1 file2 ...

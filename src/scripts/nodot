@@ -1,0 +1,5 @@
+#!/bin/sh
+# nodot:             list files which have no periods
+
+ls | sed '/\./d' | xargs ls -ld
+

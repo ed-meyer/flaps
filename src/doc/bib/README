@@ -1,0 +1,16 @@
+
+Files:
+-----
+flaps.bib: the main bibliography file - all entries should go here
+
+Checking the validity of the bibliography entries:
+-------------------------------------------------
+A pdf file of the bibliography is produced by the command "make",
+which produces "bib.pdf" from bib.tex and flaps.bib. The bibliographic
+style is determined by the next-to-last line of bib.tex:
+\bibliographystyle{plain}
+Instead of "plain" you can use "aiaa" or "mdpi" or any other
+that has a .bst file in this directory
+
+Documentation of BibTex is in ./doc/btxdoc.pdf including a list of
+all bib item types (article, book, etc)

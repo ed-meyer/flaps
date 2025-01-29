@@ -1,0 +1,61 @@
+# clean up Flaps temporary directories
+# Usage: fclean [-r]
+#    -r:  rm all temp directories in this a lower directories
+
+# set -x
+
+THIS=`basename $0`
+
+usage () {
+	echo "Usage: $THIS [-r] [-f]" >&2
+	echo "        -r:   search subdirectories" >&2
+	echo "        -f:   do not prompt before removing questionable directories" >&2
+	exit 1
+}
+
+RECURSIVE="n"
+FORCE="n"
+ASK="n"
+
+set -- `getopt drf $*`
+if [ $? != 0 ];then
+	usage
+fi
+
+for i in $*
+do
+	case $i in
+		-d)	set -x
+				shift;;
+		-i)	ASK="y"
+				shift;;
+		-r)	RECURSIVE="y"
+				shift;;
+		-f)	FORCE="y"
+				shift;;
+		--)	shift;
+				break;;
+		-?)	echo "unrecognized option: $i" >&2
+				usage;;
+	esac
+done
+
+# if [ $RECURSIVE = "n" ];then
+# 	ls -d Ftmp*
+# 	rm -rf Ftmp*
+# else
+# 	for FILE in `find . -name "Ftmp[0-9]*" -print`
+# 	do
+# 			if [ -d $FILE ];then
+# 				rm -r $FILE
+# 				echo "removed $FILE"
+# 			fi
+# 	done
+# fi
+
+# New scheme for Dropbox: all Ftmp's are on /tmp
+for FILE in `ls -d /tmp/Ftmp*`
+do
+	echo $FILE
+	rm -rf $FILE
+done

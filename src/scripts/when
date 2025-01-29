@@ -1,0 +1,46 @@
+
+# run a command repeatedly until its exit status is 0,
+# then beep. For example:
+#    when 'ps -u eem2314 | grep dublat'
+# will beep when a program called dublat
+# starts running
+
+
+if [ "$DEBUG"z != "z" ];then
+	set -x
+fi
+
+usage() {
+	echo "Usage: $0 [-s t] [-n] command: run a command every t seconds (default 5) until its exit status is zero (or non-zero if -n included)"
+	exit 1
+}
+
+case $# in
+0) usage
+	;;
+esac
+
+BANG="n"
+NAPTIME="5"
+
+while getopts ":ns:" opt
+do
+	case $opt in
+		n) BANG="y";;
+		s) NAPTIME=$OPTARG;;
+		?) usage;;
+	esac
+done
+
+shift $(($OPTIND - 1))
+
+if [ "$BANG" = "y" ];then
+	while eval $*;do sleep $NAPTIME;done
+else
+	until eval $* ;do sleep $NAPTIME;done
+fi
+
+tput bel
+tput bel
+tput bel
+tput bel

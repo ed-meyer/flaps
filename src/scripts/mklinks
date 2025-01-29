@@ -1,0 +1,50 @@
+
+# Create directories and links to files in ./$Repo to ./$Build
+# so that Flaps can be built in "Build" without polluting the
+# git directory "Repo".
+# Also delete any broken links in "Build"
+# Assumptions:
+# 1) this script is run from the parent directory to "Repo" and "Build"
+# 2) "Repo" is the local git repository
+
+if [ "$DEBUG"z != z ];then
+	set -x
+fi
+
+myname=$(basename $0)
+
+case "$#" in
+0|1)	echo "Usage: $myname repository build" 1>&2; exit 1;;
+*)		Repo=$(pwd)/$1; Build=$(pwd)/$2
+		;;
+esac
+
+# make sure repo directory exists
+if [ ! -d $Repo ];then
+	echo "directory $Repo does not exist"
+	exit 1
+fi
+
+# create each directory (type d)
+find $Repo -type d | grep -v '\.git' | while read f;do
+	g=`echo $f | sed "s,$Repo,$Build,"`
+	if [ ! -d $g ];then
+		mkdir $g
+		echo "created directory $g"
+	fi
+done
+
+# link each regular file (type f) watch out for .swp, .swo files
+find $Repo -type f | grep -v '\.git' | grep -v '\.swp' | grep -v '\.swo' | while read f;do
+	g=`echo $f | sed "s,$Repo,$Build,"`
+	if [ ! -h $g ];then
+		ln -s $f $g
+		echo "linked $f -> $g"
+	fi
+done
+
+# rm broken links in Build
+find $Build -xtype l | while read f;do
+	echo "removing broken link $f"
+	rm -f $f
+done

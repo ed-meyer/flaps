@@ -1,0 +1,23 @@
+# $Id: tbig 751 2006-11-21 17:44:09Z eem2314 $
+# list n (default 5) largest files on this and all lower subdirectories
+
+if [[ -n $DEBUG ]];then
+	set -x
+fi
+
+N=5
+CWD=`pwd`
+
+
+if [ "`echo \"$1\"|cut -c1`" = "-" ]
+	then
+		N="`echo \"$1\"|cut -d- -f2`"
+fi
+
+echo "$N largest files from $CWD:"
+
+find . -type f -exec ls -s {} \; | sort -rnb | sed ${N}q
+# find $CWD -type f -size 20 -exec ls -s {} \; | tee /tmp/find.out | sort -r | tee /tmp/tbig.out | sed ${N}q
+
+# This one does not give the subdirectory with the filename:
+# ls -lRs $CWD | sort -rnb +0 | sed ${N}q

@@ -1,0 +1,30 @@
+# Change info contained in the AC_INIT line of all configure.ac
+# files. For example, to change the version from 0.1 to 0.2:
+#   changeversion '0.1' '0.2'
+
+if [ "$DEBUG"z != "z" ];then
+	set -x
+fi
+
+Usage() {
+	echo "Usage: changeversion from to" 1>&2
+	exit 1
+}
+
+case $# in
+	0) Usage;;
+	1) Usage
+	;;
+	2) old=$1
+		new=$2;;
+esac
+
+input=/tmp/changeversion.vim
+echo ':/AC_INIT/' >$input
+echo ":s/$1/$2/" >>$input
+echo ':write' >>$input
+echo ':quit' >>$input
+find . -name '*.ac' | while read file
+do
+	vim -es $file <$input
+done

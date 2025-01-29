@@ -1,0 +1,25 @@
+#
+# search a set of files for pattern1; if pattern1
+# is found print the name of the file if pattern2 is missing
+
+THIS=`basename $0 | cut -d. -f1`
+
+# set -x
+
+Usage="Usage: $THIS pattern1 pattern2 file(s)\n\
+	list the files which contain pattern1 but not pattern2"
+
+if [ $# -lt 3 ];then
+	echo $Usage >&2
+	exit 1
+fi
+
+pattern1="$1";shift
+pattern2="$1";shift
+
+for i in `grep -l $pattern1 $*`;do
+	grep $pattern2 $i >/dev/null
+	if [ $? != 0 ];then
+		echo $i
+	fi
+done

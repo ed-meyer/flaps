@@ -1,0 +1,12 @@
+
+# list all the apt packages used to dynamically load a program
+
+if [ $# -eq 0 ];then
+	echo "Usage: $0 program"
+	exit 1
+fi
+
+for i  in `ldd $1 | sed 's/^.*=> //' | sed 's/ (0x.*$//'`
+do
+	apt-file find $i | sed 's/:.*$//'
+done | sort | uniq

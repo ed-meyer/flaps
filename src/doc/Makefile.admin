@@ -1,0 +1,60 @@
+# Administration Makefile - several targets for maintaining Flaps
+# Intended to be installed in ../$froot i.e. in the directory above
+# flaps and build
+
+RSYNCOPTS = \
+--verbose \
+--stats \
+--archive \
+--update \
+--exclude=*.swp
+
+links:	FORCE
+	flaps/src/scripts/mklinks flaps build
+#	integ/src/scripts/mklinks integ integ.b
+#	minres/src/scripts/mklinks minres minres.b
+#	jump/bin/mklinks
+#	papers/bin/mklinks
+
+status:		FORCE
+	cd flaps && git status
+	cd jump && git status
+	cd papers && git status
+
+pull:		FORCE
+	cd flaps && git pull
+	cd jump && git pull
+	cd papers && git pull
+
+backup:	FORCE
+	rsync ${RSYNCOPTS} ${HOME}/git /media/eem2314/passport >backup.out 2>&1
+
+dist:		FORCE
+	tar zcf flaps.tar.gz --exclude=.git flaps
+	cp flaps.tar.gz ~/Drive/backup/flaps.`date +%s`.tar.gz
+
+# Note: before making check, make sure VERSION in build/Makefile
+# matches that in build/Version: make checkVersion
+# if they don't match run bootstrap in build
+checkVersion:
+	cd build && src/scripts/checkVersion
+
+check:	FORCE
+	cd build && src/scripts/checkVersion
+	cd build && make dist && mv flaps-$(Version).tar.gz ../check
+	cd check && rm -rf flaps-$(Version) && tar zxf flaps-$(Version).tar.gz
+	cd check/flaps-$(Version) && . ./Profile && ./configure && make install
+	cd check/flaps-$(Version) && . ./Profile && cd demo && run all
+	cd check && cp flaps-$(Version).tar.gz ~/Insync/flapsconsulting@gmail.com/'Google Drive'/flaps
+
+FORCE:
+
+design.pdf:	design.tex
+	pdflatex design.tex
+	bibtex design
+	pdflatex design.tex
+	pdflatex design.tex
+	detex -l design.tex | wc
+	detex -l design.tex | diction -s | fmt >design.diction
+	hunspell -t -p design.words -l design.tex | sort | uniq -i
+	@ echo "words listed by hunspell that are legit should be added to design.words"

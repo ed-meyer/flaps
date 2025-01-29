@@ -1,0 +1,35 @@
+#!/bin/sh
+#!/bin/sh
+# kind:              prints files of the same kind
+
+if [ $# -gt 0 ]
+	then if [ `echo $1 | cut -c1` = "-" ]
+		then case $1 in
+			-a)	KIND='archive'
+					shift;;
+			-d)	KIND='data'
+					shift;;
+			-t)	KIND='text'
+					shift;;
+			-x)	KIND='executable'
+					shift;;
+			*)		echo "Usage: kind [-a] [-d] [-t] [-x] [file...]" >&2
+					echo "       -a    archive" >&2
+					echo "       -d    data">&2
+					echo "       -t    text (default)" >&2
+					echo "       -x    executable" >&2
+					exit 1;;
+			esac
+	fi
+fi
+
+: ${KIND:='text'}
+
+case $# in
+0)	while read FILE
+	do
+		file $FILE | fgrep $KIND | cut -d: -f1
+	done;;
+*)	file $@ | fgrep $KIND | cut -d: -f1;;
+esac
+

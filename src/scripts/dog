@@ -1,0 +1,15 @@
+#!/bin/sh
+# Acts like the std unix command "cat" except
+# that environment variables are replaced
+# Usage: dog file [file...][-]
+
+# Turn the file(s) into a script which simply runs
+# "cat" taking the file(s) as a "here" document, then
+# run the script by piping into sh
+
+cat $* | sed '1i\
+cat <<@
+$a\
+@
+' | sh -s
+

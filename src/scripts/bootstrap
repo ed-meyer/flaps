@@ -1,0 +1,60 @@
+
+# Run GNU auto tools
+#
+#------------------   stuff to set  ---------------------------------------
+#  Some influential environment variables:
+#    CC          C compiler command
+#    CFLAGS      C compiler flags
+#    LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
+#                nonstandard directory <lib dir>
+#    CPPFLAGS    C/C++ preprocessor flags, e.g. -I<include dir> if you have
+#                headers in a nonstandard directory <include dir>
+#    CXX         C++ compiler command
+#    CXXFLAGS    C++ compiler flags
+#    F77         Fortran 77 compiler command
+#    FFLAGS      Fortran 77 compiler flags
+#    CPP         C preprocessor
+#
+#    --with-blas   alternative location for BLAS library; for example
+#                  to use the ATLAS BLAS:
+# CONFIGUREFLAGS="$CONFIGUREFLAGS --with-blas='-L/home/eem2314/local/src/atlas/ATLAS/lib/Linux_P4SSE2 -lblas -latlas'"
+
+
+if [ "$DEBUG"z != "z" ];then
+	set -x
+fi
+
+if [ "$FROOT"z = "z" ];then
+	echo "FROOT has not been set" >&2
+	exit 1
+fi
+
+# /bin/pwd return the Dropbox directory linked to, but pwd returns the local
+pwd | grep $FROOT
+if [ $? != 0 ];then
+	echo "the current directory (`/bin/pwd`) is not under FROOT ($FROOT)" >&2
+	exit 1
+fi
+
+wd=`/bin/pwd`
+
+# get the include directory needed for autoconf
+ACI=$(g++ -dumpversion)
+if [ ! -d /usr/include/c++/$ACI ];then
+	echo "check the -I in the autoconf command"
+	exit 1
+fi
+
+for i in `find . -name Makefile.am -print`;do
+	dir=`dirname $i`
+	echo "bootstrapping in $dir"
+	cd $dir
+	aclocal
+	autoheader
+	automake --foreign --add-missing
+	autoconf -f -I/usr/include/c++/$ACI
+	libtoolize
+	cd $wd
+done
+
+./configure $CONFIGUREFLAGS

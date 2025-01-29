@@ -1,0 +1,8 @@
+# change permissions so that perf can be run by anyone
+# this script must be run as root:
+#   sudo perffix
+
+sh -c 'echo -1 >/proc/sys/kernel/perf_event_paranoid'
+sh -c 'echo kernel.perf_event_paranoid=1 >/etc/sysctl.d/local.conf'
+sh -c 'echo 0 >/proc/sys/kernel/kptr_restrict'
+

@@ -1,0 +1,39 @@
+
+# findlink:			find all links to a file starting from a directory
+#                 send stderr to /dev/null
+
+# set -x
+
+THIS=`basename $0`
+USAGE="Usage: $THIS file [rootdir]"
+
+case $# in
+	0) echo $USAGE >&2
+		exit
+		;;
+	1) FILE=$1
+		START=$HOME
+		;;
+	2) FILE=$1
+		START=$2
+		;;
+esac
+
+ENTRY=`/bin/ls -li "$FILE"`
+if [ $? != 0 ];then
+	echo $ENTRY >&2
+	echo $USAGE >&2
+	exit 1
+fi
+NLINKS=`echo $ENTRY | awk '{ if ($3 > 1) print $3 }'`
+if [ z"$NLINKS" = z ];then
+	echo "$FILE has no links" >&2
+	echo $ENTRY >&2
+	exit 2
+fi
+
+INODE=`echo $ENTRY | awk '{ print $1 }'`
+
+echo "$FILE (inode ${INODE}) has $NLINKS links"
+
+find $START/ -inum $INODE -print 2>/dev/null

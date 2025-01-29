@@ -1,0 +1,145 @@
+\documentclass[11pt]{article}
+\usepackage{ifthen}
+\usepackage{calc}
+\usepackage{verbatim}
+\usepackage{amsmath}
+\setlength{\parskip}{3mm}
+\setlength{\headheight}{14pt}
+\newcommand{\Matrix}[1]{\boldsymbol{#1}}
+\begin{document}
+\title{\large Rational Function Approximation}
+\author{Edward E. Meyer}
+\maketitle
+
+This approximation,
+due to Roger \cite{roger}
+uses a least-squares fit of a certain rational-polynomial
+to a set of complex matrices.
+Given a set of
+$m$
+unsteady aero matrices at various values of complex
+reduced frequency
+$p$
+
+\begin{equation}
+\Matrix{Q}_k = \Matrix{Q}(p_k) \; \; \; \; k = 1, m
+\end{equation}
+
+where
+$p = \frac{s}{v_t}$
+is the complex reduced-frequency,
+$s$ is the Laplace variable, and $v_t$ is the true airspeed,
+approximate $\Matrix{Q}$ with an analytic function of $p$.
+Roger's approximation to the aero matrix has the form
+
+\begin{equation}
+  \Matrix{Q}(p) \approx \Matrix{R}_0 + p\Matrix{R}_1 + p^2 \Matrix{R}_2 +  \sum_{i=1}^{\ell} \frac{p}{p + \beta_i} \Matrix{R}_{i+2}
+\end{equation}
+
+where the matrices $\Matrix{R}_i$ are real, and the $\beta_i$ are real.
+
+\par
+To determine the matrices $\Matrix{R}_i$, write $m$ equations, one
+for each aero matrix $\Matrix{Q}_k$:
+
+\begin{displaymath}
+\left[
+\begin{array}{cccccc}
+1 & p_1 & p_1^2 & \frac{p_1}{p_1 + \beta_1} & \ldots & \frac{p_1}{p_1 + \beta_{\ell}} \\
+1 & p_2 & p_2^2 & \frac{p_2}{p_2 + \beta_1} & \ldots & \frac{p_2}{p_2 + \beta_{\ell}} \\
+  &     &       &                           & \ddots &                           \\
+1 & p_m & p_m^2 & \frac{p_m}{p_m + \beta_1} & \ldots & \frac{p_m}{p_m + \beta_{\ell}}
+\end{array}
+\right]
+\left[
+\begin{array}{cccc}
+r_{0,11}   & r_{0,21}   & \ldots & r_{0,nn} \\
+r_{1,11}   & r_{1,21}   & \ldots & r_{1,nn} \\
+           &            & \ddots &          \\
+r_{\ell+3,11} & r_{\ell+3,21} & \ldots & r_{\ell+3,nn}
+\end{array}
+\right]
+\end{displaymath}
+
+\begin{equation}
+ =
+\left[
+\begin{array}{cccc}
+q_{0,11}   & q_{0,21}   & \ldots & q_{0,nn} \\
+q_{1,11}   & q_{1,21}   & \ldots & q_{1,nn} \\
+           &            & \ddots &          \\
+q_{m,11}   & q_{m,21}   & \ldots & q_{m,nn}
+\end{array}
+\right]
+\end{equation}
+
+where
+$r_{k,ij}$
+is the $(i,j)$
+element of the real
+$(n,n)$
+matrix $\Matrix{R}_k$
+and $q_{k,ij}$
+is the
+$(i,j)$
+element of the complex
+$(n,n)$
+matrix $\Matrix{Q}_k$.
+
+\par
+Expanding the complex terms into real and imaginary,
+
+\begin{displaymath}
+\left[
+\begin{array}{cccccc}
+1 & \Re(p_1) & \Re(p_1^2) & \Re(\frac{p_1}{p_1 + \beta_1}) & \ldots & \Re(\frac{p_1}{p_1 + \beta_{\ell}}) \\
+0 & \Im(p_1) & \Im(p_1^2) & \Im(\frac{p_1}{p_1 + \beta_1}) & \ldots & \Im(\frac{p_1}{p_1 + \beta_{\ell}}) \\
+1 & \Re(p_2) & \Re(p_2^2) & \Re(\frac{p_2}{p_2 + \beta_1}) & \ldots & \Re(\frac{p_2}{p_2 + \beta_{\ell}}) \\
+0 & \Im(p_2) & \Im(p_2^2) & \Im(\frac{p_2}{p_2 + \beta_1}) & \ldots & \Im(\frac{p_2}{p_2 + \beta_{\ell}}) \\
+  &          &            &                                & \ddots &                           \\
+1 & \Re(p_m) & \Re(p_m^2) & \Re(\frac{p_m}{p_m + \beta_1}) & \ldots & \Re(\frac{p_m}{p_m + \beta_{\ell}}) \\
+0 & \Im(p_m) & \Im(p_m^2) & \Im(\frac{p_m}{p_m + \beta_1}) & \ldots & \Im(\frac{p_m}{p_m + \beta_{\ell}}) \\
+\end{array}
+\right]
+\left[
+\begin{array}{cccc}
+r_{0,11}   & r_{0,21}   & \ldots & r_{0,nn} \\
+r_{1,11}   & r_{1,21}   & \ldots & r_{1,nn} \\
+           &            & \ddots &          \\
+r_{\ell+3,11} & r_{\ell+3,21} & \ldots & r_{\ell+3,nn}
+\end{array}
+\right]
+\end{displaymath}
+
+\begin{equation}
+ =
+\left[
+\begin{array}{cccc}
+\Re(q_{0,11})   & \Re(q_{0,21})   & \ldots & \Re(q_{0,nn}) \\
+\Im(q_{0,11})   & \Im(q_{0,21})   & \ldots & \Im(q_{0,nn}) \\
+\Re(q_{1,11})   & \Re(q_{1,21})   & \ldots & \Re(q_{1,nn}) \\
+\Im(q_{1,11})   & \Im(q_{1,21})   & \ldots & \Im(q_{1,nn}) \\
+                &                 & \ddots &          \\
+\Re(q_{m,11}) & \Re(q_{m,21}) & \ldots & \Re(q_{m,nn}) \\
+\Im(q_{m,11}) & \Im(q_{m,21}) & \ldots & \Im(q_{m,nn})
+\end{array}
+\right]
+\end{equation}
+
+Which is a set of real linear equations
+
+\begin{equation}
+\Matrix{AX} = \Matrix{B}
+\end{equation}
+
+where $\Matrix{A}$ is $(2m, 3+\ell)$, $\Matrix{X}$ is $(3+\ell, n^2)$,
+and $\Matrix{B}$ is $(2m, n^2)$. These equations are overdetermined
+if $2m > 3+\ell$, that is if the number of matrices $\Matrix{Q}_k$
+is greater than the number of $\beta_i$ plus three divided by 2,
+or the number of $\beta_i$ is less than two times the number of matrices
+minus 3.
+
+\begin{thebibliography}{}
+\bibitem{roger} Roger, K.L., ``Airplane Math Modeling Methods for Active Control Design'', \textit{Proceedings of the 44th Meeting of the AGARD Structures and Materials Panel}, AGARD CP-228, April, 1977, pp. 4.1-4.11.
+\end{thebibliography}
+\end{document}

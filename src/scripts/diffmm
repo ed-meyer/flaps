@@ -1,0 +1,61 @@
+
+# display the difference between 2 matrices in matview;
+# the matrices must be in Matrix Market format: .mm files
+
+if [[ -n $DEBUG ]];then
+	set -x
+fi
+
+Usage() {
+	echo "Usage: $0 file1 file2 [output .mm]" >&2
+	exit 1
+}
+
+case $# in
+	0) Usage >&2
+		exit
+		;;
+	1) Usage >&2
+		exit
+		;;
+#	2) file1=$1
+#		file2=$2
+#		output="/tmp/diff.mm"
+#		;;
+#	3) file1=$1
+#		file2=$2
+#		output=$3
+#		;;
+esac
+
+output="/tmp/diff.mm"
+Relative="n"
+
+while getopts "r" opt
+do
+	case $opt in
+		r) Relative="y"
+			echo "displaying relative differences"
+			;;
+		?) Usage;;
+	esac
+done
+shift $((OPTIND-1))
+file1=$1
+file2=$2
+
+# cd /tmp
+mfile="mfile.m"
+
+echo "path('$FROOT/bin',path)" >$mfile
+echo "a = mmread('$file1')" >>$mfile
+echo "b = mmread('$file2')" >>$mfile
+echo "c = a - b" >>$mfile
+if [ $Relative = "y" ];then
+	echo "maxab = max(abs(a), abs(b))" >> $mfile
+	echo "c = c ./ maxab" >> $mfile
+fi
+echo "mmwrite('$output',c)" >>$mfile
+matlab -batch "mfile"
+# octave mfile.m
+matview $output

@@ -1,0 +1,84 @@
+# Set up to run flaps
+# Usage:
+#   . ./Profile
+# where the period means "run in the current shell" so that
+# any environment variables are set in the currently running shell
+
+if [ ! -z $DEBUG ];then
+	set -x
+fi
+
+# The only decl of flaps version is in file "Version"
+export Version=$(cat Version)
+
+# The root directory of the Flaps distribution
+FROOT=`pwd`
+export FROOT
+froot=$FROOT
+export froot
+
+# Initialize: unset all variables we use so we can accumulate
+# e.g.
+#   export CFLAGS="$CFLAGS -g"
+# instead of
+#   export CFLAGS="-g"
+# which might clobber a previously-set flag
+unset CFLAGS
+unset CXXFLAGS
+unset LDFLAGS
+unset CONFIGUREFLAGS
+
+Compiler=gcc
+# Optimize="-ggdb3 -O0 -Wall"
+Optimize="-O3 -Wall"
+
+CONFIGUREFLAGS=""
+#------------------------------------------------------------------
+# Set the following CONFIGUREFLAGS
+
+# compile and load with profiling
+# export CONFIGUREFLAGS="$CONFIGUREFLAGS --enable-profiling"
+
+#------------------------------------------------------------------
+
+unset GCCVERSION
+unset LD_LIBRARY_PATH
+unset FFLAGS
+unset FLIBS
+
+export LD_LIBRARY_PATH=${FROOT}/lib
+export LD_RUN_PATH=${FROOT}/lib
+
+CONFIGUREFLAGS="$CONFIGUREFLAGS --cache-file=$FROOT/cache"
+
+# export CC=gcc
+# export CXX=g++
+export CFLAGS="$Optimize -fPIC $CFLAGS"
+export CXXFLAGS="-std=c++17 ${CFLAGS}"
+export CPPFLAGS="-I${FROOT}/include"
+# export F77=gfortran
+# libraries all programs need
+# export Libraries="-L$FROOT/lib -lflaps -llapack -lblas"
+# export Libraries="-L/usr/lib64 -L$FROOT/lib -lflaps -llapack -lblas"
+# export LIBS="-L/usr/lib64 -L$FROOT/lib -lflaps -llapack -lblas"
+
+# This script is called from flaps (script) by users,
+# so we must not assume BASECDPATH and BASEPATH are set
+
+if [ $BASEPATH"z" != "z" ];then
+	export PATH=${FROOT}/bin:$BASEPATH
+else
+	export PATH=${FROOT}/bin:$PATH
+fi
+
+if [ $BASECDPATH"z" != "z" ];then
+	CDPATH=$BASECDPATH:$FROOT/src:$FROOT/src/bin:$FROOT
+	export CDPATH
+fi
+
+# Google Drive or pCloud remove execute permissions
+# if [ -d bin ];then
+# 	chmod +x bin/*
+# fi
+# chmod +x src/scripts/*
+# chmod +x demo/run

@@ -1,0 +1,15 @@
+
+callgrind is giving this message:
+
+==504955== brk segment overflow in thread #1: can't grow to 0x484e000
+==504955== (see section Limitations in user manual)
+==504955== NOTE: further instances of this message will not be shown
+
+which means it is hitting a limit in brk() hard-coded in valgrind.
+Following advice in
+stackoverflow.com/questions/35129135/valgrind-reporting-a-segment-overflow
+I downloaded the source and edited coregrind/m_initimg/initimg-linux.c
+and changed line 1150 from
+      SizeT m8 = 8 * m1;
+to
+      SizeT m8 = 32 * m1;

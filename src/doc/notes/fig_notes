@@ -1,0 +1,38 @@
+
+	Creating figures with xfig
+	==========================
+
+Assuming the git repository is in ~/git/papers and the build is in ~/git/pub
+
+To create from a vis plot for paper "latent.tex", for example from vso.esa:
+
+	- in ~/git/pub/latent/figures:
+		- in vis -> hardcopy -> xfig -> to file -> ok  (creates vis.fig locally)
+		- cp vis.fig ~/git/papers/latent/figures/vso.fig
+
+	- in ~/git/papers/latent/figures:
+		- if template.fig has not been created, create it in xfig: only the
+			plot outline, dummy titles, and axis scale numbers. git add template.fig
+		- git add vso.fig
+		- vi vso.fig -> rm all but curves
+		- xfig vso.fig -> group curves -> merge template.fig -> scale curves
+			to fit
+		- save; add to Makefile
+
+If the fig contains Latex math:
+==============================
+Here is a simplified way to add Latex fonts using script "fig2pdf"
+in papers/bin.
+1) be sure to set "special text" mode when adding text
+   See the example of what the .fig file should look like below
+	fields 6 and 9 should be 2
+2) math must be enclosed in $$ and \ must be escaped, e.g. $\\eta$
+3) run* "fig2pdf file.fig" to create file.pdf or put
+
+.SUFFIXES:	.fig .pdf
+.fig.pdf:
+	fig2pdf $<
+
+   into a Makefile, then you can just type "make file.pdf"
+
+*Note (11/26/2022): I now use fig2mpdf which is in package fig2dev (see /var/lib/dpkg/info/fig2dev.list)

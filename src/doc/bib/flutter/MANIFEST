@@ -1,0 +1,62 @@
+
+AIAA-1444-979.pdf: Incorrectness of the k method for flutter calculations, Patil, M.J., Yurkovich, R.N., Hodges, D.H.,
+
+AIAA-2001-569-245.pdf: "Evaluation of computational aeroelasticity codes for loads and flutter", Huttsell, L., et.al.
+comparison of cap-tsd, ens3dae, and cfl3d
+
+AIAA-2003-1489-447.pdf: "flutter and divergence analysis using the generalized aeroelastic analysis method", Edwards, J.W.,
+Wieseman, C.D.
+
+AIAA-200-916.pdf: "Convergence of methods for nonlinear eigenvalue problems", Back, P., Ringertz, U.
+this pdf has formatting issues - see the hardcopy
+
+AIAA-20190-867.pdf: "Efficient computation of robust flutter boundaries using
+the \mu-k method", Borglund, D., and Ringertz, U.
+more flutterometer stuff
+
+AIAA-3062-855.pdf:  "the \mu-k method for robust flutter solutions", Borglund, D.
+... and even more flutterometer stuff
+
+AIAA-43581-180_Prediction_of_Flutter_Onset_Speed_Based_on_Flight_Testing_at_Subcritical_Speeds.pdf
+
+
+21543.0.AIAA_2003_1942_Flutter.pdf: "flutter characteristics of an over-the-wing
+engine mount business-jet configuration", Fujino, M., et.al.
+
+A_Locally_Parameterized_Continuation_Process.pdf: Rheinboldt, W.C., ad Burkardt, J.V.
+
+A_Method_for_the_Numerical_Determination_of_Bifurcation_States_of_Nonlinear_Systems_of_Equations.pdf
+
+amsallem.pdf: "Linearized Aeroelastic Computations in the Frequency
+Domain Based on Computational Fluid Dynamics", Amsallem, D., Neumann, D.,
+Choi, Y., and Farhat, C., arXiv preprint arXiv:1506.07441
+
+Comparison_of_Different_Methods_of_Assessing_the_Free_Oscillatory_Characteristics_of_Aeroelastic_Systems.pdf: Lawrence, A.J., and Jackson, P., 1970
+
+nastran_aeroelastic.pdf: NASTRAN aeroelasticity  manual (contains HA145B)
+
+AIAA-2011-2142-551[1].pdf: "complete bifurcation behaviour of aeroelastic systems
+with freeplay", Dimitriadis, G. 2011
+
+nonlinear
+Identification_of_Limit_Cycles.pdf: "identification of limit cycles for
+piecewise nonlinear aeroelastic systems", Jones, D.P., et.al., 2007
+
+robust_flutter_analysis_of_a_nonlinear_aeroelastic_system_with_parametric_uncertainties.pdf
+
+pp_method.pdf: "true damping and frequency prediction for aeroelastic systems:
+the PP method", Haddadpour, H., and Firouz-Abadi, R.D. 2009
+
+Rheinboldt78.pdf: "numerical methods for a class of finite dimensional
+bifurcation problems"
+
+S06_4_118_potkan.pdf: "nonlinear flutter analysis by application of a harmonic
+balance and a continuation method", Potkanski, W. IFASD 2011
+
+scicompbook.pdf: "introduction to high-performance scientific computing" 2010
+
+SNA000674.pdf: "algorithms for the nonlinear eigenvalue problem", Ruhe, A. 1973
+
+TensorMethods-SCE002329.pdf: "on the performance of tensor methods for solving
+ill-conditioned problems", Bader, B.W., and Schnabel, R.B. 2007
+

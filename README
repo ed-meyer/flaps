@@ -1,0 +1,42 @@
+
+For quick installation from a distribution tar file
+-----------------------------------------------------------------
+starting in the directory containing the tar file:
+>  tar zxf flaps-XXX.tar.gz
+will create a directory "flaps-XXX", the Flaps root directory.
+
+If this is the first time installing Flaps it may be necessary to
+install certain packages; the PACKAGES in the Flaps root directory
+can be run as a script like this:
+> yes | sudo PACKAGES
+note that it is usually necessary to run it as superuser with sudo.
+PACKAGES will try to determine if this Linux uses apt or rpm for
+package management.
+
+Once you have the necessary packages installed all you should have
+to do is
+>  cd flaps-XXX
+>  . ./Profile
+>  ./configure
+>  make install
+
+If this is successful you can run some tests:
+
+>  cd demo
+>  run all
+
+If the build is not succesful it may be because some packages
+were not installed, or it may be necessary to adjust environment
+variables that are set when Profile is "sourced".
+Or maybe it is time to text or email
+Ed Meyer
+206-453-8778
+flapsconsulting@gmail.com
+
+
+For quick installation from github:
+-----------------------------------------------------------------
+git clone https://github.com/eem2314/flaps
+cd flaps
+src/scripts/bootstrap
+make install

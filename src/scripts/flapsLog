@@ -1,0 +1,7 @@
+# $Id$
+# Add an entry into the flaps log
+# Note: this script must be setuid - permissions 6755
+
+if [ ${FROOT}"z" != "z" ];then
+	echo "$LOGNAME `date`" >> $FROOT/log
+fi

@@ -1,0 +1,153 @@
+% Flaps LaTeX style
+
+
+\typeout{ -------------- Flaps Document style}
+
+
+% ensure \appendix is only included once
+\newcommand{\Appendix}{\appendix\renewcommand{\Appendix}{}}
+
+%------------------------------------------------------------------
+% These are from the User's Guide for the amsmath Package (amsldoc.pdf):
+% real and imag parts of a complex number:
+\newcommand{\Real}{\mathrm{Re}}
+\newcommand{\Imag}{\mathrm{Im}}
+\newcommand{\Conj}[1]{\overline{#1}}
+
+% Matrices and vectors:
+\newcommand{\mat}[1]{\boldsymbol{#1}}
+\newcommand{\vect}[1]{\boldsymbol{#1}}
+
+% absolute value
+\providecommand{\abs}[1]{\lvert#1\rvert}
+
+% short dash for text in math, e.g. lbf-in^2
+\newcommand{\hyphen}{\text{-}}
+%------------------------------------------------------------------
+
+
+\setlength{\topmargin}{-.5in}
+\setlength{\textheight}{9.0in}
+\setlength{\textwidth}{5.7in}
+\setlength{\evensidemargin}{0in}
+\setlength{\oddsidemargin}{0.5in}
+\setlength{\parindent}{0pt}
+
+\setcounter{tocdepth}{1}
+
+\pagestyle{plain}
+% \setlength{\footrulewidth}{0.8pt}
+% \setlength{\headrulewidth}{0.8pt}
+\renewcommand{\chaptermark}[1]{\markboth{#1}{#1}}
+\renewcommand{\sectionmark}[1]{\markright{\footnotesize\thesection\ #1}}
+\lfoot[{\bfseries\thepage}]{\fancyplain{}{\footnotesize\rightmark}}
+\cfoot{\fancyplain{\bfseries\thepage}}
+\rfoot[\fancyplain{}{\footnotesize\leftmark}]{\fancyplain{}{\bfseries\thepage}}
+\lhead{}
+% \chead{\fancyplain{\sffamily\bfseries DRAFT}{\sffamily\bfseries DRAFT}}
+\rhead{\thesection}
+%
+% Lentry is a description list which puts the description on
+% a new line if the item is too long
+% From The Latex Companion, p. 64
+%
+\newcommand{\entrylabel}[1]{\mbox{\textsf{#1}}\hfil}
+\newenvironment{entry}
+	{\begin{list}{}%
+		{\renewcommand{\makelabel}{\entrylabel}%
+		 \setlength{\labelwidth}{1.0in}%
+		 \setlength{\leftmargin}{\labelwidth+\labelsep}%
+		}%
+	}%
+	{\end{list}}
+
+\newlength{\Mylen}
+\newcommand{\Lentrylabel}[1]{%
+	\settowidth{\Mylen}{\textsf{#1}}%
+	\ifthenelse{\lengthtest{\Mylen > \labelwidth}}%
+		{\parbox[b]{\labelwidth}%		term > labelwidth
+			{\makebox[0pt][l]{\textsf{#1}}\\}}%
+		{\textsf{#1}}%
+	\hfil\relax}
+\newenvironment{Lentry}
+	{\renewcommand{\entrylabel}{\Lentrylabel}%
+		\begin{entry}}
+	{\end{entry}}
+%
+% MyDescription is a description-list with an argument: labelwidth
+%
+\newenvironment{MyDescription}{\begin{list}{\bullet}{
+	\setlength{\labelwidth}{1.0in}%
+	\setlength{\leftmargin}{\labelwidth+\labelsep}}%
+}{\end{list}}
+
+% IndexTerm{key}{visual} should create \index{#1@#2} if #1 has non-zero length,
+% and \index{#2} otherwise
+
+\newcommand{\IndexTerm}[2]{\ifthenelse{\equal{#1}{}}{\index{#2}}{\index{#1@#2}}}
+% \newcommand{\IndexTerm}[2]{#1 \index{#1@#2}}
+
+% GlossaryTerm is to handle Docbook GLOSSTERM. It writes the term in
+% italics and puts it in the index
+% \newcommand{\GlossaryTerm}[1]{\index{#1}{\itshape #1\/}}
+\newcommand{\GlossaryTerm}[1]{{\itshape #1\/}}
+
+\newcommand{\STRING}{string}
+\newcommand{\STRINGLIST}{stringList}
+\newcommand{\STRINGWO}{string \{options\}}
+\newcommand{\STRINGWP}{string \{parameter-defns\}}
+\newcommand{\INT}{int}
+\newcommand{\INTWO}{int \{options\}}
+\newcommand{\INTWP}{int \{parameter-defn\}}
+\newcommand{\INTLIST}{intList}
+\newcommand{\INTLISTWO}{intList \{options\}}
+\newcommand{\INTLISTWP}{intList \{parameter-defn\}}
+\newcommand{\FLOAT}{float}
+\newcommand{\FLOATLIST}{floatList}
+\newcommand{\FLOATWO}{float \{options\}}
+\newcommand{\Lhs}[2]{\vspace{1.5em}\index{#2@{\sffamily #2} (option)!\RefF}{\sffamily #2} = {\ttfamily\itshape #1}}
+
+\newcommand{\Keyword}[1]{\vspace{1.5em}\index{#1@{\sffamily #1} (option)!\RefF}{\sffamily #1}}
+
+% Usage: \RefName{[ID]}{name}
+
+\newcommand{\RefName}[2]{\section{\sf~ #2}\index{#2@{\sffamily #2} (command)}\label{#1}\hrule\vspace{3mm}}
+
+% Redefine \theindex to put an entry in TOC
+% SURELY there must be an easier way!
+
+\renewcommand{\theindex}{\@restonecoltrue\if@twocolumn\@restonecolfalse\fi
+\columnseprule \z@
+\columnsep 35\p@\twocolumn[\@makeschapterhead{\indexname}]%
+    \@mkboth{\uppercase{\indexname}}{\uppercase{\indexname}}%
+    \thispagestyle{plain}\parindent\z@
+    \parskip\z@ plus .3\p@\relax\let\item\@idxitem\addcontentsline{toc}{chapter}{\indexname}}
+
+% Redefine \thebibliograhy to put an entry in TOC
+% SURELY there must be an easier way!
+
+% \renewcommand{\thebibliography}[1]{\chapter*{\bibname\@mkboth
+%   {\uppercase{\bibname}}{\uppercase{\bibname}}}\list
+%   {\@biblabel{\arabic{enumiv}}}{\settowidth\labelwidth{\@biblabel{#1}}%
+%     \leftmargin\labelwidth
+%     \advance\leftmargin\labelsep
+%     \usecounter{enumiv}%
+%     \let\p@enumiv\@empty
+%     \def\theenumiv{\arabic{enumiv}}}%
+%     \def\newblock{\hskip .11em plus.33em minus.07em}%
+%     \sloppy\clubpenalty4000\widowpenalty4000
+%     \sfcode`\.=\@m\addcontentsline{toc}{chapter}{\bibname}}
+\renewenvironment{thebibliography}[1]{\chapter*{\bibname\@mkboth
+  {\uppercase{\bibname}}{\uppercase{\bibname}}}\list
+  {\@biblabel{\arabic{enumiv}}}{\settowidth\labelwidth{\@biblabel{#1}}%
+    \leftmargin\labelwidth
+    \advance\leftmargin\labelsep
+    \usecounter{enumiv}%
+    \let\p@enumiv\@empty
+    \def\theenumiv{\arabic{enumiv}}}%
+    \def\newblock{\hskip .11em plus.33em minus.07em}%
+    \sloppy\clubpenalty4000\widowpenalty4000
+    \sfcode`\.=\@m\addcontentsline{toc}{chapter}{\bibname}}{}
+
+\newenvironment{LiteralLayout}{\obeylines\@vobeyspaces\global\frenchspacing
+\medskip\small\ttfamily}{\medskip}

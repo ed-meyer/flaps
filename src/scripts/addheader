@@ -1,0 +1,14 @@
+# Usage: addheader file [file ...]
+# add the contents of FROOT/header to each file
+
+if [ "$DEBUG"z != "z" ];then
+	set -x
+fi
+
+TMP=/tmp/addheader.tmp
+
+for file in $*
+do
+	cat $FROOT/header $file >$TMP
+	cp $TMP $file
+done

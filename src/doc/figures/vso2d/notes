@@ -1,0 +1,6 @@
+
+fig files created from demo/whirlnl.d/vso.apf
+	vz -x vtas -y[-15:15] sigma vso.apf -> hardcopy -> xfig
+
+vi vs.fig:
+	:%s/^2 1 2 1 ./2 1 0 2 0/		# change lines to solid 2/80 thick black

@@ -1,0 +1,7 @@
+
+The version number is set in one place: $froot/Version
+it is a single line like:
+1.1
+
+If you change the version number you must run bootstrap from $froot
+for the new version number to have effect

@@ -1,0 +1,406 @@
+#!/bin/sh
+#
+# The fig2pdf script converts fig files to pdf. By default, pdflatex is used 
+# to include the special text from the fig file in the pdf output file. 
+# Alternatively, fig2pdf can generate separate LaTeX code which will overlay 
+# the pdf file with the special text when used in a LaTeX document.
+#
+# Copyright (c) 2006,2007,2008,2009,2010,2011,2013,2015
+# Wouter Kager
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+
+program=`basename $0`
+version=2015/08/01
+packages=color,
+class=article
+scale=1.00375
+gsopts="-q -dSAFER -dNOPAUSE -dBATCH"
+force=n
+debug=n
+fsub=
+csub=
+setspecial=0
+mode=pdf
+level=1.3
+preamble=
+mpsub="[1 0 0 -1 0 0]"
+
+echo "$program $version by Wouter Kager"
+
+# Scan command line options:
+while getopts :bc:fFi:kl:p:stTu optionkey $*; do
+	case $optionkey in
+		b)	scale=1 ;;
+		c)	class=$class]$OPTARG ;;
+		f)	force=y ;;
+		F)	fsub="&\\\\selectfont " ;;
+		i)	preamble="$preamble$OPTARG" ;;
+		k)	debug=y ;;
+		l)	level=$OPTARG ;;
+		p)	packages=$packages$OPTARG, ;;
+		s)	setspecial=1 ;;
+		t)	mode=tex ;;
+		T)	mode=texfile ;;
+		u)	mpsub=& ;;
+		:)	echo "$program: the option -$OPTARG requires an argument!"
+			echo "$program: run $program without arguments for help"
+			exit 1 ;;
+		?)	echo "$program: the option -$OPTARG is illegal!"
+			echo "$program: run $program without arguments for help"
+			exit 1 ;;
+	esac
+done
+
+shift `expr $OPTIND - 1`
+
+# Check for input files:
+if [ ${#} -eq 0 ]; then
+	cat <<-EOF
+
+		Usage: $program [options] figfile(s)
+
+		The valid options are:
+		 -b            assume that \unitlength=1bp, instead of 1pt
+		 -c class      specify document class  (default = article)
+		 -f            force files to be overwritten if they exist
+		 -F            use font size information from the fig file
+		 -i "tex code" inserts tex code into the document preamble
+		 -k            keep temporary files for debugging purposes
+		 -l level      set PDF level to 1.2, 1.3 (default), or 1.4
+		 -p packages   specify packages (graphicx is always added)
+		 -s            set the special flag of all text objects on
+		 -t            to generate pdf file with separate tex code
+		 -T            to generate pdf file with separate tex file
+		 -u            no correction for upside-down fill patterns
+
+		Environment variables:
+		 FIG2PDF_CODE  additional tex code (added to the preamble)
+
+		Packages must be specified as a comma-separated list, with
+		options for a particular package written directly in front
+		of the package name between square brackets. Likewise, you
+		can specify class options between square brackets directly
+		in front of the class name. In this case you may leave out
+		the class name to use the default article class.
+		
+		Example: $program -c [12pt] -p txfonts,[one,two]mysty *.fig
+		EOF
+	exit 0
+fi
+
+# This tricky code parses the class and packages arguments:
+for field in `echo $class | tr ] " "`
+do
+	if [ `echo $field | cut -c1` = "[" ]; then
+		options=$field]
+	else
+		class={$field}
+	fi
+done
+
+class=\\documentclass$options$class
+
+tmp=`echo $packages | tr ] " "`
+packages=\\usepackage
+options=
+
+for field in $tmp
+do
+	for subfield in `echo $field | tr , " "`
+	do
+		if [ `echo $subfield | cut -c1` = "[" ]; then
+			options=$subfield
+		else
+			if [ -z "$options" ]; then
+				packages=$packages{$subfield}\\usepackage
+			else
+				options=$options,$subfield
+			fi
+		fi
+	done
+	if [ -n "$options" ]; then
+		packages=$packages$options]
+		options=
+	fi
+done
+
+packages=$packages{graphicx}
+
+#--------------------------- Function definitions ---------------------------
+
+# pass_fig sets the special flag of all text objects (if desired), sets the 
+# width and height of special text to 0, sets the "default color" of special 
+# text to black, and passes on the output:
+pass_fig ()
+{
+	awk '{if ($1==4 && $NF ~ /\\001$/) {
+			$9+='$setspecial'*2*(1-($9/2)%2);
+			if (($9/2)%2==1) {$10=0; $11=0; if ($3==-1) $3=0}
+		} print}' "$base.fig"
+}
+
+# latex_code generates (human-readable) latex code from the file $base.fig
+# which includes the figure and overlays it with the special text:
+latex_code ()
+{
+	if [ $specialtext -gt 0 ]; then
+	pass_fig | fig2dev -L pdftex_t -F 2>/dev/null |
+	sed -n '/\\setlength{\\unitlength}/ {
+			s/sp//
+			s/[{}]/ /gp
+		 }
+		 /\\begin{picture}/ s/[(,)]/ /gp
+		 /\\put/ {
+			s/b\]{*\\smash{*/]{/
+			s/{*\\color/\\color/
+			s/\\SetFigFont/\\fontsize/
+			s/\\fontsize{[^}]*}{[^}]*}/'"$fsub"'/
+			s/\\color\[.*\]{[^}]*}/'"$csub"'/
+			s/(0,0)\[/[0pt][/
+			s/[][]*\]/]/
+			s/%[^%]*$/}/
+			s/\\rotatebox.*/&}/
+			s/(/ /
+			s/,/ /
+			s/)/ /p
+		}' |
+	awk '/unitlength/ {unit=$3*('$scale'/65781.76)}
+		 /begin{picture}/ {
+			dx=$4; dy=$5;
+			x1=int('$x1'*'$scale'-0.999);
+			y1=int('$y1'*'$scale'-0.999);
+			x2=int('$x2'*'$scale'+0.999);
+			y2=int('$y2'*'$scale'+0.999);
+			printf "%s(%d,%d)",$1,x2-x1,y2-y1;
+			if (x1+y1 != 0) printf "(%d,%d)",x1,y1;
+			printf "\n\\put(0,0){\\includegraphics{'"$base"'}}\n"}
+		 /put/ {
+			printf "\\put(%.0f,%.0f)",($2-dx)*unit,($3-dy)*unit;
+			for (i=4;i<NF;i++) printf "%s ",$i; printf "%s\n",$NF}
+		 END {print "\\end{picture}"}'
+	else
+		echo "\includegraphics{$base}"
+	fi
+}
+
+# pdflatex_document creates a pdflatex document from $base.fig:
+pdflatex_document ()
+{
+	cat <<-EOF
+		$class$packages
+		$FIG2PDF_CODE$preamble%
+		\parindent=0bp\oddsidemargin=3928bp\evensidemargin=0bp%
+		\topmargin=-72bp\headheight=0bp\headsep=0bp%
+		\paperwidth=16000bp\paperheight=16000bp%
+		\textwidth=12000bp\textheight=12000bp%
+		\pdfpagewidth=16000bp\pdfpageheight=16000bp%
+		\pagestyle{empty}\DeclareGraphicsExtensions{.pdf}%
+		\begin{document}
+		\null\vfill
+		EOF
+	latex_code
+	cat <<-EOF
+		\end{document}
+		EOF
+}
+
+# get_mbox retrieves the media box from $1:
+get_mbox ()
+{
+	file=`echo "$1" | sed 's/(/\\050/g' | sed 's/)/\\051/g'`
+	set `gs -q -dNODISPLAY -c "($file) (r) file runpdfbegin 1 pdfgetpage" \
+		-c "/MediaBox pget {{=} forall} if quit"`
+
+	wd=`expr $3 - $1`
+	ht=`expr $4 - $2`
+	dx=`expr  0 - $1`
+	dy=`expr  0 - $2`
+
+	x1=0; y1=0; x2=$wd; y2=$ht
+}
+
+# find_bbox finds the tightest bounding box for $1:
+find_bbox ()
+{
+	log=`gs $gsopts -sDEVICE=bbox \
+		 -r360 -g80000x80000 "$1" 2>&1 1>/dev/null`
+	check_error Ghostscript
+
+	set `echo "$log" |
+		 awk '{ $2-=4000; $3-=4000; $4-=4000; $5-=4000;
+				if ($2>0) $2=0; if ($4<'$wd') $4='$wd';
+				if ($3>0) $3=0; if ($5<'$ht') $5='$ht';
+				print}'`
+
+	x3=$2; y3=$3; x4=$4; y4=$5
+	x1=$7; y1=$8; x2=$9; y2=${10}
+}
+
+# pdfdistill distills $1 into "$base.pdf":
+pdfdistill ()
+{
+	log=`gs $gsopts -sDEVICE=pdfwrite -sOutputFile="$base.pdf" \
+		-dPDFSETTINGS=/prepress -dCompatibilityLevel=$level \
+		-dEmbedAllFonts=true -dSubsetFonts=true \
+		-c "<</PageSize [$wd $ht]>>setpagedevice" \
+		-c "<</BeginPage {$dx $dy translate}>>setpagedevice" \
+		-dFIXEDMEDIA -f "$1" -c quit 2>/dev/null`
+	check_error Ghostscript
+}
+
+# check_file verifies whether $1 exists and is readable:
+check_file ()
+{
+	if [ ! -f "$1" ]; then
+		echo "$program: file $1: no such file (skipping)"
+		continue
+	fi
+	if [ ! -r "$1" ]; then
+		echo "$program: file $1: not readable (skipping)"
+		continue
+	fi
+}
+
+# check_error checks for and reports errors after running $1:
+check_error ()
+{
+	if [ $? -ne 0 ]; then
+		echo [error]
+		echo "$program: $1 says:"
+		echo
+		if [ "$1" = pdflatex ]; then
+			awk '/^!/ {print; getline; print}' $tmp.log
+		else
+			echo "$log"
+		fi
+		continue
+	fi
+}
+
+#------------------------- End of function definitions ----------------------
+
+# Create non-existing temporary files:
+until [ "$OK" = y ]
+do
+	OK=y
+	tmp=`mktemp -u $program-XXXXXX`
+	tmpfiles="$tmp.tex $tmp.aux $tmp.log $tmp.eps $tmp.pdf"
+
+	for j in $tmpfiles
+	do
+		if [ -e $j ]; then
+			OK=n
+		fi
+	done
+done
+
+# Loop through all files specified on the command line:
+for file
+do
+
+echo
+
+base=`echo "$file" | sed 's/\.fig$//'`
+check_file "$base.fig"
+echo "$program: processing file $base.fig"
+
+# Overwrite existing files only if user agrees:
+if [ -w "$base.pdf" -a $force = n ]; then
+	echo "$program: warning, the file $base.pdf exists!"
+	printf "$program: should I overwrite it (y/n)? "
+	read OK
+fi
+if [ "$OK" = y -a $mode = texfile -a -w "$base.tex" -a $force = n ]; then
+	echo "$program: warning, the file $base.tex exists!"
+	printf "$program: should I overwrite it (y/n)? "
+	read OK
+fi
+
+# Perform conversion or skip file:
+if [ "$OK" = y ]; then
+
+	# Look for special (colored) text:
+	specialtext=`awk 'BEGIN {a=0}
+		/\\\\001$/ {
+			if ($1==4 && (($9/2)%2==1 || '$setspecial'==1))
+			{a=1; if ($3>0) {a=2; exit}}}
+		END {print a}' "$base.fig"`
+
+	if [ $specialtext -gt 1 ]; then
+		csub="&"
+	fi
+
+	printf "$program: $base.fig -> $base.pdf "
+
+	log=`pass_fig | fig2dev -L pstex > $tmp.eps 2>&1`
+	check_error fig2dev
+
+	# Correct for fill pattern bugs:
+	sed 's/^matrix/'"$mpsub"'/
+		s/\[] 0 sd/& gs currentpoint n m cp s gr/' $tmp.eps |
+	gs $gsopts -dEPSCrop -sDEVICE=pdfwrite -sOutputFile=$tmp.pdf -
+	check_error Ghostscript
+
+	get_mbox $tmp.pdf
+
+	if [ $specialtext -gt 0 ]; then
+		cp $tmp.pdf "$base.pdf"
+
+		pdflatex_document > $tmp.tex
+		printf "q\n" | pdflatex $tmp.tex > /dev/null 2>&1
+		check_error pdflatex
+
+		find_bbox $tmp.pdf
+
+		if [ $mode = pdf ]; then
+			wd=`expr $x4 - $x3`
+			ht=`expr $y4 - $y3`
+			dx=`expr -4000 - $x3`
+			dy=`expr -4000 - $y3`
+		else
+			cp "$base.pdf" $tmp.pdf
+		fi
+	fi
+
+	pdfdistill $tmp.pdf
+
+	echo [ok]
+	echo "$program: image size $wd""bp x $ht""bp"
+	echo | awk 'END {printf "'$program': that is %.2fpt x %.2fpt\n",
+				'$wd'*1.00375,'$ht'*1.00375}'
+
+	if [ $mode = tex ]; then
+		echo "$program: latex code follows:"
+		echo
+		latex_code
+	elif [ $mode = texfile ]; then
+		echo "$program: use \input{$base.tex} to include image"
+		latex_code > "$base.tex"
+	fi
+else
+	echo "$program: file $base.fig skipped [ok]"
+fi
+
+done
+
+# Clean up:
+if [ $debug = n ]; then
+	rm -f $tmpfiles
+fi

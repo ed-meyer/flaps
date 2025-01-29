@@ -1,0 +1,5 @@
+
+# hidden:  list hidden files in current directory in chronological order
+
+ls -a $* | grep '^\.' | xargs ls -ladt
+

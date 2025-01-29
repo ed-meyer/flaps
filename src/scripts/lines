@@ -1,0 +1,38 @@
+# lines:             print n lines of a file starting at "start"
+
+Usage() {
+	echo "Usage: lines n [start] file" 1>&2
+	echo "          n:   print n lines" 1>&2
+	echo "      start:   starting line number" 1>&2
+	exit 1
+}
+
+case $# in
+0) Usage
+	;;
+1) FILE=$1
+	N=10
+	START=1;;
+2) FILE=$2
+	N=$1
+	START=1;;
+3) FILE=$3
+	N=$1
+	START=$2;;
+*) Usage
+	;;
+esac
+
+echo "print of $N lines from $FILE starting at line $START:"
+
+END=`expr $START + $N - 1`
+
+sed -n "${START},${END}p" $FILE
+
+# if [ "$START" -eq 1 ]
+# then
+# 	sed "${N}q" ${FILE}
+# else
+# 	sed "1,${START}d" $FILE | sed "${N}q"
+# fi
+

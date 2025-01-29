@@ -1,0 +1,45 @@
+# removes tracing from a .cpp file:
+# - #include "trace.h"
+# - Trace<n> trc(...
+# - trc.dprint...
+
+if [ "$DEBUG"z != "z" ];then
+	set -x
+fi
+
+Usage() {
+	echo "Usage: rmtrace file1 file2 ..." 1>&2
+	exit 1
+}
+
+case $# in
+ 	0) Usage;;
+esac
+
+# input=/tmp/rmtrace.vim
+# echo ':1' >$input
+# echo ':g/Trace</normal dd' >>$input
+# echo ':1' >>$input
+# echo ':g/trc\./normal dd' >>$input
+# echo ':1' >>$input
+# echo ':/#include "trace.h"/d' >>$input
+# echo ':write' >>$input
+# echo ':quit' >>$input
+
+for file in $*
+do
+#	vim -es $file <$input
+ 	vim -es $file <<@
+:1
+:g/Trace trc/normal dd
+:1
+:g/trc\./normal dd
+:1
+:g/trc()/normal dd
+:1
+:/#include "trace.h"/d
+:write
+:quit
+@
+done
+

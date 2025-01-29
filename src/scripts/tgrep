@@ -1,0 +1,67 @@
+# XXX doesn't work: something like 
+#      tgrep -i isline '*.c'
+# expands *.c - how to protect it?
+
+# search for patterns in specified files in a tree using extended
+# regular-expressions; unlike "grep -r" or rgrep, this will grep
+# only specified files, not all files, and symlinks are de-referenced
+# by default
+# Usage: tgrep [options] pattern file [directory]
+#   options:    grep options which do not take arguments, e.g. -e
+#   pattern:    extended regular-expression patten
+#   file:       file names, in quotes if they contain patterns, e.g. "*.c"
+#   directory:  (optional) relative or absolute directory where searching
+#               and recursion is to begin
+
+if [ "$DEBUG"z != "z" ];then
+	set -x
+fi
+
+# the last argument may be a directory name, else recurse from here
+LASTARG=${*: -1}
+if [ -d ${LASTARG} ]; then
+	DIR=${LASTARG}
+else
+	DIR="."
+fi
+
+THIS=`basename $0`
+
+USAGE="Usage: $THIS [grep options] pattern file [directory]"
+
+GREPOPT=""
+
+# pick out any grep options, e.g. -i, -
+for ARG in $@
+do
+	if [ "`echo $ARG | cut -c1`" = "-" ]; then
+		GREPOPT="${GREPOPT} $ARG"
+		shift
+	fi
+done
+
+
+case $# in
+0) echo $USAGE >&2
+	exit 2
+	;;
+1) while read FILE						# Read from a pipe
+	do
+		egrep $GREPOPT "$1" $FILE /dev/null		# /dev/null forces file name
+	done
+	;;
+*)	PATTERN=$1
+	# shift 2
+	shift
+	for File in $*;do
+		# -L follows symlinks
+		if [ $File != $DIR ]; then
+			eval find -L $DIR/ -type f -name \'$File\' -print | sort | while read FILE
+			do
+				egrep $GREPOPT "$PATTERN" $FILE /dev/null
+			done
+		fi
+	done
+	;;
+esac
+

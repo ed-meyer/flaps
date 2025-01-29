@@ -1,0 +1,10 @@
+# List element of the current PATH,
+# one per line
+
+if [ $# -gt 0 ];then
+	thepath=$1
+else
+	thepath=$PATH
+fi
+
+echo $thepath | sed 's/:/\n/g'

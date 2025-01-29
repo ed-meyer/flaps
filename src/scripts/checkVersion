@@ -1,0 +1,18 @@
+#!/bin/bash
+# check that the version number in $FROOT/Version matches that in FROOT/Makefile
+# and environment variable Version
+if [[ -n $DEBUG ]]; then
+	set -x
+fi
+
+a=$(grep '^VERSION =' $FROOT/Makefile | sed 's/VERSION = \(.*\)/\1/')
+b=$(cat $FROOT/Version)
+if [ "$a" != "$b" ];then
+	echo 'bootstrap needs to be run to enable new version'
+	exit 1
+fi
+
+if [ "$Version" != "$a" ];then
+	echo 'Profile needs to be run to enable new version'
+	exit 1
+fi

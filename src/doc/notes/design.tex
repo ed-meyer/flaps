@@ -1,0 +1,212 @@
+\documentclass[11pt]{article}
+\usepackage{verbatim}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+% use \Cpp, not C++
+\def\Cpp{{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\tiny\bf ++}}\:}
+
+\usepackage{hyperref}
+
+\setlength{\parskip}{3mm}
+\setlength{\headheight}{14pt}
+\newcommand{\Matrix}[1]{\boldsymbol{#1}}
+\newcommand{\Vector}[1]{\boldsymbol{#1}}
+% \Eqn{} allows for different styles of equation references:
+\newcommand{\Eqn}[1]{Eq.\ \ref{#1}}  % AIAA
+\begin{document}
+\title{\Huge Design and Evolution of Flaps}
+\author{Edward E. Meyer}
+\maketitle
+
+Flaps is the evolution of a program I wrote at Boeing called Apex,
+which in turn is the evolution of a program I wrote for my thesis on
+flutter of a Darrieus wind turbine.
+The common thread here is the use and development of a numerical continuation
+method: pseudo-arclength minimum-norm corrector.
+% There have been many formulations of the flutter equations over the years;
+% some have been called ``flutter methods'' but the formulation used can
+% often be solved with continuation, for example the
+% p-k method \cite{hassig1971approximate},
+% the p-method \cite{hassig1971approximate}, and
+% the g-method \cite{chen2000damping}.
+After more than 30 years solving flutter equations with numerical continuation
+I feel confident that it is the most appropriate and versatile method available.
+
+\section{Thesis}
+Computing flutter on the Darrieus wind turbine using the traditional
+V-g formulation (aka k-method) showed some strange behavior, probably
+due to the gyroscopics; that and the need to connect the dots led me
+to implement a continuation method so that I could try the p-k
+method \cite{hassig1971approximate} (aka British method).
+The p-k formulation proved to be
+much more realistic, without mode switching which I saw with V-g.
+In addition to these advantages I realized I could use the same code
+to do parameter studies like stiffness or mass variations with only
+minor changes to the code.
+% I hired into the Flutter Research group in Boeing in 1978, thinking
+% I was almost finished with my thesis; it wasn't until 1982 that I
+% finished, partly due to developing the flutter solution technique
+% which became an appendix.
+% Especially helpful was Charles Pratt-Barlow, who encouraged me to implement
+% an improved flutter solution technique.
+
+\section{Apex}
+I hired into the Flutter Research group in Boeing in 1978. At the time it was
+led by M.J. Turner, known by some as the father of the finite-element method.
+Flutter Research was a group of 5-6 engineers and 3-4 programmers.
+I was hired to maintain the flutter code and develop new capabilities.
+
+The flutter code was part of a larger program called ATLAS, which did
+analyses including finite-element modeling, stress, vibration, dynamic loads,
+and flutter. There was not much to maintain in the flutter code since it
+had few capabilities, mainly the solution of a complex eigenvalue problem,
+the result of a V-g formulation of the flutter equation.
+A V-g formulation assumes that adding structural damping is a close
+approximation to the true damping so that the problem becomes an
+eigenvalue problem, which has robust solution techniques;
+unfortunately there is no reliable way to connect solutions so the
+engineer was reduced to ``connecting the dots''.
+
+% The program would compute frequency and structural damping at a given
+% set of reduced frequencies and the engineer would connect the dots by hand.
+I was asked to develop the p-k flutter solution in ATLAS, which
+gives the same flutter points but more accurate damping away from flutter.
+The only published p-k solution method at the time was to formulate
+the problem as a nonlinear eigenvalue problem and compute eigenvalues
+by determinant iteration:
+solving the nonlinear eigenvalue problem by searching for places where
+the determinant of the dynamic matrix is zero \cite{hassig1971approximate}.
+But because determinants are extremely large or small (more so as the
+problem size increases), this is a poor choice for modern analyses.
+
+I chose to take a crude continuation code from my thesis
+\cite{meyer1982aeroelastic} and adapt
+it to ATLAS. In doing that I also added some simple parameter variation capability
+which proved to be much more popular than the p-k capability since
+it saved even more time than just connecting the dots with p-k.
+
+Around this time some open-source continuation codes were appearing;
+I chose to replace the code from my thesis with one called PITCON
+which has a very good stepsize algorithm \cite{rheinboldt1983algorithm}.
+PITCON is written in Fortran 77 so eventually I translated it to C, then
+\Cpp. In re-writing it I changed the corrector from locally-parameterized
+with LU factorization to minimum-norm with QR factorization, which requires
+slightly fewer iterations and uses the more stable QR factorization.
+
+An early request was to include controls equations using equations
+coded by the users in Fortran. The difficulty was computing derivatives
+of the equations with respect to, for example frequency and velocity.
+The alternatives were to require the user to supply derivatives, use
+finite-differencing, or a programming technique called
+``automatic differentiation''.
+To save the user the effort of coding the derivatives, and to
+avoid the inaccuracies of finite-differencing, I implemented a system
+that transformed the user's equation to \Cpp where I could use automatic
+differentiation to get exact derivatives along with the equations.
+
+One of the advantages to treating flutter equations as a parameterized
+system of nonlinear equations is that this is the most general way of
+looking at these equations.
+As a result it has been relatively easy to add new capabilities, such as
+controls equations, structural nonlinearities, and new formulations of the flutter
+equation
+\cite{hassig1971approximate},
+\cite{chen2000damping}, \cite{edwards2008flutter}.
+I believe that has been the key to its success.
+
+\section{Flaps}
+When I retired from Boeing in 2012 I began writing papers about
+aspects of flutter I'd been pondering but never had time to pursue
+at Boeing. In order to try some of these ideas, try new
+programming techniques, and create examples for papers, I re-wrote Apex
+and called it Flaps.
+
+Among the features a complete re-write allowed were multiple nonlinearities,
+new types of matrix parameterization, and multiple-threaded
+(parallel) mode tracking.
+To someone who used Apex before I retired, Flaps probably
+looks familiar; this was intentional in case Boeing decided to try it.
+It was, however, written from scratch.
+
+In order to be able to create test cases I wrote a simple beam
+finite-element code with double-lattice unsteady aerodynamics. I used
+the Goland wing to verify the code and build a few other test cases.
+It uses branch-mode substructuring to create models with discrete
+degrees-of-freedom for nonlinear test cases, and component-mode
+synthesis to compare with branch-modes.
+
+One feature of Flaps that is different from Apex is controls equations.
+Controls equations are now written by the user in \Cpp instead of
+Fortran. This is because of an effort to make more use of user-written
+custom code to modify any matrix. It would not be hard to allow
+Fortran controls equations, I just haven't done it.
+% Controls equations are now treated like any other custom code
+% One difference between Flaps and Apex that would effect a
+
+
+By the time I retired Apex was written almost entirely in \Cpp and
+the move to \Cpp continued with Flaps, using some of the new features
+of \Cpp -11.
+Many of the new features in \Cpp -11 allow for cleaner, easier to
+understand code. Others are more for better performance, for instance
+concurrency.
+
+Concurrency (also known as parallel programming) is the ability to run
+parts of a program simultaneously using threads. Modern PCs can run
+parts of a program in each of its threads; my desktop PC can run 16
+threads. There are other ways to use threads but \Cpp -11 makes it easy
+without needing extra libraries.
+Because tracing a mode with continuation can be done independently of
+all the other modes, converting Flaps to use threads was straightforward.
+
+\section{Papers}
+The first paper I wrote in retirement \cite{meyer2014unified} showed how
+continuation methods could be used for a wide variety of flutter
+calculations. The second one \cite{meyer2015continuation}
+had its roots years earlier when a new control-law became singular
+at a certain flight condition
+in Apex, causing the program to quit tracking a mode.
+At the time I didn't know how to treat the problem and fortunately it
+never showed up in flight. I now realize it was a bifurcation so this
+paper showed how it could be a standard check in the code.
+Next I wrote a paper showing how a mathematical technique called
+Topological Degree could be used to determine if flutter is present
+in a given range of parameters \cite{meyer2015topological}.
+Then a paper showing how multiple nonlinearities could be treated with
+describing functions and continuation \cite{meyer2016continuation},
+followed by one showing how these techniques could be used to find
+something I called Latent LCO \cite{meyer2021latent}.
+
+\section{What's next?}
+I've been trying different types of nonlinearities and automating
+the process of deriving describing functions, some of which I've added
+to Flaps. I'm  also looking at the possibility of using Flaps to
+compute nonlinear flutter of very flexible aircraft \cite{patil2001limit}.
+
+Something I've been interested in for a long time is how to
+take into account uncertainties in the terms of the flutter equation.
+There has been some work on this based on control theory with uncertainties
+\cite{danowsky2010evaluation}, \cite{iannelli2017nonlinear}, \cite{dai2014methods},
+\cite{bueno2015flutter},
+\cite{borglund2004mu}.
+These treat the flutter equation as a control system, losing physical
+feel for the problem. I have experimented with using interval methods
+\cite{neumaier1990interval} without much success so far; I intend to
+continue.
+
+But my overriding goal with Flaps is to promote the use of continuation
+methods for solving flutter equations. To this end I plan on giving the
+code to anyone who could further this goal.
+
+% \begin{thebibliography}{}
+\bibliography{../flaps}
+\bibliographystyle{acm}
+% \bibliographystyle{aiaa}
+% \bibliographystyle{../bib/bst/mdpi}
+
+
+% \end{thebibliography}
+\end{document}
+

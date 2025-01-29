@@ -1,0 +1,31 @@
+// AUTOMATICALLY GENERATED AT LOAD TIME: DO NOT EDIT - EDIT lib/version.tmpl
+#include <iostream>
+#include <string>
+#include <sstream>
+
+#include "config.h"
+#include "text.h"
+
+using namespace std;
+
+void
+version(string const& prog) {
+	string v("built on REPLACE WITH DATE");
+	string now = stringTimeDate();
+	ostringstream os;
+	int width = page_width()/2;
+
+	// first line: program build date
+	os << prog << " " << v;
+	string ul(os.str().size(), '-');
+	// cout << endl << endl;
+	cout << stringCenter(width, os.str()) << endl;
+
+	// second line: program run date
+	os.str("");
+	// os << "run on " << now << " on " << get_uname("sysname")
+	// 	<< " " << get_uname("release") << " (" << get_uname("nodename") << ")";
+	os << "run on " << now << " on " << get_uname("nodename");
+	cout << stringCenter(width, os.str()) << endl;
+	cout << stringCenter(width, ul) << endl;
+}

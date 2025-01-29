@@ -1,0 +1,30 @@
+
+- performs the many parameter studies necessary to design and certify
+  aircraft free of flutter instabilities
+
+- taking advantage of modern computer hardware, many parameter studies
+  are done simultaneously
+
+- more realistic analyses can be performed by including multiple
+  nonlinearities and tracing curves of limit cycle oscillations
+  (LCO), including latent LCO, which are nearly impossible to find
+  any other way.
+
+- because it does continuous parameter variations there is none of
+  the confusion between aeroelastic modes traditional methods
+  suffer from
+ 
+- Flaps capabilities can be expanded by including custom computer
+  code and defining new parameters; typical uses for custom code
+  include defining controls equations and including unusual
+  nonlinearities.
+
+- an optimization method can be used to adjust models
+  to match flight tests or search for latent LCO in addition to
+  searching for optimal solutions in some sense.
+
+- the motion of the aircraft can be visualized by clicking on
+  the desired point on any of the curves produced, giving the
+  engineer added insight into flutter mechanisms
+
+

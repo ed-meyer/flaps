@@ -1,0 +1,4 @@
+#!/bin/sh
+# list files sorted by size
+
+ls -hlLaS $* | more

@@ -1,0 +1,69 @@
+# remove various "junk" files starting at current directory
+
+if [ "$DEBUG"z != "z" ];then
+	set -x
+fi
+
+usage () {
+	echo "Usage: `basename $0` [-n]" >&2
+	echo "  -d    debug" >&2
+	echo "  -n    print what would be done but do not delete any files" >&2
+	echo "  -v    print messages regarding progress" >&2
+	exit 1
+}
+
+RM='-exec rm -f {} ;'
+
+# Get options using the ksh function getopts().
+# The first : (colon) prevents getopt from printing an
+# ugly error message for an unrecognized option; other colons
+# specify that the option takes an agument
+# Reference: Rosenblatt, Bill, "Learning the Korn Shell", O'Reilly & Assoc.,
+# 1993, pg 159.
+
+while getopts ":dnv" opt
+do
+	case $opt in
+		d) set -x
+			LOG="/dev/tty"
+			;;
+		n) RM='-exec ls -l {} ;'
+			echo "Dry-run: no deletions"
+			;;
+		v) LOG="/dev/tty"
+			RSYNCARGS="${RSYNCARGS} --progress --verbose --stats"
+			;;
+		?) usage;;
+		*)	echo "$0: argument error (${ARG})" >&2
+			usage
+			;;
+	esac
+done
+
+df . >cleanout.out
+
+echo "Removed:" >>cleanout.out
+
+# -name ".#*" -o \
+# -name "*.diff" -o \
+# -name "*.lst" -o \
+# -name "*.ln" -o \
+
+find . \( \
+-name "mon.out" -o \
+-name "core.[1-9][0-9]*" -o \
+-name mod.out -o \
+-name "mpatrol.*.log" -o \
+-name "[1-9]*.o" -o \
+-name "[1-9]*.e" -o \
+-name "valgrind.[1-9][0-9]*" \) \
+$RM -print  >>cleanout.out
+
+# echo "Candidates for removal:" >>cleanout.out
+# find . \( \
+# -name 'F*.f' -o \
+# -name '*.P' \
+# \) \
+# -print >>cleanout.out
+
+df . >>cleanout.out

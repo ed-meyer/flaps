@@ -1,0 +1,9 @@
+@article{pons2016aeroelastic,
+  title={Aeroelastic flutter of continuous systems: A generalized laplace transform method},
+  author={Pons, Arion and Gutschmidt, Stefanie},
+  journal={Journal of Applied Mechanics},
+  volume={83},
+  number={8},
+  year={2016},
+  publisher={American Society of Mechanical Engineers Digital Collection}
+}

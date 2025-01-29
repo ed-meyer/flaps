@@ -1,0 +1,47 @@
+
+# print currently running flaps processes
+# to run spy continuously type
+#    watch spy
+# Usage: spy [-j]
+#   -j     print only the job numbers, one per line
+
+PROG="flaps"
+JobOnly="no"
+NAPTIME=3
+tty >/dev/null
+isatty=$?
+
+if [ $DEBUG"z" != "z" ];then
+	set -x
+fi
+
+while getopts "j" opt
+do
+	case $opt in
+		j) JobOnly="yes";;
+	esac
+done
+if [ $(($OPTIND-1)) -lt $# ];then
+	shift $((OPTIND-1))
+	PROG=$1
+fi
+
+if ! ps -u $LOGNAME | grep $PROG >/dev/null 2>&1;then
+	echo "No $PROG jobs running"
+	exit 1
+fi
+
+for GROUP in $(ps -a | awk "/$PROG/ {print \$1}")
+do
+	if [ $JobOnly = "yes" ];then
+		echo $GROUP
+	else
+		echo "==============   $PROG Job $GROUP:"
+		if [ $PROG = "flaps" ] ;then
+			q=`pgrep -g $GROUP '.*' | sed -e 's/^/-p /'`
+		else
+			q="-p $GROUP"
+		fi
+		ps $q -o comm= -o pid:10=pid -o time:15=time -o pcpu:10=%cpu -o vsz:10=memory -o nlwp:10=threads
+	fi
+done

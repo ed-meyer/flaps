@@ -1,0 +1,8 @@
+@article{tian493nonlinear,
+  title={Nonlinear aeroservoelastic analysis of a supersonic aircraft with control fin free-play by component mode synthesis technique},
+  author={Tian, Wei and Gu, Yingsong and Liu, Hao and Wang, Xiaochen and Yang, Zhichun and Li, Yueming and Li, Ping},
+  journal={Journal of Sound and Vibration},
+  volume={493},
+  pages={115835},
+  publisher={Elsevier}
+}

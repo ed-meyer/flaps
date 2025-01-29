@@ -1,0 +1,27 @@
+
+# Strip the tables of target summarys from a flut output file
+
+if [ "$DEBUG"z != "z" ];then
+	set -x
+fi
+
+Usage() {
+	echo "Usage: targets [file(s)]" >&2
+	exit 1
+}
+
+tty >/dev/null
+isatty=$?
+if [[ $isatty -eq 0 && $# -lt 1 ]];then
+	Usage
+fi
+
+if [ $# -lt 1 ];then
+	sed -n '
+/^[ \t]*[1-9][0-9]* target(s) found.*$/,/^$/p' -
+else
+	for i in $*;do
+	sed -n '
+/^[ \t]*[1-9][0-9]* target(s) found.*$/,/^$/p' $i
+	done
+fi

@@ -1,0 +1,49 @@
+#!/bin/sh
+# cgrep:	 search file(s) for a pattern & print n lines of context
+
+THIS=`basename $0`
+
+Usage() {
+	echo "Usage: $THIS [-n] pattern file [file ...]" >&2
+	echo "          -n:  list line numbers" >&2
+	echo "          -m:  list m lines of context (default 4)" >&2
+	exit 1
+}
+
+NC=4
+
+case $# in
+0) echo $USAGE >&2
+	exit 1;;
+esac
+
+for ARG in "$@"
+do
+	if [ "`echo $ARG | cut -c1`" = "-" ]
+		then case $ARG in
+			-[1-9])	NC=`echo $ARG | cut -c2-`
+						shift
+						;;
+			-d)	set -x
+					shift
+					;;
+			-?)	Usage
+					;;
+			 *)	echo "$0: argument error (${ARG})" >&2
+					Usage
+					;;
+		esac
+	fi
+done
+
+PATTERN=$1
+shift
+
+echo "$NC lines of context"
+
+for FILE in $*
+do
+	cat <<*EOF | ex - $FILE
+g/${PATTERN}/.-${NC},.+${NC}number
+*EOF
+done

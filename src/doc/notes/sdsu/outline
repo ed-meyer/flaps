@@ -1,0 +1,46 @@
+
+- 2 phases of flutter prediction: analysis and flight test
+	- everyone believes the flight test except the guy who ran the test,
+	  no one believes the analysis except the person who did the analysis
+- 2 types of flutter:
+	-  destructive: amplitudes grow so large parts break
+	-  LCO: amplitudes grow to a certain size then stay constant
+- 2 types of flutter solution: time domain, freq domain
+
+- desctructive:
+	- electra
+	-  awacs
+- LCO
+	- 37 elevator
+	- windtunnelLCO video
+
+- Vibration problem
+- add struct damping: complex
+- add aero: complicates eigensolution
+- add gyro, viscous damping, controls: hard or impossible to solve as an eigenvalue problem
+
+- Introduction of Numerical Continuation
+- Solving using continuation
+- Some flutter problems in commercial airplanes
+	- basic flutter
+	- parameter variations
+	- optimization
+	- contours
+	- control systems
+	- nonlinearities
+- Open source implementation: Flaps
+
+
+
+- Introduction of Numerical Continuation
+- General flutter equations including gyroscopics, viscous damping, control systems, nonlinearities
+- Solving using continuation
+- Some flutter problems in commercial airplanes
+	- basic flutter
+	- parameter variations
+	- optimization
+	- contours
+	- control systems
+	- nonlinearities
+- Open source implementation: Flaps
+
