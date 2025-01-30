@@ -36,23 +36,23 @@ concurrent(Fstack* curves, void (*fcn)(Fstack*,int)) {
 // - there are more than 2 curves,
 // - if concurrently() is true
 // Otherwise track them sequentially, calling fcn one curve at a time
-	Trace trc(1,"concurrent");
+	T_(Trace trc(1,"concurrent");)
 
-	trc.dprint(curves->size()," curves to trace");
+	T_(trc.dprint(curves->size()," curves to trace");)
 
 	// leave one thread alone for the user
 	const int hwthreads = std::thread::hardware_concurrency() - 1;
 
 
 	if (curves->size() > 1 && concurrently() && hwthreads > 1) {
-		trc.dprint(hwthreads," hardware threads");
+		T_(trc.dprint(hwthreads," hardware threads");)
 		int ncon = std::min(static_cast<int>(curves->size()), hwthreads);
 		flaps::info("tracking concurrently ", ncon, " at a time");
 		size_t k{0};
 		// do hwthreads curves at a time saving one for me
 		int const max_threads = curves->size() - k;
 		int const nthread = std::min(hwthreads, max_threads) - 1;
-		trc.dprint("max_threads ",max_threads,", nthread ",nthread);
+		T_(trc.dprint("max_threads ",max_threads,", nthread ",nthread);)
 		vector<thread> threads;
 		for (int i=0; i<nthread; i++) {
 			threads.push_back(std::thread(fcn, curves, i+1));

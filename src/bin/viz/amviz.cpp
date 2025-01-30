@@ -126,7 +126,7 @@ Amviz::
 Amviz() {
 // Amviz constructor (private): just check that either a vzid
 // or a Universal file name are in Specs - data is loaded in kit()
-	Trace trc(1,"Amviz constructor");
+	T_(Trace trc(1,"Amviz constructor");)
 	Specs& sp = specs();
 
 	if (sp.ufname.empty() && sp.vzid.empty())
@@ -136,7 +136,7 @@ Amviz() {
 
 Amviz::
 ~Amviz() {
-	Trace trc(2,"Amviz dtor");
+	T_(Trace trc(2,"Amviz dtor");)
 	// tell animate() to quit XXX necessary?
 	quit = true;
 }
@@ -149,7 +149,7 @@ amviz_kit() {
 // 2) normalize the coordinates and shift to center in the bounding box
 // 3) If this is a standalone run load the modes from the Fma::gct to
 //    visualize
-	Trace trc(1,"amviz_kit");
+	T_(Trace trc(1,"amviz_kit");)
 	Specs& sp = specs();
 	Amviz& amviz{Amviz::instance()};
 
@@ -171,15 +171,15 @@ amviz_kit() {
 	}
 
 	if (!amviz.error.empty()) {
-		trc.dprint("quick return: ",amviz.error);
+		T_(trc.dprint("quick return: ",amviz.error);)
 		return;
 	}
-	trc.dprint("got fma:\n",*amviz.fma);
+	T_(trc.dprint("got fma:\n",*amviz.fma);)
 
 	// normalize the coordinates and shift the origin to the bounding-box center
 	amviz.coord_norm_ = amviz.normalize_coord();
-	trc.dprint("normalized & shifted coords: ",amviz.fma->coords);
-	trc.dprint("coord norm ",amviz.coord_norm_);
+	T_(trc.dprint("normalized & shifted coords: ",amviz.fma->coords);)
+	T_(trc.dprint("coord norm ",amviz.coord_norm_);)
 
 	amviz.colormode_ = "abs value";
 	amviz.colorskew_ = 5;  // no skewing
@@ -198,14 +198,14 @@ amviz_kit() {
 		vector<complex<double>> disp(nr);
 		complex<double>* cele = amviz.fma->gct.data();
 		for (size_t j=0; j<nc; j++) {
-			//!! blas_copy(nr, &cele[IJ(0,nc-j-1,nr)], 1, &disp[0], 1);
-			blas_copy(nr, &cele[IJ(0,j,nr)], 1, &disp[0], 1);
-			double disp_norm = blas_scnrm2(nr, &disp[0], 1);
+			//!! blas::copy(nr, &cele[IJ(0,nc-j-1,nr)], 1, &disp[0], 1);
+			blas::copy(nr, &cele[IJ(0,j,nr)], 1, &disp[0], 1);
+			double disp_norm = blas::nrm2(nr, &disp[0], 1);
 			if (disp_norm == 0.0)
 				flaps::warning("mode ",nc-j," is zero");
 			amviz.nodal_disp_.push_back(disp);
 			amviz.picked_names_.Add(wxString(vastr("mode ",j+1)));
-			trc.dprint("added mode ",j+1," to picked_names");
+			T_(trc.dprint("added mode ",j+1," to picked_names");)
 		}
 		// start visualizing on the first one
 		amviz.picked_point_ = 0;
@@ -215,7 +215,7 @@ amviz_kit() {
 void
 amviz_run() {
 // Create the AmvizFrame then call animate()
-	Trace trc(2,"amviz_run");
+	T_(Trace trc(2,"amviz_run");)
 	Amviz& amviz{Amviz::instance()};
 	Specs& sp = specs();
 
@@ -250,7 +250,7 @@ add(const vector<complex<double>>& ev, const string& name) {
 // Multiply the gct by the eigenvector (ev) and add the
 // result to the list of nodal displacements; return
 // the 0b index of the result in the nodal_disp_ array.
-	Trace trc(2,"Amviz::add");
+	T_(Trace trc(2,"Amviz::add");)
 	complex<double> alpha{1.0};
 	complex<double> beta{0.0};
 	int m{3*nnodes()};
@@ -259,14 +259,14 @@ add(const vector<complex<double>>& ev, const string& name) {
 	// if there are extra controls equations
 	if ((int)ev.size() < n) {
 		string exc{vastr("mismatch: ",ev.size()," gc but ",n," transform columns")};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		//!! throw runtime_error(exc);
 		errormsg(exc, false);
 	}
 	complex<double>* gcxf = fma->gct.data();
 	vector<complex<double>> disp(m);
-	trc.dprint("eigenvector:",ev);
-	blas_cgemv ("n", m, n, alpha, gcxf, m, &ev[0], 1, beta, &disp[0], 1);
+	T_(trc.dprint("eigenvector:",ev);)
+	blas::gemv ("n", m, n, alpha, gcxf, m, &ev[0], 1, beta, &disp[0], 1);
 
 	//!! MM::exporter("nodal_disp","nodal_disp",disp.data(),m,1);
 	//!! MM::exporter("gct","gct",gcxf,m,n);
@@ -284,7 +284,7 @@ coord_displacements(int omegat, int phase, vector<double>& colorvalue) {
 // compute the (real) displacement at each node at time omegat
 //   x[k] = Real(cos(omegat)+i*sin(omegat)*nodal_disp[k] + coord[k]
 //       k = 0:n3-1
-	Trace trc(1,"Amviz::coord_displacements");
+	T_(Trace trc(1,"Amviz::coord_displacements");)
 	constexpr double deg2rad = atan(1.0)/45.0;
 	constexpr double pi = 4.0*atan(1.0);
 	static int visit{0};
@@ -310,26 +310,26 @@ coord_displacements(int omegat, int phase, vector<double>& colorvalue) {
 			nodal_disp_.size()-1));
 
 	if (visit == 0)
-		trc.dprint("omegat ",omegat,", disp = ",disp);
+		T_(trc.dprint("omegat ",omegat,", disp = ",disp);)
 	visit++;
 
 	// normalize the complex nodal displacements to amplitude_*coord_norm_
 	// use the infinity norm and normalize colorvalues with it below
-	double dispnorm = abs(disp[blas_icamax(n3, &disp[0], 1)-1]);
+	double dispnorm = abs(disp[blas::icamax(n3, &disp[0], 1)-1]);
 	double eps{1.0e-6};
 	// return zero if tiny displacements
 	if (dispnorm*amplitude_ <= eps) {
 		return rval;
 	}
 	complex<double> ct = amplitude_*coord_norm_/dispnorm;
-	blas_scal(n3, ct, &disp[0], 1);
+	blas::scal(n3, ct, &disp[0], 1);
 
 	double omtp{(omegat + phase)*deg2rad};
 	double scr{cos(omtp)};
 	double sci{sin(omtp)};
 	complex<double> csc(scr, sci);
 
-	trc.dprint("omegat+phase ",omtp," rad, (cos,sin) ",csc);
+	T_(trc.dprint("omegat+phase ",omtp," rad, (cos,sin) ",csc);)
 
 	vector<complex<double>> cd(3);
 	for (int i=0; i<nnodes(); i++) {
@@ -343,9 +343,8 @@ coord_displacements(int omegat, int phase, vector<double>& colorvalue) {
 		rval[k] = x + fma->coords[k];
 		rval[k+1] = y + fma->coords[k+1];
 		rval[k+2] = z + fma->coords[k+2];
-		// double normd = blas_scnrm2(3,&cd[0],1);
 		double normd = sqrt(x*x+y*y+z*z);
-		int idx = blas_icamax(3,&cd[0],1)-1;
+		int idx = blas::icamax(3,&cd[0],1)-1;
 		// set a color value for this node
 		if (amviz.colormode_ == "abs value") {
 			colorvalue[i] = normd;
@@ -359,7 +358,7 @@ coord_displacements(int omegat, int phase, vector<double>& colorvalue) {
 	// scale colorvalues so that the largest colorvalue over an
 	// oscillation cycle is 1.0. The largest (normalized) displacement 
 	// over a cycle is amplitude_*coord_norm_
-	blas_scal(nnodes(), 1.0/(amplitude_*coord_norm_), &colorvalue[0], 1);
+	blas::scal(nnodes(), 1.0/(amplitude_*coord_norm_), &colorvalue[0], 1);
 
 	// skewed color variation
 	if (amviz.colorskew_ != 5) {
@@ -374,7 +373,7 @@ coord_displacements(int omegat, int phase, vector<double>& colorvalue) {
 		}
 	}
 
-	trc.dprint("nodal disp:",rval);
+	T_(trc.dprint("nodal disp:",rval);)
 	return rval;
 }
 
@@ -383,7 +382,7 @@ color_values (double t, float& red, float& green, float& blue) {
 // given a number (t) between 0 and 1, set the rgb values
 // so that they vary linearly with t=0 blue, t=0.5 green,
 // and t=1 red
-	Trace trc(3,"color_values");
+	T_(Trace trc(3,"color_values");)
 
 	if (t > 1.0)
 		t = 1.0;
@@ -404,7 +403,7 @@ color_values (double t, float& red, float& green, float& blue) {
 void
 Amviz::
 render(int omegat, int phase) {
-	Trace trc(2,"render ",omegat);
+	T_(Trace trc(2,"render ",omegat);)
 
 	// if colormode == "none" use the reverse of the bg color
 	float red = 1.0 - BGRed;
@@ -685,7 +684,7 @@ Amviz::
 startup() {
 // Create an AmvizFrame with a GLCanvas
 // Takes the place of an OnInit() when run in viz
-	Trace trc(2,"Amviz::startup");
+	T_(Trace trc(2,"Amviz::startup");)
 	Specs& sp = specs();
 
 	wxSize dpy = getDisplaySize();
@@ -745,7 +744,7 @@ AmvizFrame::AmvizFrame(wxWindow *frame, const wxString& title, const wxPoint& po
     const wxSize& size, long style)
     : wxFrame(frame, wxID_ANY, title, pos, size, style) {
 
-	Trace trc(2,"AmvizFrame ctor");
+	T_(Trace trc(2,"AmvizFrame ctor");)
 
 	// an icon for the app bar
 	SetIcon(wxIcon(amviz_xpm));
@@ -862,7 +861,7 @@ AmvizFrame::AmvizFrame(wxWindow *frame, const wxString& title, const wxPoint& po
 	m_canvas->Show(true);
 	Show(true);
 
-	trc.dprint("topsizer after layout: ",sizer2string(*topsizer));
+	T_(trc.dprint("topsizer after layout: ",sizer2string(*topsizer));)
 }	// AmvizFrame ctor
 
 bool
@@ -878,7 +877,7 @@ isRunning() {
 void
 AmvizFrame::
 createControls() {
-	Trace trc(2,"AmvizFrame::createControls");
+	T_(Trace trc(2,"AmvizFrame::createControls");)
 
     // Make the "File" menu
     wxMenu *fileMenu = new wxMenu;
@@ -966,7 +965,7 @@ AmvizFrame::
 OnFreqSlider(wxScrollEvent& event) {
 // Respond to movement of the freq slider; if the new frequency
 // is zero just stop the timer. Values go from 5-200
-	Trace trc(2,"OnFreqSlider");
+	T_(Trace trc(2,"OnFreqSlider");)
 	Specs& sp = specs();
 	int freq = this->freqSlider->GetValue();
 	if (sp.threads)
@@ -976,7 +975,7 @@ OnFreqSlider(wxScrollEvent& event) {
 		timer->Stop();
 		if (freq > 0) {
 			period = (10*period)/freq;
-			trc.dprint("new period: ",period);
+			T_(trc.dprint("new period: ",period);)
 		}
 		timer->Start(period);
 	}
@@ -1121,7 +1120,7 @@ printPS() {
 void
 AmvizFrame::
 OnMenuFileExit( wxCommandEvent& WXUNUSED(event) ) {
-	Trace trc(2,"AmvizFrame::OnMenuFileExit");
+	T_(Trace trc(2,"AmvizFrame::OnMenuFileExit");)
 	Specs& sp = specs();
 	// write out the current quaternion to use as the initial
 	// position in FGlCanvas constructor
@@ -1271,7 +1270,7 @@ void
 AmvizFrame::
 OnModeNumber( wxCommandEvent& event ) {
 // popup a dialog for selecting which mode to display
-	Trace trc(2,"OnModeNumber");
+	T_(Trace trc(2,"OnModeNumber");)
 	Amviz& amviz{Amviz::instance()};
 	wxArrayString& picks = amviz.picked_names();
 	wxSingleChoiceDialog modedlg(this,"Mode","choose",picks);
@@ -1281,7 +1280,7 @@ OnModeNumber( wxCommandEvent& event ) {
 		modedlg.SetSelection(current);
 	// show the dialog, get selection
 	int stat = modedlg.ShowModal();	// ??
-	trc.dprint("ShowModal returned ",stat);
+	T_(trc.dprint("ShowModal returned ",stat);)
 	if (stat == wxID_CANCEL)
 		return;
 	int sel = modedlg.GetSelection();
@@ -1342,13 +1341,13 @@ END_EVENT_TABLE()
 
 void
 ani() {
-	Trace trc(2,"ani");
+	T_(Trace trc(2,"ani");)
 	Amviz::instance().frame->GetCanvas()->animate();
 }
 void
 FGLCanvas::
 animate() {
-	Trace trc(2,"FGLCanvas::animate");
+	T_(Trace trc(2,"FGLCanvas::animate");)
 	static string last_colormode;
 	static int omegat = 0;
 	int phase = 0;
@@ -1356,7 +1355,7 @@ animate() {
 
 #ifdef NEVER // OnPaint not necessary?
 	// pause until InitGL() finishes in OnPaint
-	trc.dprint("m_init = ",m_init);
+	T_(trc.dprint("m_init = ",m_init);)
 	while (!m_init)
 		std::this_thread::sleep_for(std::chrono::seconds{1});
 		// snooze(1.0e+8);
@@ -1383,7 +1382,7 @@ animate() {
 		// check to see if an eigenvector has appeared
 		if (!amviz.ev.empty()) {
 			static int visit{0};
-			trc.dprint("new eigenvector, visit ",visit);
+			T_(trc.dprint("new eigenvector, visit ",visit);)
 			amviz.add(amviz.ev, to_string(++visit));
 			amviz.ev.clear();
 		}
@@ -1392,13 +1391,13 @@ animate() {
 		glFlush();
 		wxGLCanvas::SwapBuffers();
 	}
-	trc.dprint("returning: got quit");
+	T_(trc.dprint("returning: got quit");)
 	amviz.quit = false;	// for the next time
 }
 void
 myTimer::
 Notify() {
-	Trace trc(2,"myTimer::Notify");
+	T_(Trace trc(2,"myTimer::Notify");)
 	Amviz& amviz{Amviz::instance()};
 	static bool visit{false};
 	int interval = GetInterval();
@@ -1420,7 +1419,7 @@ Notify() {
 void
 FGLCanvas::
 oneframe() {
-	Trace trc(2,"FGLCanvas::oneframe");
+	T_(Trace trc(2,"FGLCanvas::oneframe");)
 	int incr{4};
 	Amviz& amviz{Amviz::instance()};
 	int phase{0};
@@ -1433,7 +1432,7 @@ oneframe() {
 	// check to see if an eigenvector has appeared
 	if (!amviz.ev.empty()) {
 		static int visit{0};
-		trc.dprint("new eigenvector, visit ",visit);
+		T_(trc.dprint("new eigenvector, visit ",visit);)
 		amviz.add(amviz.ev, to_string(++visit));
 		amviz.ev.clear();
 	}
@@ -1449,7 +1448,7 @@ FGLCanvas::FGLCanvas(wxWindow *parent, wxWindowID id, const int* attlist,
 			wxGLCanvas(parent, id, attlist, pos, size, style, name, wxNullPalette) {
 // FGlCanvas constructor for WSL using the old GL attributes and GL context
 // XXX combine the 2 ctors somehow
-	Trace trc(2,"WSL FGLCanvas ctor");
+	T_(Trace trc(2,"WSL FGLCanvas ctor");)
 
    m_gldata.initialized = false;
 	m_init = false;
@@ -1460,9 +1459,9 @@ FGLCanvas::FGLCanvas(wxWindow *parent, wxWindowID id, const int* attlist,
    // Set the default quat, initialize view matrix with it
 	Default_quat = airplane_quat;
 	m_gldata.quat = Default_quat;
-	float qn = 1.0/blas_snrm2(4, &m_gldata.quat[0], 1);
+	float qn = 1.0/blas::nrm2(4, &m_gldata.quat[0], 1);
 	if (abs(qn-1.0) > 8.0*std::numeric_limits<float>::epsilon()) {
-		blas_scal(4, qn, &m_gldata.quat[0], 1);
+		blas::scal(4, qn, &m_gldata.quat[0], 1);
 		cerr << "inital quat scaled by " << qn << ": " << m_gldata.quat << endl;
 	}
 	// create a glContext but don't SetCurrent yet
@@ -1492,7 +1491,7 @@ FGLCanvas::FGLCanvas(wxWindow *parent, wxWindowID id, const int* attlist,
 			if (glcontext->IsOK())
 				break;
 		}
-		trc.dprint("using glcontext attr ",i);
+		T_(trc.dprint("using glcontext attr ",i);)
 	}
 	if (!glcontext->IsOK())
 		throw runtime_error("could not create an OpenGL context");
@@ -1505,7 +1504,7 @@ FGLCanvas::FGLCanvas(wxWindow *parent, wxGLAttributes& att, wxWindowID id,
 		const wxPoint& pos, const wxSize& size, long style, const wxString& name) :
 			wxGLCanvas(parent, att, id, pos, size, style, name, wxNullPalette) {
 // FGlCanvas constructor using the newer GL attributes and GL context
-	Trace trc(2,"FGLCanvas ctor");
+	T_(Trace trc(2,"FGLCanvas ctor");)
 
    m_gldata.initialized = false;
 	m_init = false;
@@ -1516,9 +1515,9 @@ FGLCanvas::FGLCanvas(wxWindow *parent, wxGLAttributes& att, wxWindowID id,
    // Set the default quat, initialize view matrix with it
 	Default_quat = airplane_quat;
 	m_gldata.quat = Default_quat;
-	float qn = 1.0/blas_snrm2(4, &m_gldata.quat[0], 1);
+	float qn = 1.0/blas::nrm2(4, &m_gldata.quat[0], 1);
 	if (abs(qn-1.0) > 8.0*std::numeric_limits<float>::epsilon()) {
-		blas_scal(4, qn, &m_gldata.quat[0], 1);
+		blas::scal(4, qn, &m_gldata.quat[0], 1);
 		cerr << "inital quat scaled by " << qn << ": " << m_gldata.quat << endl;
 	}
 	// create a glContext but don't SetCurrent yet
@@ -1548,7 +1547,7 @@ FGLCanvas::FGLCanvas(wxWindow *parent, wxGLAttributes& att, wxWindowID id,
 			if (glcontext->IsOK())
 				break;
 		}
-		trc.dprint("using glcontext attr ",i);
+		T_(trc.dprint("using glcontext attr ",i);)
 	}
 	if (!glcontext->IsOK())
 		throw runtime_error("could not create an OpenGL context");
@@ -1569,7 +1568,7 @@ FGLCanvas::
 OnPaint( wxPaintEvent& event) {
 // This doesn't do any painting, just adjusts the view to
 // account for trackball motion  XXX maybe there's a better place for it
-	Trace trc(2,"FGLCanvas::OnPaint");
+	T_(Trace trc(2,"FGLCanvas::OnPaint");)
 
 	glcontext->SetCurrent(*this);
 #ifdef NEVER // where should this go
@@ -1656,7 +1655,7 @@ world2screen(GLdouble worldx, GLdouble worldy,
 void
 FGLCanvas::
 display_node(double x, double y) {
-	Trace trc(1,"display_node");
+	T_(Trace trc(1,"display_node");)
 	Amviz& amviz{Amviz::instance()};
 
 	if (amviz.frame->isRunning()) {
@@ -1666,7 +1665,7 @@ display_node(double x, double y) {
 	}
 
 	wxSize siz = GetClientSize();
-	trc.dprint("window width ", siz.GetWidth(),", height ",siz.GetHeight());
+	T_(trc.dprint("window width ", siz.GetWidth(),", height ",siz.GetHeight());)
 	double h = siz.GetHeight();
 	y = h - y;  // transform from wx to gl coord
 	GLdouble winx;
@@ -1682,7 +1681,7 @@ display_node(double x, double y) {
 		GLdouble worldz{coord[i+2]};
 		// transform this node's coords to screen
 		world2screen(worldx, worldy, worldz, winx, winy, winz);
-		trc.dprint("node ",i/3," world (",worldx,',',worldy, ',',worldz,") screen (", (int)winx, ',', (int)winy,',',(int)winz,")\n");
+		T_(trc.dprint("node ",i/3," world (",worldx,',',worldy, ',',worldz,") screen (", (int)winx, ',', (int)winy,',',(int)winz,")\n");)
 		// compute distance to mouse click
 		double dist = sqrt((winx-x)*(winx-x) + (winy-y)*(winy-y));
 		if (dist < mindist) {
@@ -1690,7 +1689,7 @@ display_node(double x, double y) {
 			mindist = dist;
 		}
 	}
-	trc.dprint("got alt-left at (", x, ", ", y,") placing ",node,"\n");
+	T_(trc.dprint("got alt-left at (", x, ", ", y,") placing ",node,"\n");)
 	string nodestr = vastr(node);
 	wxMessageBox(nodestr);
 }
@@ -1757,7 +1756,7 @@ OnMouse(wxMouseEvent& event) {
 void
 FGLCanvas::
 InitGL() {
-	Trace trc(2,"InitGL");
+	T_(Trace trc(2,"InitGL");)
 
     // set viewing projection XXX necessary?
 	glMatrixMode(GL_PROJECTION);
@@ -2047,7 +2046,7 @@ void
 FGLCanvas::
 video() {
 // create an mp4 video file of a few cycles (ncycles) of animation
-	Trace trc(2,"FGLCanvas::video");
+	T_(Trace trc(2,"FGLCanvas::video");)
 	Amviz& amviz{Amviz::instance()};
 	Specs& sp = specs();
 
@@ -2072,7 +2071,7 @@ video() {
 	wxSize siz = GetClientSize();
 	GLsizei width = siz.GetWidth();
 	GLsizei height = siz.GetHeight();
-	trc.dprint("window width ", width,", height ",height,", canvas: ",amsizes.canvas);
+	T_(trc.dprint("window width ", width,", height ",height,", canvas: ",amsizes.canvas);)
 
 	// start ffmpeg
 	FILE* ffmpeg{nullptr};

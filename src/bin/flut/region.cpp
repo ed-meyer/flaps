@@ -10,6 +10,7 @@
 
 #include "region.h"
 #include "specs.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -24,10 +25,10 @@ Bndry (Tok const& opt) {
 // call the Bndry(Par*) constructor which will add the parameter to
 // the gpset if it is new, and convert min and max to internal if
 // a conversion factor is not part of lhs
-	Trace trc(2,"Bndry(Tok) constructor");
+	T_(Trace trc(2,"Bndry(Tok) constructor");)
 	Specs& sp = flutspecs();
 
-	trc.dprint("input opt: ",opt);
+	T_(trc.dprint("input opt: ",opt);)
 
 	// special case: lhs is a curve id, e.g. vso.1.a and no rhs
 	vector<string> toks = string2tok(opt.lhs, '.');
@@ -50,7 +51,7 @@ Bndry (Tok const& opt) {
 			// Par parser constructor: only pass srhs, not svec,
 			// let upstream deal with multiple rhs
 			Par ap(opt.lhs, opt.srhs);
-			trc.dprint("creating a Bndry with: ",ap.desc());
+			T_(trc.dprint("creating a Bndry with: ",ap.desc());)
 
 			// Grab the limits and make a note as to whether they are
 			// in internal or external units so we can convert them to
@@ -86,13 +87,13 @@ Bndry (Tok const& opt) {
 			if (!internal) {
 				min /= fac;
 				max /= fac;
-				trc.dprint("converted min, max to internal: ",min,", ",max);
+				T_(trc.dprint("converted min, max to internal: ",min,", ",max);)
 			}
 		} catch (runtime_error& s) {
 			throw runtime_error(vastr("bad start-region definition (",opt,"): ", s.what()));
 		}
 	}
-	trc.dprint("constructed: ",*this);
+	T_(trc.dprint("constructed: ",*this);)
 }
 
 string
@@ -135,7 +136,7 @@ Region (const string& options) {
 // parse a set of options and create a list of Bndrys
 // This constructor allows for multi-values options, e.g.
 //   start{vtas=(100,200)}
-	Trace trc(1,"Region(string) constructor");
+	T_(Trace trc(1,"Region(string) constructor");)
 
 	vector<Tok*> toks = flaps::lexer(options);
 	for (auto tok : toks) {
@@ -182,10 +183,10 @@ Region::
 pointBndry() {
 // if this Region has a point Bndry (one where min==max)
 // return a pointer to that Bndry, otherwise return nullptr
-	Trace trc(1,"Region::pointBndry");
+	T_(Trace trc(1,"Region::pointBndry");)
 	for (auto& reg : *this) {
 		if (reg.isPoint()) {
-			trc.dprint("returning ",reg);
+			T_(trc.dprint("returning ",reg);)
 			return &reg;
 		}
 	}
@@ -197,11 +198,11 @@ Region::
 curveidBndry() {
 // if this Region has a Bndry which is simply a curveid
 // return that curveid
-	Trace trc(1,"Region::curveidBndry");
+	T_(Trace trc(1,"Region::curveidBndry");)
 	vector<string> rval;
 	for (auto& reg : *this) {
 		if (!reg.curveid.empty()) {
-			trc.dprint("returning ",reg.curveid);
+			T_(trc.dprint("returning ",reg.curveid);)
 			rval.push_back(reg.curveid);
 		}
 	}
@@ -240,7 +241,7 @@ bool
 Region::
 curveidOk(string& cid) {
 // if this Region has curveid's does cid match any of them?
-	Trace trc(1,"curveidOk");
+	T_(Trace trc(1,"curveidOk");)
 
 	// watch out for uncertainty curves: cid like mode_1_hi or mode_1_lo
 	string tail = rsubstr(cid, 2);
@@ -254,7 +255,7 @@ curveidOk(string& cid) {
 		if (!bndry.curveid.empty()) {
 			ntest++;
 			if (regex_match(cid, mch, regex(bndry.curveid))) {
-				trc.dprint(cid," matches ",bndry.curveid);
+				T_(trc.dprint(cid," matches ",bndry.curveid);)
 				return true;
 			}
 		}
@@ -276,13 +277,13 @@ Region::
 hasCurveid(string& id) {
 // does this Region contain one or more curveid Bndrys,
 // and if so do any match "id"?
-	Trace trc(1,"Region::hasCurveid");
+	T_(Trace trc(1,"Region::hasCurveid");)
 	int nid{0};
 	for (auto& bndry : *this) {
 		if (!bndry.curveid.empty()) {
 			nid++;
 			if (bndry.curveid == id) {
-				trc.dprint("returning ",bndry.curveid);
+				T_(trc.dprint("returning ",bndry.curveid);)
 				return true;
 			}
 		}
@@ -296,7 +297,7 @@ hasCurveid(string& id) {
 vector<int>
 Region::
 ordinal_numbers() const {
-	Trace trc(1,"Region::ordinal_numbers");
+	T_(Trace trc(1,"Region::ordinal_numbers");)
 	vector<int> rval;
 	for (auto& bndry : *this) {
 		if (!bndry.ordinal.empty()) {
@@ -305,14 +306,14 @@ ordinal_numbers() const {
 			}
 		}
 	}
-	trc.dprint("returning ",rval.size()," ordinals: ",rval);
+	T_(trc.dprint("returning ",rval.size()," ordinals: ",rval);)
 	return rval;
 }
 
 vector<int>
 Region::
 mode_numbers() const {
-	Trace trc(1,"Region::mode_numbers");
+	T_(Trace trc(1,"Region::mode_numbers");)
 	vector<int> rval;
 	for (auto& bndry : *this) {
 		if (!bndry.modes.empty()) {
@@ -321,7 +322,7 @@ mode_numbers() const {
 			}
 		}
 	}
-	trc.dprint("returning ",rval.size()," modes: ",rval);
+	T_(trc.dprint("returning ",rval.size()," modes: ",rval);)
 	return rval;
 }
 
@@ -330,22 +331,22 @@ Region::
 contains_ordinal(int ordinal) const {
 // does this Region contain "ordinal", i.e. did the
 // option have something like "ordinal=1"
-	Trace trc(1,"Region::contains_ordinal ",ordinal);
+	T_(Trace trc(1,"Region::contains_ordinal ",ordinal);)
 	vector<int> ordinals = this->ordinal_numbers();
-	trc.dprint(ordinals.size()," ordinals");
+	T_(trc.dprint(ordinals.size()," ordinals");)
 	// if no ordinals were specified all are ok
 	if (ordinals.empty()) {
-		trc.dprint("quick (true) return: no ordinals specified");
+		T_(trc.dprint("quick (true) return: no ordinals specified");)
 		return true;
 	}
 
 	for (auto i : ordinals) {
 		if (ordinal == i) {
-			trc.dprint("returning true");
+			T_(trc.dprint("returning true");)
 			return true;
 		}
 	}
-	trc.dprint("returning false");
+	T_(trc.dprint("returning false");)
 	return false;
 }
 
@@ -354,22 +355,22 @@ Region::
 contains_mode(int mode) const {
 // does this Region contain "mode", i.e. did the
 // option have something like "mode=1"
-	Trace trc(1,"Region::contains_mode ",mode);
+	T_(Trace trc(1,"Region::contains_mode ",mode);)
 	vector<int> modes = this->mode_numbers();
-	trc.dprint(modes.size()," modes");
+	T_(trc.dprint(modes.size()," modes");)
 	// if no ordinals were specified all are ok
 	if (modes.empty()) {
-		trc.dprint("quick (true) return: no modes specified");
+		T_(trc.dprint("quick (true) return: no modes specified");)
 		return true;
 	}
 
 	for (auto i : modes) {
 		if (mode == i) {
-			trc.dprint("returning true");
+			T_(trc.dprint("returning true");)
 			return true;
 		}
 	}
-	trc.dprint("returning false");
+	T_(trc.dprint("returning false");)
 	return false;
 }
 
@@ -405,10 +406,10 @@ Region::
 get (string const& name) {
 // return a pointer to the Bndry in this list with
 // parameter name "name"
-	Trace trc(1,"Region::get ",name);
+	T_(Trace trc(1,"Region::get ",name);)
 	for (auto& bndry : *this) {
 		if (bndry.parname == name) {
-			trc.dprint("returning ",bndry);
+			T_(trc.dprint("returning ",bndry);)
 			return &bndry;
 		}
 	}
@@ -438,12 +439,12 @@ const Par*
 Region::
 outOfRange (pset& pl, string& oormsg) const {
 // Find a parameter in pl which is out of these Bndrys
-	Trace trc(1,"outOfRange");
+	T_(Trace trc(1,"outOfRange");)
 	for (const auto& bndry : *this) {
 		if (!bndry.isPoint()) {
 			const Par* pp = pl.findp(bndry.parname);
 			if (pp) {
-				trc.dprint("check ",pp->summary()," against ",bndry);
+				T_(trc.dprint("check ",pp->summary()," against ",bndry);)
 				double val = pp->value();
 				double fac = pp->convFactor();
 				if (bndry.min > val || val >= bndry.max) {
@@ -451,7 +452,7 @@ outOfRange (pset& pl, string& oormsg) const {
 					os << bndry.parname << " is out of the range ["
 						<< bndry.min*fac << ':' << bndry.max*fac << ']';
 					oormsg = os.str();
-					trc.dprint("out of range: returning ",pp->summary());
+					T_(trc.dprint("out of range: returning ",pp->summary());)
 					return pp;
 				}
 			}

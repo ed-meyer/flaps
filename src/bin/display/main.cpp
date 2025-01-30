@@ -34,7 +34,7 @@ int
 main (int argc, char** argv) {
 // Print one or more matrices to cout if small enough, or export to a Matrix
 // Market file for visualization in matview if too large for cout.
-	Trace trc(1,"main");
+	T_(Trace trc(1,"main");)
 	string progname{argv[0]};
 
 	try {
@@ -98,7 +98,7 @@ main (int argc, char** argv) {
 int
 display(const string& mid, pset& altpset, Specs& sp) {
 // fetch matrix 'mid', evaluate it, and display
-	Trace trc(2,"display");
+	T_(Trace trc(2,"display");)
 	ostringstream os;
 	int rval{0};
 

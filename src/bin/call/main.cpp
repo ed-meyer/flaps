@@ -24,7 +24,7 @@ using namespace std;
 
 int
 main (int argc, char** argv) {
-	Trace trc(1,argv[0],":main");
+	T_(Trace trc(1,argv[0],":main");)
 	string progname{argv[0]};
 
 	try {

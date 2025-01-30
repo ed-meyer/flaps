@@ -43,7 +43,7 @@ int
 main (int argc, char *argv[]) {
 // Flaps executive program: read the input file, split blocks,
 // and run each function or program
-	Trace trc(2,"flaps");
+	T_(Trace trc(2,"flaps");)
 	int rval{0};
 	Ftmpdir ftmp;		// create a temporary directory for data, etc
 
@@ -104,7 +104,7 @@ usage(const string& prog) {
 static string
 cmdline(int argc, char *argv[]) {
 // parse the command line, return the input file name
-	Trace trc(1,"cmdline");
+	T_(Trace trc(1,"cmdline");)
 	string rval;
 
 	// First convert arguments to a vector of strings skipping argv[0]
@@ -185,7 +185,7 @@ makePattern (vector<string> const& cmds) {
 // sub-match 1:  if(!
 // sub-match 2:  /home/
 // sub-match 3:  flut
-	Trace trc(1,"makePattern");
+	T_(Trace trc(1,"makePattern");)
 	// string start(R"(^\s*(if\s*\(\s*!?)?(/.*/)?()");
 	string start(R"(()");
 	// string end(R"()\s*\{.*$)");
@@ -198,7 +198,7 @@ makePattern (vector<string> const& cmds) {
 		rval += cmds[i];
 	}
 	rval += end;
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -206,7 +206,7 @@ double
 do_cmds(vector<pair<string,string> >& cmds) {
 // call a set of functions or programs depending on what "cmd" is
 // Returns the total cpu time for all the cmds
-	Trace trc(1,"do_cmds");
+	T_(Trace trc(1,"do_cmds");)
 	double rval{0.0};
 
 	regex programRe = make_regex (makePattern(prog_names()));
@@ -290,7 +290,7 @@ split (const string& file) {
 // Returns the first block which is the control program
 // All other blocks are written to FTMP with filenames the same
 // as the block name
-	Trace trc(1,"split ",file);
+	T_(Trace trc(1,"split ",file);)
 	ostringstream os;
 	
 	// if "file" is empty take the input from cin
@@ -321,20 +321,20 @@ split (const string& file) {
 			line = line.substr(first);
 		// strip comments - watch out for #ifdef...
 		if (regex_match(line, commentrx)) {
-			trc.dprint("got comment: ",line);
+			T_(trc.dprint("got comment: ",line);)
 			// if this is a #ifdef look in the environment
 			// for the macro - if not there skip lines until #endif
 			smatch m;
 			if (regex_match(line, m, ifdefrx)) {
 				string var = m[1];
-				trc.dprint("got macro ",var);
+				T_(trc.dprint("got macro ",var);)
 				// macro not defined - skip lines until #endif
 				if (getenv(var.c_str()) == nullptr) {
-					trc.dprint("env var ",var," not found: skip line until endif");
+					T_(trc.dprint("env var ",var," not found: skip line until endif");)
 					while(inp->good()) {
 						getline(*inp, line);
 						if (regex_match(line, endifrx)) {
-							trc.dprint("got endif");
+							T_(trc.dprint("got endif");)
 							break;
 						}
 					}
@@ -362,7 +362,7 @@ split (const string& file) {
 	}
 	// the input file is now in os.str()
 	string rval = os.str();
-	trc.dprint("input file {\n",rval,"\n}\n");
+	T_(trc.dprint("input file {\n",rval,"\n}\n");)
 	if (rval.empty())
 		throw runtime_error("input file is empty");
 
@@ -390,7 +390,7 @@ split (const string& file) {
 		std::getline(*inp, line);
 		if (regex_match(line, mch, beginblock)) {
 			string filename = vastr(getftmp(),"/",mch[1]);
-			trc.dprint("got block name <",filename,">");
+			T_(trc.dprint("got block name <",filename,">");)
 			// does the block name have an extension?
 			string ext;
 			string::size_type idx = filename.rfind('.');

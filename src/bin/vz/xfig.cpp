@@ -265,12 +265,12 @@ int color)			/* Line color (if any)  */
  * xgOut structure passed back from xg_init().
  */
 {
-	Trace trc(1,"xfigSeg");
+	T_(Trace trc(1,"xfigSeg");)
 	Info	*xfig_info = (Info *) user_state;
 	int	i, j, k;
 	FILE* stream = xfig_info->strm;
 
-	trc.dprint(ns," segments, style ",style,", color ",color,", width ",width);
+	T_(trc.dprint(ns," segments, style ",style,", color ",color,", width ",width);)
 
 	// I don't know why but this fcn gets called with width=0
 	if (width == 0) width = 1;

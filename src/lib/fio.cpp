@@ -51,7 +51,7 @@ get (Receiver& s) {
 // - call the object's serializer
 // Throws a runtime_error if the object's class has not been registered,
 // e.g. if it was stored with fio::store(vector<Type>)
-	Trace trc(2,"Fio::get");
+	T_(Trace trc(2,"Fio::get");)
 
 	// read the object's id from the Receiver
 	string id;
@@ -68,12 +68,12 @@ get (Receiver& s) {
 			q != io_map->end(); q++)
 			os << (*q).first << " is registered\n";
 
-		trc.dprint("throwing exception: ",os.str());
+		T_(trc.dprint("throwing exception: ",os.str());)
 		throw runtime_error(os.str());
 	}
 
 	FioGetFcn f = (*io_map)[id];
-	trc.dprint("calling ",id," get serializer");
+	T_(trc.dprint("calling ",id," get serializer");)
 
 	Fio* rval = f(s);
 
@@ -86,7 +86,7 @@ put (Sender& s, const Fio& m) {
 // Write an object to a Sender: serialize it's vid, then
 // call it's virtual put() function
 // XXX need a way to ensure m.put is never called directly
-	Trace trc(2,"Fio::put ",m.vid());
+	T_(Trace trc(2,"Fio::put ",m.vid());)
 	s.serialize(m.vid());
 	m.put(s);
 }
@@ -96,7 +96,7 @@ bool
 Fio::
 register_class (string id, FioGetFcn pf) {
 // add a class name (id) to the map of registered classes
-	Trace trc(3,"Fio::register_class ",id);
+	T_(Trace trc(3,"Fio::register_class ",id);)
 	if (io_map == nullptr)
 		io_map = new map<string, FioGetFcn >;
 	(*io_map)[id] = pf;
@@ -107,11 +107,11 @@ void
 putVFio (Sender& s, const std::vector<Fio*>& t) {
 // Serialize an STL vector of pointers to classes that are
 // derived from Fio and have registered (register_class)
-	Trace trc(2,"putVFio ",t.size());
+	T_(Trace trc(2,"putVFio ",t.size());)
 
 	s.serialize(t.size());
 	for (auto tp : t) {
-		trc.dprint("putting a ",tp->vid());
+		T_(trc.dprint("putting a ",tp->vid());)
 		Fio::put(s, *tp);
 	}
 }
@@ -121,17 +121,17 @@ getVFio (Receiver& s, vector<Fio*>& t) {
 // de-serialize a vector of Fio objects by calling Fio::get for
 // each element of the vector (the first object de-serialized is
 // the length of the vector)
-	Trace trc(2,"getVFio");
+	T_(Trace trc(2,"getVFio");)
 	size_t n;
 	s.serialize(n);
-	trc.dprint("reading ",n," objects");
+	T_(trc.dprint("reading ",n," objects");)
 	if (n == 0)
 		return;
 
 	for (size_t i=0; i<n; i++) {
 		Fio* tp = Fio::get(s);
 		t.push_back(tp);
-		trc.dprint("got object ",i+1,": \"",tp->vid(),"\"");
+		T_(trc.dprint("got object ",i+1,": \"",tp->vid(),"\"");)
 	}
 	return;
 }
@@ -139,16 +139,16 @@ getVFio (Receiver& s, vector<Fio*>& t) {
 // Sender constructor
 Sender::
 Sender(const string& file) {
-	Trace trc(2,"Sender constructor");
+	T_(Trace trc(2,"Sender constructor");)
 	// create a file on datadir
 	string path = vastr(get_datadir(), "/", file);
-	trc.dprint("opening ",path);
+	T_(trc.dprint("opening ",path);)
 	int flags = O_CREAT | O_WRONLY | O_TRUNC;;
 	mode_t mode = S_IRUSR | S_IWUSR;
 	ofd = open(path.c_str(), flags, mode);
 	if (ofd < 0) {
 		string exc = vastr("cannot open ",path);
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 }
@@ -177,7 +177,7 @@ write (const char* s, size_t nbytes) {
 void
 Sender::
 serialize(int  t) {
-	Trace trc(3,"Sender::serialize(int) ",t);
+	T_(Trace trc(3,"Sender::serialize(int) ",t);)
 	// ofs << t << endl;
 	this->write((char*)&t, sizeof(int));
 }
@@ -185,7 +185,7 @@ serialize(int  t) {
 void
 Sender::
 serialize(size_t  t) {
-	Trace trc(3,"Sender::serialize(size_t) ",t);
+	T_(Trace trc(3,"Sender::serialize(size_t) ",t);)
 	// ofs << t << endl;
 	this->write((char*)&t, sizeof(size_t));
 }
@@ -193,7 +193,7 @@ serialize(size_t  t) {
 void
 Sender::
 serialize(double  t) {
-	Trace trc(3,"Sender::serialze(double) ",t);
+	T_(Trace trc(3,"Sender::serialze(double) ",t);)
 	// ofs << std::showpoint << std::setprecision(20) << t << endl;
 	this->write((char*)&t, sizeof(double));
 }
@@ -201,7 +201,7 @@ serialize(double  t) {
 void
 Sender::
 serialize(const complex<double>& t) {
-	Trace trc(3,"Sender::serialze(complex) ",t);
+	T_(Trace trc(3,"Sender::serialze(complex) ",t);)
 	this->serialize(t.real());
 	this->serialize(t.imag());
 }
@@ -209,7 +209,7 @@ serialize(const complex<double>& t) {
 void
 Sender::
 serialize(const string&  t) {
-	Trace trc(3,"Sender::serialize(string) ",t);
+	T_(Trace trc(3,"Sender::serialize(string) ",t);)
 	size_t m = t.size();
 	this->serialize(m);
 	if (m == 0) return;
@@ -220,7 +220,7 @@ serialize(const string&  t) {
 void
 Sender::
 serialize(const vector<vector<double> >& t) {
-	Trace trc(3,"Sender::serialize(vector<vector<double>>");
+	T_(Trace trc(3,"Sender::serialize(vector<vector<double>>");)
 	size_t m = t.size();
 	this->serialize(m);
 	if (m == 0) return;
@@ -248,7 +248,7 @@ Receiver::
 Receiver(const string& file) {
 // Receiver constructor: throws runtime_error exception if the
 // file does not exist
-	Trace trc(2,"Receiver constructor");
+	T_(Trace trc(2,"Receiver constructor");)
 	// the file must be on datadir
 	string datadir = get_datadir();
 	string path = vastr(datadir,"/",file);
@@ -256,7 +256,7 @@ Receiver(const string& file) {
 	mode_t mode = O_RDONLY;
 	ifd = open(path.c_str(), flags, mode);
 	if (ifd < 0) {
-		trc.dprint("\"",path,"\" does not exist");
+		T_(trc.dprint("\"",path,"\" does not exist");)
 		string err = file + " does not exist";
 		throw runtime_error(err);
 	}
@@ -272,14 +272,14 @@ Receiver::
 void
 Receiver::
 serialize(int&  t) {
-	Trace trc(3,"Receiver::serialize(int)");
+	T_(Trace trc(3,"Receiver::serialize(int)");)
 	// if (ifs.eof())
 	// 	throw runtime_error("eof in serialize(int)");
 	// string st;
 	// std::getline(this->ifs, st);
-	// trc.dprint("read <",st,">");
+	// T_(trc.dprint("read <",st,">");)
 	// t = stoi(st, nullptr);
-	// trc.dprint("got ",st," => ",t);
+	// T_(trc.dprint("got ",st," => ",t);)
 	read(ifd, &t, sizeof(int));
 }
 
@@ -295,11 +295,11 @@ serialize(size_t&  t) {
 void
 Receiver::
 serialize(double&  t) {
-	Trace trc(3,"Receiver::serialize(double)");
+	T_(Trace trc(3,"Receiver::serialize(double)");)
 	// string st;
 	// std::getline(this->ifs, st);
 	// str2double(st, t);
-	// trc.dprint("got ",st," => ",t);
+	// T_(trc.dprint("got ",st," => ",t);)
 	read(ifd, &t, sizeof(double));
 }
 
@@ -318,7 +318,7 @@ Receiver::
 serialize(string&  t) {
 // a string might have spaces and newlinee so we must read
 // the string length, then the characters.
-	Trace trc(3,"Receiver::serialize(string)");
+	T_(Trace trc(3,"Receiver::serialize(string)");)
 	size_t m;
 	this->serialize(m);
 	if (m == 0) return;
@@ -328,14 +328,14 @@ serialize(string&  t) {
 	read(ifd, buf, m);
 	t = string(buf, string::size_type(m));
 	delete[] buf;
-	trc.dprint("got <",t,">");
+	T_(trc.dprint("got <",t,">");)
 }
 
 
 void
 Receiver::
 serialize(vector<vector<double> >& t) {
-	Trace trc(3,"Receiver::serialize(vector<vector<double>>");
+	T_(Trace trc(3,"Receiver::serialize(vector<vector<double>>");)
 	size_t m;
 	this->serialize(m);
 	if (m == 0) return;
@@ -394,7 +394,7 @@ catalog (const string& rxname, bool sum) {
 // Returns a vector of strings which are the names (sum=false or not included)
 // or a summary (name, size, datatype) (sum=true) of each item in the database
 // whose name matches regular expression "rxname"
-	Trace trc(2,"fio::catalog ",rxname);
+	T_(Trace trc(2,"fio::catalog ",rxname);)
 	vector<string> entries = ls (get_datadir());
 	vector<string> rval;
 
@@ -404,26 +404,26 @@ catalog (const string& rxname, bool sum) {
 			if (ei != "." && ei != "..")
 				rval.push_back(ei);
 		}
-		trc.dprintv(rval, "no name given: returning all entries");
+		T_(trc.dprintv(rval, "no name given: returning all entries");)
 	} else {
 		regex re = make_regex(rxname);
 		for (auto& ei : entries) {
-			trc.dprintn("testing <",ei,">...");
+			T_(trc.dprintn("testing <",ei,">...");)
 			if (regex_match(ei, re)) {
 				rval.push_back(ei);
-				trc.dprint(" matches");
+				T_(trc.dprint(" matches");)
 			} else {
-				trc.dprint(" no match");
+				T_(trc.dprint(" no match");)
 			}
 		}
 	}
 	if (rval.empty()) {
-		trc.dprint("returning empty");
+		T_(trc.dprint("returning empty");)
 		return rval;
 	}
 	// sort the entries
 	if (rval.size() > 1) {
-		trc.dprintv(rval,"before sorting");
+		T_(trc.dprintv(rval,"before sorting");)
 		sort(rval.begin(),rval.end(), strwnum);
 	}
 
@@ -446,12 +446,12 @@ catalog (const string& rxname, bool sum) {
 					os << *mp;
 				name = os.str();		// replace this element of rval
 			} catch (runtime_error& s) {
-				trc.dprint("ignoring exception: ",s.what());
+				T_(trc.dprint("ignoring exception: ",s.what());)
 			}
 		}
 	}
 
-	trc.dprintv(rval,"returning");
+	T_(trc.dprintv(rval,"returning");)
 	return rval;
 }
 
@@ -460,21 +460,21 @@ fio::
 save (const vector< string>& rxnames, const string& file) {
 // Read the fid's, which may be regular-expressions, and
 // tar them to "file" compressed
-	Trace trc(2,"fio::save");
+	T_(Trace trc(2,"fio::save");)
 	ostringstream os;
 	vector<string> entries;
 	string wd = get_cwd();
 
-	trc.dprint("rxnames: ",rxnames);
+	T_(trc.dprint("rxnames: ",rxnames);)
 	// get mids of existing matrices that match the regex's
 	for (auto& rxname : rxnames) {
-		trc.dprint("cataloging ",rxname);
+		T_(trc.dprint("cataloging ",rxname);)
 		vector<string> ent = catalog(rxname);
 		for (auto& ei : ent)
 			entries.push_back(ei);
 	}
 
-	trc.dprint("entries: ",entries);
+	T_(trc.dprint("entries: ",entries);)
 
 	if (entries.empty())
 		return entries;
@@ -491,7 +491,7 @@ save (const vector< string>& rxnames, const string& file) {
 	os << "tar zcf " << path;
 	for (auto fp : entries)
 		os << " " << fp;
-	trc.dprint("system(",os.str(),")");
+	T_(trc.dprint("system(",os.str(),")");)
 	int stat = system(os.str().c_str());
 	if (stat != 0) {
 		cerr << "failed to save matrices\n";
@@ -504,7 +504,7 @@ vector<string>
 fio::
 restore(const string& file) {
 // restore matrices saved on "file" (by fio::save()) to datadir
-	Trace trc(2,"fio::restore");
+	T_(Trace trc(2,"fio::restore");)
 
 	// create a full path if not already
 	string fullpath{file};
@@ -516,7 +516,7 @@ restore(const string& file) {
 	Chdir wd(datadir);
 	// run a shell command to untar
 	string cmd{vastr("tar zvxf ",fullpath)};
-	trc.dprint("system(",cmd,")");
+	T_(trc.dprint("system(",cmd,")");)
 
 	// open a pipe to the command...
 	Fpipe pipe{cmd};
@@ -533,7 +533,7 @@ restore(const string& file) {
 		while (*(last-1) == '\n')
 			last--;
 		string item{&buf[0], last};
-		trc.dprint("got ",n," char <",item,">");
+		T_(trc.dprint("got ",n," char <",item,">");)
 		rval.push_back(item);
 	}
 
@@ -583,7 +583,7 @@ File::
 
 Msgq::
 Msgq(const string& name, int flags, mode_t mode, struct mq_attr* attr) {
-	Trace trc(1,"Msgq constructor");
+	T_(Trace trc(1,"Msgq constructor");)
 	name_ = name;
 	if (attr == nullptr) {
 		creator = false;
@@ -594,19 +594,19 @@ Msgq(const string& name, int flags, mode_t mode, struct mq_attr* attr) {
 	}
 	if (des_ == -1)
 		throw std::system_error(errno, std::generic_category(),"mq_open");
-	trc.dprint("opened ",name,", creator? ",creator,", des ",des_);
+	T_(trc.dprint("opened ",name,", creator? ",creator,", des ",des_);)
 }
 
 Msgq::
 ~Msgq() {
-	Trace trc(2,"Msgq destructor");
+	T_(Trace trc(2,"Msgq destructor");)
 	if (mq_close(des_) == -1)
 		cerr << "mq_close failed, errno " << errno << endl;
-	trc.dprint("closed ",name_);
+	T_(trc.dprint("closed ",name_);)
 	if (creator) {
 		if (mq_unlink(name_.c_str()) == -1)
 			cerr << "mq_close failed, errno " << errno << endl;
-		trc.dprint("unlinked ",name_);
+		T_(trc.dprint("unlinked ",name_);)
 	}
 }
 
@@ -622,7 +622,7 @@ void
 Msgq::
 receive(std::string& v) {
 // read a string from a message queue
-	Trace trc(2,"Msgq::receive(string)");
+	T_(Trace trc(2,"Msgq::receive(string)");)
 	struct mq_attr attr;
 	mq_getattr(des_, &attr);
 	long msgsize = attr.mq_msgsize;
@@ -635,10 +635,10 @@ receive(std::string& v) {
 	for (int i=0; i<5; i++) {
 		errno = 0;
 		nbytes = mq_receive(des_, msg.data(), msgsize, nullptr);
-		trc.dprint("errno ",errno,", nbytes ",nbytes);
+		T_(trc.dprint("errno ",errno,", nbytes ",nbytes);)
 		if (errno == 0 && nbytes > 0) break;
 		if (nbytes == -1 && errno != EAGAIN) {
-			trc.dprint("throwing system_error exception");
+			T_(trc.dprint("throwing system_error exception");)
 			throw std::system_error(errno, std::generic_category(),"mq_receive");
 		}
 		sleep(1);
@@ -732,7 +732,7 @@ getftmp () {
  * returns the full path of the temporary directory for this
  * Flaps job. This path will be the same as environment variable FTMP.
  *------------------------------------------------------------------*/
-	Trace trc(3,"getftmp");
+	T_(Trace trc(3,"getftmp");)
 	string rval{getEnv("FTMP")};
 
 #ifdef NEVER // return empty if none
@@ -740,7 +740,7 @@ getftmp () {
 	if (rval.empty())
 		rval = "/tmp";
 #endif // NEVER // return empty if none
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -750,30 +750,30 @@ get_datadir () {
  * returns the full path of the temporary directory containing
  * data for this Flaps job.
  *------------------------------------------------------------------*/
-	Trace trc(3,"get_datadir");
+	T_(Trace trc(3,"get_datadir");)
 	string rval{getftmp()};
 
 	// data is kept in directory "data" under ftmp
 	rval += "/data";
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
 string
 get_cwd() {
 // return the current working directory as a string
-	Trace trc(3,"get_cwd");
+	T_(Trace trc(3,"get_cwd");)
 	string rval;
 #ifdef _GNU_SOURCE
 	// using GNU-specific replacement for getcwd()
 	char* cwd = get_current_dir_name();
-	trc.dprint("get_current_dir_name returned ",cwd);
+	T_(trc.dprint("get_current_dir_name returned ",cwd);)
 	if (cwd == nullptr)
 		throw std::system_error(errno, std::generic_category(),
 			"cannot get current working directory: ");
 
 	rval = string(cwd);
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	free(cwd);
 #else
 	size_t len{PATH_MAX};
@@ -826,7 +826,7 @@ getfwd () {
  * returns the full path of the working directory for this
  * flaps job.
  *------------------------------------------------------------------*/
-	Trace trc(1,"getfwd");
+	T_(Trace trc(1,"getfwd");)
 	string rval{getEnv("FWD")};
 
 	// if FWD is not already in the environment set it to the
@@ -836,7 +836,7 @@ getfwd () {
 		string fwd = vastr("FWD=",rval);
 		putEnv(fwd);
 	}
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -867,11 +867,11 @@ static vector<string> RmErr;
 
 static int
 rmdirTreeFcn (char const* file, struct stat const* sb, int type, struct FTW* s) {
-	Trace trc(2,"rmdirTreeFcn ", file);
+	T_(Trace trc(2,"rmdirTreeFcn ", file);)
 	errno = 0;
 	int status = remove(file);
-	trc.dprint("remove(",file,") returned status ",status,", errno ",errno);
-	trc.dprint("cwd ",get_cwd());
+	T_(trc.dprint("remove(",file,") returned status ",status,", errno ",errno);)
+	T_(trc.dprint("cwd ",get_cwd());)
 	if (status < 0) {
 		string err;
 		if (errno) {
@@ -880,7 +880,7 @@ rmdirTreeFcn (char const* file, struct stat const* sb, int type, struct FTW* s) 
 		} else {
 			err = vastr("remove returned ",status);
 		}
-		trc.dprint("returning 1: ",err);
+		T_(trc.dprint("returning 1: ",err);)
 		return 1;
 	}
 	return 0;
@@ -892,7 +892,7 @@ rmdirTree (string const& path) {
 // Remove a directory and all the files in it. Does the
 // equivalent of "rm -rf path" and in fact if the function
 // nftw() is not available that is what is done
-	Trace trc(2,"rmdirTree ", path);
+	T_(Trace trc(2,"rmdirTree ", path);)
 
 #ifndef HAVE_NFTW
 	ostringstream os;
@@ -932,20 +932,20 @@ removeHOME (string const& path) {
  * variable if the path starts with it; otherwise the input path
  * is returned.
  *------------------------------------------------------------------*/
-	Trace trc(1,"removeHOME");
+	T_(Trace trc(1,"removeHOME");)
 	char const* home = getenv("HOME");
 	// char* logname = getenv("LOGNAME");
 	string rval;
 
-	trc.dprint("path<",path,">");
+	T_(trc.dprint("path<",path,">");)
 	
 	if (!home) {
-		trc.dprint("quick return: no HOME in env");
+		T_(trc.dprint("quick return: no HOME in env");)
 		return path;
 	}
 
 	if (path == string(home)) {
-		trc.dprint("returning \".\": path==home");
+		T_(trc.dprint("returning \".\": path==home");)
 		return string(".");
 	}
 
@@ -956,14 +956,14 @@ removeHOME (string const& path) {
 	if (path.size() > homestr.size()) {
 		if (path.substr(0,homestr.size()) == homestr) {
 			rval = path.substr(homestr.size());
-			trc.dprint("returning \"",rval,"\"");
+			T_(trc.dprint("returning \"",rval,"\"");)
 			return rval;
 		}
 	}
 	/*
 	 * HOME not found - just return the input string
 	 */
-	trc.dprint("returning input: \"",path,"\"");
+	T_(trc.dprint("returning input: \"",path,"\"");)
 	return path;
 }
 
@@ -982,7 +982,7 @@ Ftmpdir(const string& path) {
 // - create a new directory under /tmp: Ftmp+pid
 // - create data directory under Ftmp
 // - put FTMP=Ftmp+pid in the environment
-	Trace trc(1,"Ftmpdir constructor");
+	T_(Trace trc(1,"Ftmpdir constructor");)
 
 	// put the current path in the environment: getfwd()
 	// does this if FWD is not already in the environment
@@ -1016,7 +1016,7 @@ Ftmpdir(const string& path) {
 			throw std::system_error(errno, std::generic_category(),
 				vastr("cannot create temp directory (", _tmpdir));
 
-		trc.dprint("Flaps temporary directory: ", _tmpdir);
+		T_(trc.dprint("Flaps temporary directory: ", _tmpdir);)
 
 	} else {
 		_tmpdir = path;
@@ -1047,12 +1047,12 @@ Ftmpdir::
 ~Ftmpdir() {
 // Deletes the temporary directory unless KEEPFTMP is in the environment
 // or if DEBUG is in the environment
-	Trace trc(1,"Ftmpdir destructor");
+	T_(Trace trc(1,"Ftmpdir destructor");)
 
 	// sometimes multiple Ftmpdirs are created but only one
 	// has an actual directory: quick return if we don't have one
 	if (_tmpdir.empty()) {
-		trc.dprint("quick return: no ftmpdir");
+		T_(trc.dprint("quick return: no ftmpdir");)
 		return;
 	}
 

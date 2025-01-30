@@ -19,6 +19,7 @@
 #include "settings.h"
 #include "specs.h"
 #include "startpts.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -27,16 +28,16 @@ Specs::
 update(const string& nm, double val) {
 // update Cu2eu "nm" with val if it exists, otherwise add
 // it to my vector<Cu2eu>
-	Trace trc(2,"Specs::update");
+	T_(Trace trc(2,"Specs::update");)
 	for (auto& ci : cu2eu) {
 		if (ci.name == nm) {
 			ci.value = val;
-			trc.dprint("updated cu2eu: ",ci);
+			T_(trc.dprint("updated cu2eu: ",ci);)
 			return;
 		}
 	}
 	cu2eu.push_back({nm, val});
-	trc.dprint("added new cu2eu: ",cu2eu[cu2eu.size()-1]);
+	T_(trc.dprint("added new cu2eu: ",cu2eu[cu2eu.size()-1]);)
 }
 
 Specs&
@@ -106,17 +107,17 @@ incr_mfv(int init) {
 // the 4th on its first.
 //
 // Note: this function is not threadsafe: contains statics
-	Trace trc(1,"incr_mfv");
+	T_(Trace trc(1,"incr_mfv");)
 	vector<Par*> fixed = gpset::get().get_fixed();
 	size_t i;
 	ostringstream os;
 	static int visit{0};
 	string rval;
 
-	trc.dprint("init ",init,", visit ",visit);
+	T_(trc.dprint("init ",init,", visit ",visit);)
 
 	if (fixed.empty()) {
-		trc.dprint("returning empty string: no fixed parameters");
+		T_(trc.dprint("returning empty string: no fixed parameters");)
 		return "";
 	}
 
@@ -135,13 +136,13 @@ incr_mfv(int init) {
 		if (sz > 0) {
 			mfvpar.push_back(pp);
 			ld.push_back(sz);
-			trc.dprint("mfv parameter (",pp->name,") has ",sz," altval");
+			T_(trc.dprint("mfv parameter (",pp->name,") has ",sz," altval");)
 			nmv *= sz;
 		}
 	}
 
 	if (visit >= (int)nmv) {
-		trc.dprint("returning empty string: all mfv par used");
+		T_(trc.dprint("returning empty string: all mfv par used");)
 		return "";
 	}
 
@@ -149,12 +150,12 @@ incr_mfv(int init) {
 	// each mfv parameter...
 	static vector<size_t> mfvindex;	// not threadsafe
 	mfvindex = vec2mdim(visit, ld);
-	trc.dprintv(mfvindex,"mfvindex");
+	T_(trc.dprintv(mfvindex,"mfvindex");)
 	// ... then set each mfv parameter to that value
 	for (i=0; i<mfvpar.size(); i++) {
 		Par* pp = mfvpar[i];
 		double pi = pp->altval[mfvindex[i]];
-		trc.dprint("set ",pp->name," to ",pi," @",pp);
+		T_(trc.dprint("set ",pp->name," to ",pi," @",pp);)
 		// use valuef to force the change; note this does not change
 		// the "constant" member
 		pp->valuef(pi);
@@ -171,7 +172,7 @@ incr_mfv(int init) {
 
 	// increment visit for the next call
 	visit++;
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -183,9 +184,9 @@ is_flutmat (string const& desc) {
  * e.g. "mass", "stif", etc.
  * Returns the matched description if found, empty string otherwise
  *------------------------------------------------------------------*/
-	Trace trc(1,"is_flutmat");
+	T_(Trace trc(1,"is_flutmat");)
 
-	trc.dprint("is ",desc," a flutter matrix?");
+	T_(trc.dprint("is ",desc," a flutter matrix?");)
 
 	// These are the (only) options for flutter matrices
 	static vector<string> valid;
@@ -203,7 +204,7 @@ is_flutmat (string const& desc) {
 	if (find(valid.begin(), valid.end(), desc) != valid.end()) {
 		return true;
 	}
-	trc.dprint("returning false: ",desc," is not a flut matrix");
+	T_(trc.dprint("returning false: ",desc," is not a flut matrix");)
 	return false;
 }
 
@@ -350,12 +351,12 @@ dmatrix_f (const Tok& opt) {
 
 static bool
 indep_f(const Tok& opt) {
-	Trace trc(1,"indep ",opt.svec.size()," independents");
+	T_(Trace trc(1,"indep ",opt.svec.size()," independents");)
 	bool rval = true;
 
 	if (opt.svec.empty()) {
 		string exc = vastr("no independent parameters specified in ",opt);
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 
@@ -414,7 +415,7 @@ indep_f(const Tok& opt) {
 static bool
 matrix_f (const Tok& opt) {
 // treat matrix input options, e.g. "mass=KHH"
-	Trace trc(1,"matrix ",opt);
+	T_(Trace trc(1,"matrix ",opt);)
 	ostringstream os;
 	Specs& sp = flutspecs();
 	
@@ -430,10 +431,10 @@ matrix_f (const Tok& opt) {
 		// add it to the collection if source was not included
 		if (sp.sid.empty())
 			Matrix::insert(mp);
-		trc.dprint("returning true: got ",mp->summary());
+		T_(trc.dprint("returning true: got ",mp->summary());)
 		return true;
 	}
-	trc.dprint("returning false: not a flutter matrix");
+	T_(trc.dprint("returning false: not a flutter matrix");)
 	return false;
 }
 
@@ -449,7 +450,7 @@ optimize_f (const Tok& opt) {
 // optimize{increase=vtas{0.5}, decrease=gcnorm{0.8}}
 // or
 // increase{vtas=0.4, gcnorm=0.1, sigma=-0.4}
-	Trace trc(1,"optimize");
+	T_(Trace trc(1,"optimize");)
 	Specs& sp = flutspecs();
 
 	// parse the left-hand side options: split into Toks by
@@ -479,8 +480,8 @@ optimize_f (const Tok& opt) {
 		sp.project.push_back(parnames[i]);
 		sp.projdir.push_back(pardir[i]);
 	}
-	trc.dprint("projection parameters: ",sp.project);
-	trc.dprint("projection directions: ",sp.projdir);
+	T_(trc.dprint("projection parameters: ",sp.project);)
+	T_(trc.dprint("projection directions: ",sp.projdir);)
 
 	return true;
 }
@@ -514,14 +515,14 @@ start_f(const Tok& opt) {
  *   start{sigma=closest{0}}
  * See region.cpp:Region(Tok) constructor for precise parsing options
  *------------------------------------------------------------------*/
-	Trace trc(1,"start_f");
+	T_(Trace trc(1,"start_f");)
 
-	trc.dprint("Tok: ",opt);
+	T_(trc.dprint("Tok: ",opt);)
 
 	// all options must be in the lopt
 	if (opt.lopt.empty()) {
 		string exc = vastr("illegal startregion: ",opt);
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 	// add these options to the startregions
@@ -540,7 +541,7 @@ target_f(const Tok& p) {
 // and sigma=1) each limited to the interval vtas[10:100].
 // This function can be called multiple times - Targets are
 // accumulated in flutspecs().
-	Trace trc(1,"target_f");
+	T_(Trace trc(1,"target_f");)
 	vector<Window> windows;
 	string sortpar;
 	Specs& sp = flutspecs();
@@ -620,7 +621,7 @@ toprint_f(const Tok& opt) {
  * be added to the list of parameters to print in the solution
  * summary
  *------------------------------------------------------------------*/
-	Trace trc(1,"toprint");
+	T_(Trace trc(1,"toprint");)
 	size_t i;
 	ostringstream os;
 	Specs& sp = flutspecs();
@@ -660,7 +661,7 @@ toprint_f(const Tok& opt) {
 			} else {
 				add2vector(rhs, sp.toprint);
 				//!! sp.toprint.push_back(rhs);
-				trc.dprint(rhs," will be printed");
+				T_(trc.dprint(rhs," will be printed");)
 			}
 		}
 	}
@@ -730,11 +731,11 @@ param_f(const Tok& opt) {
 // XXX Allow the user to say something like "alt=Fixed" instead
 // of specifying a value - this means to take the parameter value
 // from a previous analysis
-	Trace trc(1,"param_f");
+	T_(Trace trc(1,"param_f");)
 	ostringstream os;
 	Specs& sp = flutspecs();
 
-	trc.dprint("opt<",opt,"> ",opt.svec.size()," rhs");
+	T_(trc.dprint("opt<",opt,"> ",opt.svec.size()," rhs");)
 
 	Par* par(nullptr);
 	try {
@@ -763,7 +764,7 @@ param_f(const Tok& opt) {
 			par->set_aux();
 	} catch (runtime_error& s) {
 		string exc = vastr("illegal parameter definition: ",s.what());
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 
@@ -779,7 +780,7 @@ param_f(const Tok& opt) {
 
 	par = gpset::get().add(par);
 
-	trc.dprint("got parameter ",par->longsummary());
+	T_(trc.dprint("got parameter ",par->longsummary());)
 	return true;
 }
 /*------------------------------------------------------------------
@@ -789,7 +790,7 @@ param_f(const Tok& opt) {
 void
 parser (string const& prog) {
 // Parse the user's options by calling flaps::lexer with handler functions
-	Trace trc(1,"parser");
+	T_(Trace trc(1,"parser");)
 
 	Specs& sp = flutspecs();
 
@@ -890,9 +891,9 @@ parser (string const& prog) {
 		{"^vacm$|^cmvd$", [&](const Tok& p) { return vacm_f(p.rvec[0]); }},
 		{"^vvca$", [&](const Tok& p) { return vvca_f(p.rvec[0]); }},
 		{"^vzid|amkit", [&](const Tok& p) {
-			Trace trc(1,"vzid");
+			T_(Trace trc(1,"vzid");)
 			sp.vzid = p.srhs;
-			trc.dprint("got vzid \"",sp.vzid,"\"");
+			T_(trc.dprint("got vzid \"",sp.vzid,"\"");)
 			return true; }},
 		{".*", param_f },    // parameter name?
 	});
@@ -900,7 +901,7 @@ parser (string const& prog) {
 	if (!unrec.empty())
 		throw runtime_error(vastr(unrec.size()," options were not recognized: ",unrec));
 
-	trc.dprint("specs: {\n",sp,"}");
+	T_(trc.dprint("specs: {\n",sp,"}");)
 	return;
 }
 
@@ -915,12 +916,12 @@ get_source(string const& sid) {
 // Most will already be in the global pset but some members may be
 // taken from the source parameter. Keeping a separate pset in
 // addition to the gpset allows passing Fixed states, and ??.
-	Trace trc(1,"get_source");
+	T_(Trace trc(1,"get_source");)
 
 	string mid{vastr("parameters,",sid)};
 	try {
 		pset* source = pset::fetch(mid);
-		trc.dprint("gpset before updating with source parameters:\n",gpset::get());
+		T_(trc.dprint("gpset before updating with source parameters:\n",gpset::get());)
 		for (auto& pairi : source->pmap()) {
 			Par* pp = pairi.second;
 			Par* gpsp = gpset::find(pp->name);
@@ -929,7 +930,7 @@ get_source(string const& sid) {
 			if (pp->is_fixed()) {
 				gpsp->valuef(pp->value());
 				gpsp->set_fixed();
-				trc.dprint("set ",pp->name," to Fixed ",pp->value());
+				T_(trc.dprint("set ",pp->name," to Fixed ",pp->value());)
 			}
 			// if Indep change gpsp to Derived if it has candidates,
 			// nostate otherwise
@@ -942,7 +943,7 @@ get_source(string const& sid) {
 			// Clear the "solns" arrays
 			gpsp->clear_solns();
 		}
-		trc.dprint("gpset after updating with source parameters:\n",gpset::get());
+		T_(trc.dprint("gpset after updating with source parameters:\n",gpset::get());)
 	} catch (runtime_error& s) {
 		string exc{vastr("source analysis (",sid,") is not available: ",s.what())};
 		throw runtime_error(exc);
@@ -954,7 +955,7 @@ get_source(string const& sid) {
 		if (mids.empty()) {
 			string exc{vastr("data from source analysis (",sid,
 				") is incomplete: matrix list is missing")};
-			trc.dprint("throwing exception: ",exc);
+			T_(trc.dprint("throwing exception: ",exc);)
 			throw runtime_error(exc);
 		}
 		for (auto& s : mids) {
@@ -965,7 +966,7 @@ get_source(string const& sid) {
 				throw runtime_error(vastr("matrix \"",mid,"\" was not saved in ",sid));
 			mp->desc(des);
 			Matrix::insert(mp);
-			trc.dprint("fetched source matrix ",mid);
+			T_(trc.dprint("fetched source matrix ",mid);)
 		}
 	} catch (runtime_error& s) {
 		throw runtime_error(vastr("data from source analysis (",sid,

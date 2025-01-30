@@ -76,7 +76,7 @@ initialize(const string& nodes, const string& coords,
 vector<int>
 penlift2segments(const vector<int>& penlift) {
 // convert connectivities in penlift format to segment format
-	Trace trc(2,"penlift2segments");
+	T_(Trace trc(2,"penlift2segments");)
 	vector<int> rval;
 	int prev{0};
    for (size_t i=0; i<penlift.size(); i++) {
@@ -94,7 +94,7 @@ penlift2segments(const vector<int>& penlift) {
 			prev = penlift[i];
 		}
 	}
-	trc.dprint("connectivities in segment format",rval);
+	T_(trc.dprint("connectivities in segment format",rval);)
 	return rval;
 }
 
@@ -103,11 +103,11 @@ Amdata::
 dostuff(vector<int>& nodenumbers_, vector<double>& coords_,
 	vector<int>& penlift, vector<complex<double>>& gct_) {
 // do some common setup for both constructors
-	Trace trc(1,"dostuff");
+	T_(Trace trc(1,"dostuff");)
 
-	trc.dprint("coordinates: ",coords_);
-	trc.dprint("connectivity: ",penlift);
-	trc.dprint("node numbers: ",nodenumbers_);
+	T_(trc.dprint("coordinates: ",coords_);)
+	T_(trc.dprint("connectivity: ",penlift);)
+	T_(trc.dprint("node numbers: ",nodenumbers_);)
 
 	nnodes_ = nodenumbers_.size();
 	ngc_ = gct_.size()/(3*nnodes_);
@@ -121,8 +121,8 @@ dostuff(vector<int>& nodenumbers_, vector<double>& coords_,
 
 	// normalize the coordinates and shift the origin to the bounding-box center
 	coord_norm_ = normalize_coord();
-	trc.dprint("normalized & shifted coords: ",coords_);
-	trc.dprint("coord norm ",coord_norm_);
+	T_(trc.dprint("normalized & shifted coords: ",coords_);)
+	T_(trc.dprint("coord norm ",coord_norm_);)
 
 	// the connectivities are in penlift format - change them to 0b indices
 	// into the nodenumbers array; then the start of start of ordinal
@@ -136,7 +136,7 @@ dostuff(vector<int>& nodenumbers_, vector<double>& coords_,
 				" has not been defined"));
 		segidx_.push_back((int)(idx - nodenumbers_.begin()));
 	}
-	trc.dprint("segment indices (segidx)",segidx_);
+	T_(trc.dprint("segment indices (segidx)",segidx_);)
 
 	colormode_ = "abs value";
 	colorskew_ = 5;  // no skewing
@@ -161,7 +161,7 @@ Amdata(const string& ufname) {
 // 4) gct           (3*nnodes*ngc) transformation from the ngc generalized
 //                  (or physical) coordinates to (x,y,z) displacements at
 //                  "coords_"
-	Trace trc(1,"Amdata uf constructor");
+	T_(Trace trc(1,"Amdata uf constructor");)
 
 	// import the uf file
 	vector<int> penlift;
@@ -217,7 +217,7 @@ Amdata(const string& nodes_name, const string& coords_name,
 //                  "coordinates"
 // The data in these matrices is stored in vectors of doubles, so the int
 // arrays nodenumbers and penlift must be cast to ints.
-	Trace trc(1,"Amdata (nodes...) constructor");
+	T_(Trace trc(1,"Amdata (nodes...) constructor");)
 
 	Matrix* nodes = new Matrix(nodes_name);
 	Matrix* coords = new Matrix(coords_name);
@@ -254,7 +254,7 @@ Amdata::
 add(const vector<complex<double>>& ev) {
 // add gctransform*ev to the list of nodal displacements, return
 // the 0b index of the result in the nodal_disp_ array.
-	Trace trc(1,"Amdata::add");
+	T_(Trace trc(1,"Amdata::add");)
 	complex<double> alpha{1.0};
 	complex<double> beta{0.0};
 	int m{3*nnodes()};
@@ -263,12 +263,12 @@ add(const vector<complex<double>>& ev) {
 	// if there are extra controls equations
 	if ((int)ev.size() < n) {
 		string exc{vastr("mismatch: ",ev.size()," gc but ",n," transform columns")};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 	complex<double>* gcxf = &gct_[0];
 	vector<complex<double>> disp(m);
-	trc.dprint("eigenvector:",ev);
+	T_(trc.dprint("eigenvector:",ev);)
 	blas_cgemv ("n", m, n, alpha, gcxf, m, &ev[0], 1, beta, &disp[0], 1);
 	size_t rval = nodal_disp_.size();
 	picked_point_ = rval;     // default picked point
@@ -298,7 +298,7 @@ coord_displacements(int omegat, int phase, vector<double>& colorvalue) {
 // compute the (real) displacement at each node at time omegat
 //   x[k] = Real(cos(omegat)+i*sin(omegat)*nodal_disp[k] + coord[k]
 //       k = 0:n3-1
-	Trace trc(1,"Amdata::coord_displacements");
+	T_(Trace trc(1,"Amdata::coord_displacements");)
 	constexpr double deg2rad = atan(1.0)/45.0;
 	constexpr double pi = 4.0*atan(1.0);
 	static int visit{0};
@@ -315,7 +315,7 @@ coord_displacements(int omegat, int phase, vector<double>& colorvalue) {
 	vector<complex<double>> disp = nodal_disp_[picked_point_];
 
 	if (visit == 0)
-		trc.dprint("omegat ",omegat,", disp = ",disp);
+		T_(trc.dprint("omegat ",omegat,", disp = ",disp);)
 	visit++;
 
 	// normalize the complex nodal displacements to amplitude_*coord_norm_
@@ -334,7 +334,7 @@ coord_displacements(int omegat, int phase, vector<double>& colorvalue) {
 	double sci{sin(omtp)};
 	complex<double> csc(scr, sci);
 
-	trc.dprint("omegat+phase ",omtp," rad, (cos,sin) ",csc);
+	T_(trc.dprint("omegat+phase ",omtp," rad, (cos,sin) ",csc);)
 
 	vector<complex<double>> cd(3);
 	for (int i=0; i<nnodes(); i++) {
@@ -384,7 +384,7 @@ coord_displacements(int omegat, int phase, vector<double>& colorvalue) {
 		}
 	}
 
-	trc.dprint("nodal disp:",rval);
+	T_(trc.dprint("nodal disp:",rval);)
 	return rval;
 }
 

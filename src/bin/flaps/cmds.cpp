@@ -54,16 +54,16 @@ bgprocess(pid_t pid) {
 // Register a background process so they can be waited on when
 // flaps is finished. If pid == 0 each registered process is
 // waited on
-	Trace trc(1,"bgprocess ", pid);
+	T_(Trace trc(1,"bgprocess ", pid);)
 	static vector<pid_t> bgprocs;
 	if (pid > 0)
 		bgprocs.push_back(pid);
 	else {
 		for (auto p : bgprocs) {
 			int stat;
-			trc.dprint("waiting on bg proc ",p);
+			T_(trc.dprint("waiting on bg proc ",p);)
 			waitpid(p, &stat, 0);
-			trc.dprint("pid ",p," terminated with status ",stat);
+			T_(trc.dprint("pid ",p," terminated with status ",stat);)
 			if (stat != 0) {
 				cout << p << " terminated abnormally: "
 					<< exitstatus(stat) << " (see stderr)\n";
@@ -82,7 +82,7 @@ exec_prog (const string& prog, const string& options,
  *
  * Returns:		the exit status of the program
  *------------------------------------------------------------------*/
-	Trace trc(1,"exec_prog");
+	T_(Trace trc(1,"exec_prog");)
 	string name;
 	string exc;
 	ostringstream os;
@@ -128,7 +128,7 @@ exec_prog (const string& prog, const string& options,
 	// ignoreErr is false
 	if (!ignoreErr && status != 0) {
 		string err = prog + string(" failed");
-		trc.dprint("throwing exception: ",err);
+		T_(trc.dprint("throwing exception: ",err);)
 		throw (runtime_error(err));
 	}
 
@@ -143,7 +143,7 @@ exec_prog (const string& prog, const string& options,
 
 bool
 call_function (const string& name, const string& options, bool ignoreErr) {
-	Trace trc(1,"call_function");
+	T_(Trace trc(1,"call_function");)
 	Fcnptr fun = fcnptr(name);
 
 	// Expand environment variables in the options
@@ -163,7 +163,7 @@ call_function (const string& name, const string& options, bool ignoreErr) {
 
 double
 callRealFunction (const char *funName, double (*fun)(char const*), char const* opt, bool ignoreErr) {
-	Trace trc(1,"callRealFunction");
+	T_(Trace trc(1,"callRealFunction");)
 	preamble (funName, opt, true);
 	double rval = fun(opt);
 	int nerr = flaps::nerrors();
@@ -175,7 +175,7 @@ callRealFunction (const char *funName, double (*fun)(char const*), char const* o
 
 bool
 unix_command (const string& cmd, bool ignoreErr) {
-	Trace trc(1,"unix_command");
+	T_(Trace trc(1,"unix_command");)
 	bool rval = true;
 	ostringstream os;
 
@@ -188,7 +188,7 @@ unix_command (const string& cmd, bool ignoreErr) {
 
 	if (status != 0) {
 		string exc = vastr(cmd, " returned status ",status);
-		trc.dprint("unix cmd error: : ",exc);
+		T_(trc.dprint("unix cmd error: : ",exc);)
 		flaps::error(exc);
 		return false;
 	}
@@ -211,11 +211,11 @@ preamble (const string& progpath, const string& options, bool waiton) {
  *    ------------------------------------------------------
  *
  *------------------------------------------------------------------*/
-	Trace trc(1,"preamble");
+	T_(Trace trc(1,"preamble");)
 	string task;
 	string line;
 
-	trc.dprint("prog path ",progpath,", options: ",options);
+	T_(trc.dprint("prog path ",progpath,", options: ",options);)
 
 	// task is the name of the command without path info
 	string::size_type idx = progpath.rfind("/");
@@ -255,7 +255,7 @@ unix_preamble (string const& commandline) {
  *    ------------------  Unix Command commandline  ---------- {
  *
  *------------------------------------------------------------------*/
-	Trace trc(1,"unix_preamble");
+	T_(Trace trc(1,"unix_preamble");)
 
 	cout << "\n\n ------------  Unix Command " <<
 				commandline << "   -----------------{\n";
@@ -272,7 +272,7 @@ static void
 colophon (const string& task, int status, bool waiton,
 		pid_t pid, const double& cputime) {
 // print messages in cout, cerr regarding the completion of a task
-	Trace trc(1,"colophon");
+	T_(Trace trc(1,"colophon");)
 
 	if (task.empty())
 		return;
@@ -301,7 +301,7 @@ wait_for_group() {
 // cannot use waitpid() if we have grandchildren
 // Note: this function only works when called from a process
 // named "control"
-	Trace trc(1,"wait_for group");
+	T_(Trace trc(1,"wait_for group");)
 	char buf[256];
 	pid_t pid = getpid();
 	ostringstream os;
@@ -315,24 +315,24 @@ wait_for_group() {
 	//
 	// os << "ps -e -o \"%r %c\"";
 
-	trc.dprint("searching for pgid ",pid);
+	T_(trc.dprint("searching for pgid ",pid);)
 	// keep running ps until the only processes left in
 	// my group are me (control), ps, or sh
 	while(1) {
 		// FILE* pipe = popen(os.str().c_str(), "r");
-		trc.dprint("popen(",ps,")");
+		T_(trc.dprint("popen(",ps,")");)
 		FILE* pipe = popen(ps, "r");
 
 		while (1) {
 			char* cp = fgets(buf, sizeof(buf), pipe);
 			if (!cp) {
-				trc.dprint("no more processes: done");
+				T_(trc.dprint("no more processes: done");)
 				pclose(pipe);
 				return;
 			}
 			string line(buf);
 			vector<string> toks = string2tok(line, " \t\n");
-			trc.dprint("read ",buf);
+			T_(trc.dprint("read ",buf);)
 			int pgid;
 			// more than 2 items on a line? probably <defunct>,
 			// or if the 1st item is not an int, ignore this line
@@ -340,7 +340,7 @@ wait_for_group() {
 				continue;
 			// if one of my group is still running break, pause, and re-try
 			if (pgid == (int)pid) {
-				trc.dprint("found a proc with my gpid: ",buf);
+				T_(trc.dprint("found a proc with my gpid: ",buf);)
 				if (toks[1] != "control" && toks[1] != "ps" && toks[1] != "sh")
 					break;
 			}

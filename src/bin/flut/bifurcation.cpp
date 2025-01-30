@@ -26,6 +26,7 @@ constexpr int tracelvl{1};
 #include "message.h"
 #include "nrc.h"
 #include "svd.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -81,17 +82,17 @@ checkdsc(Pac& a, Pac& b) {
 	b.det.equalize(a.det);
 
 	// debug tracing for when we encountered bif
-	Trace trc(tracelvl,"checkdsc");
+	T_(Trace trc(tracelvl,"checkdsc");)
 
 	double t = -a.det.coef/(b.det.coef-a.det.coef);
-	trc.dprint("predicted bif stepsize factor: ",t);
+	T_(trc.dprint("predicted bif stepsize factor: ",t);)
 	double dsctol = a.specs.minstepsize*243.0;
 	if (a.step.hk > dsctol) {
 		if (t > 0.01) {
 			double tstep = 0.7*t*a.step.hk;
 				a.step.hk = tstep;
 				a.step.red_dsc++;
-				trc.dprint("returning -1: retry step with hk=",a.step.hk);
+				T_(trc.dprint("returning -1: retry step with hk=",a.step.hk);)
 				return -1;	// retry
 		}
 	}
@@ -99,7 +100,7 @@ checkdsc(Pac& a, Pac& b) {
 	// lambda to evaluate the determinant at (1-t)*a + t*b
 	Pac bifp{a};
 	auto rootfcn = [&](double t) {
-		Trace trc(tracelvl,"rootfcn");
+		T_(Trace trc(tracelvl,"rootfcn");)
 		for (int i=0; i<nx; i++) {
 			bifp.x[i] = (1.0-t)*a.x[i] + t*b.x[i];
 			bifp.tan[i] = (1.0-t)*a.tan[i] + t*b.tan[i];
@@ -107,39 +108,39 @@ checkdsc(Pac& a, Pac& b) {
 		bifp.corrector();
 		Det det = bifp.determinant();
 		det.equalize(a.det);
-		trc.dprint("returning f(",t,") = ",det.coef);
+		T_(trc.dprint("returning f(",t,") = ",det.coef);)
 		return det.coef;
 	};
 
 	double bif = t;
 
-	trc.dprint("det sign change localized between ",a.coord," and ",b.coord," with step ",a.stepsize);
+	T_(trc.dprint("det sign change localized between ",a.coord," and ",b.coord," with step ",a.stepsize);)
 
 	// recompute bifp in case root did not return the last iteration
 	double det = rootfcn(bif);
-	trc.dprint("converged det = ",det);
+	T_(trc.dprint("converged det = ",det);)
 
 	// compute starting tangents for the bifurcations
 	vector<double> t1(nx, 0.0);
 	vector<double> t2(nx, 0.0);
 	string error = bif_tan(bifp, t1, t2);
 	if (!error.empty()) {
-		trc.dprint("bif_tan failed: ",error);
+		T_(trc.dprint("bif_tan failed: ",error);)
 		flaps::warning("suspected bifurcation between coord ",a.coord,
 				" and ",b.coord," failed: ",error);
 		return 0;
 	}
 
-	trc.dprintvvv(bifp.tan, t1, t2, "tan, t1, t2");
+	T_(trc.dprintvvv(bifp.tan, t1, t2, "tan, t1, t2");)
 	string plotfile("biftan");
 	plotTangent (*this, bifp.x, bifp.tan, t1, t2, plotfile);
 	// compare these 2 tangents with bifp's tangent: one
 	// should be close, use the other one
 	double tp1;
-	blas_dot(nx, bifp.tan.data(), 1, t1.data(), 1, tp1);
+	blas::dot(nx, bifp.tan.data(), 1, t1.data(), 1, tp1);
 	double tp2;
-	blas_dot(nx, bifp.tan.data(), 1, t2.data(), 1, tp2);
-	trc.dprint("p1 * t1, t2 = ", tp1, ", ", tp2);
+	blas::dot(nx, bifp.tan.data(), 1, t2.data(), 1, tp2);
+	T_(trc.dprint("p1 * t1, t2 = ", tp1, ", ", tp2);)
 //!! #ifdef NEVER // both
 	if (abs(tp2) < abs(tp1))
 		t1 = t2;
@@ -165,14 +166,14 @@ checkdsc(Pac& a, Pac& b) {
 
 static string
 bif_tan(Pac& bifp, vector<double>& t1, vector<double>& t2) {
-	Trace trc(tracelvl,"bif_tan");
+	T_(Trace trc(tracelvl,"bif_tan");)
 
 	int nf = bifp.f.size();
 	int nx = bifp.x.size();
 
 	// SVD the jacobian to see how many rank def and to get U and V
    SVD jf(nf, nx, bifp.jac.data());
-	trc.dprint("rcond: ",jf.s[nf-1]/jf.s[0]);
+	T_(trc.dprint("rcond: ",jf.s[nf-1]/jf.s[0]);)
 
 	// how many rank deficiencies?
 	size_t nrdef = 0;
@@ -180,8 +181,8 @@ bif_tan(Pac& bifp, vector<double>& t1, vector<double>& t2) {
 	//!! double tol = 20.0*4.0*eps*jf.s[0];
 	double eps(std::numeric_limits<double>::epsilon());
 	double tol = 8.0*nf*eps*jf.s[0];
-	trc.dprint("rank tol = ",tol);
-	//!! trc.dprint("singular values: ",jf.s);
+	T_(trc.dprint("rank tol = ",tol);)
+	//!! T_(trc.dprint("singular values: ",jf.s);)
  	for (int i=0; i<nf; i++) {
 		if (jf.s[nf-1-i] < tol)
 			nrdef++;
@@ -197,7 +198,7 @@ bif_tan(Pac& bifp, vector<double>& t1, vector<double>& t2) {
 		nrdef = 1;
 	} else if (nrdef != 1) {
 		//!! flaps::warning("there are ",nrdef," rank deficiencies - ignoring all but one");
-		trc.dprint("there are ",nrdef," rank deficiencies - ignoring all but one");
+		T_(trc.dprint("there are ",nrdef," rank deficiencies - ignoring all but one");)
 		nrdef = 1;
 	}
 
@@ -208,14 +209,14 @@ bif_tan(Pac& bifp, vector<double>& t1, vector<double>& t2) {
 	//    um = U_m            last column of U: (m,1) left nullspace of J
 	//    vm = [V_m V_{m+1}]  (m+1,nrdef+1) nullspace (last nrdef+1 columns of V)
 	vector<double> um(m);
-	blas_copy(m, &jf.u[IJ(0,m-1,m)], 1, &um[0], 1);
+	blas::copy(m, &jf.u[IJ(0,m-1,m)], 1, &um[0], 1);
 	vector<double> vm((m+1));
 	vector<double> vmp1((m+1));
 	vector<double> work(m+1);
 	// first vm is the last column of V, then the nrdef
 	// penultimate columns
-	blas_copy(m+1, &jf.vt[IJ(m,0,m+1)], m+1, &vm[0], 1);
-	blas_copy(m+1, &jf.vt[IJ(m-1,0,m+1)], m+1, &vmp1[0], 1);
+	blas::copy(m+1, &jf.vt[IJ(m,0,m+1)], m+1, &vm[0], 1);
+	blas::copy(m+1, &jf.vt[IJ(m-1,0,m+1)], m+1, &vmp1[0], 1);
 
 	// compute alpha_k, beta_k, k=1,2
 	double alpha1, beta1;
@@ -226,17 +227,17 @@ bif_tan(Pac& bifp, vector<double>& t1, vector<double>& t2) {
 
 	// mult t_k = alpha_k*v_m + beta_k*v_{m+1}
 	t1 = vm;
-	blas_scal(nx, alpha1, &t1[0], 1);
-	blas_axpy(nx, beta1, &vmp1[0], 1, &t1[0], 1);
+	blas::scal(nx, alpha1, &t1[0], 1);
+	blas::axpy(nx, beta1, &vmp1[0], 1, &t1[0], 1);
 	t2 = vm;
-	blas_scal(nx, alpha2, &t2[0], 1);
-	blas_axpy(nx, beta2, &vmp1[0], 1, &t2[0], 1);
+	blas::scal(nx, alpha2, &t2[0], 1);
+	blas::axpy(nx, beta2, &vmp1[0], 1, &t2[0], 1);
 
 	// normalize new tangents
-	double norm = blas_snrm2(nx, &t1[0], 1);
-	blas_scal(nx, 1.0/norm, &t1[0], 1);
-	norm = blas_snrm2(nx, &t2[0], 1);
-	blas_scal(nx, 1.0/norm, &t2[0], 1);
+	double norm = blas::snrm2(nx, &t1[0], 1);
+	blas::scal(nx, 1.0/norm, &t1[0], 1);
+	norm = blas::snrm2(nx, &t2[0], 1);
+	blas::scal(nx, 1.0/norm, &t2[0], 1);
 	return rval;
 }
 
@@ -247,7 +248,7 @@ alpha_beta (Pac& bifp, const vector<double>& um,
 // Compute (alphak,betak), k=1,2 as part of computing bifurcation
 // tangents. Returns a string: if !empty the computation failed and
 // it gives the message
-	Trace trc(tracelvl,"alpha_beta");
+	T_(Trace trc(tracelvl,"alpha_beta");)
 	string rval;
 
 	int nf = bifp.f.size();
@@ -261,24 +262,24 @@ alpha_beta (Pac& bifp, const vector<double>& um,
 	auto g = [&](double xi1, double xi2) {
 		vector<double> xp(bifp.x);
 		if (xi1 != 0.0)
-			blas_axpy(nx, xi1, &vm[0], 1, &xp[0], 1);
+			blas::axpy(nx, xi1, &vm[0], 1, &xp[0], 1);
 		if (xi2 != 0.0)
-			blas_axpy(nx, xi2, &vmp1[0], 1, &xp[0], 1);
+			blas::axpy(nx, xi2, &vmp1[0], 1, &xp[0], 1);
 		bifp.fjac(xp, bifp.f, bifp.jac);
 		double rval;
-		blas_dot(nf, &um[0], 1, &bifp.f[0], 1, rval);
+		blas::dot(nf, &um[0], 1, &bifp.f[0], 1, rval);
 		return rval;
 	};
 
 	double g00 = g(0.0, 0.0);
-	trc.dprint("g00 = ",g00);
+	T_(trc.dprint("g00 = ",g00);)
 	double eps = pow(std::numeric_limits<double>::epsilon(), 1.0/3.0);
 	double epssq{eps*eps};
 	double a11 = (g(eps,0.0) - 2.0*g00 + g(-eps,0))/epssq;
 	double a12 = (g(eps,eps) + g(-eps,-eps) - g(eps,-eps) - g(-eps,eps))/(4.0*epssq);
 	double a22 = (g(0,eps) - 2.0*g00 + g(0,-eps))/epssq;
 	double disc = a12*a12 - a11*a22;
-	trc.dprint("a11 ",a11,", a12 ",a12,", a22 ",a22,", disc ",disc);
+	T_(trc.dprint("a11 ",a11,", a12 ",a12,", a22 ",a22,", disc ",disc);)
 	if (disc <= 0.0) {
 		rval = "not a simple bifurcation: negative discriminant";
 		//!! flaps::warning("suspected bifurcation at\n", this->summarize(bifp.x),
@@ -294,8 +295,8 @@ alpha_beta (Pac& bifp, const vector<double>& um,
 	beta1 = c1/sqrt(c1*c1 + a22*a22);
 	alpha2 = c2/sqrt(c2*c2 + a11*a11);
 	beta2 = c2/sqrt(c2*c2 + a22*a22);
-	trc.dprint("alpha1 ",alpha1,", beta1 ",beta1);
-	trc.dprint("alpha2 ",alpha2,", beta2 ",beta2);
+	T_(trc.dprint("alpha1 ",alpha1,", beta1 ",beta1);)
+	T_(trc.dprint("alpha2 ",alpha2,", beta2 ",beta2);)
 	return rval;
 }	// alpha_beta
 
@@ -306,16 +307,16 @@ vector<double>& tan,
 vector<double>& t1,
 vector<double>& t2,
 string const& plotfile) {
-	Trace trc(2,"plotTangent");
+	T_(Trace trc(2,"plotTangent");)
 	int nx = origin.size();
 	string aid = fc.aid();
 	// compute 3 tangents: origin->tan, origin->t1, origin->t2
 	vector<double> ot{origin};
-	blas_axpy(nx, 1.0, tan.data(), 1, ot.data(), 1);
+	blas::axpy(nx, 1.0, tan.data(), 1, ot.data(), 1);
 	vector<double> ot1{origin};
-	blas_axpy(nx, 1.0, t1.data(), 1, ot1.data(), 1);
+	blas::axpy(nx, 1.0, t1.data(), 1, ot1.data(), 1);
 	vector<double> ot2{origin};
-	blas_axpy(nx, 1.0, t2.data(), 1, ot2.data(), 1);
+	blas::axpy(nx, 1.0, t2.data(), 1, ot2.data(), 1);
 
 	Flutcurve ftan(aid, vastr(fc.cid(),".orig"),fc.vzid());
 	//!! ftan.clear_solns();

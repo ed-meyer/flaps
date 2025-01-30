@@ -138,8 +138,8 @@ public:
 
 	// Constructors
 	Par() noexcept = default;
-	Par (const Par& ap) noexcept = default; // copy constructor: use clone()
-	Par (Par&& ap) noexcept = default;      // move constructor
+	Par (const Par& ap) = default; // copy constructor: use clone()
+	Par (Par&& ap) = default;      // move constructor
 	// initializer-list constructor: defn contains lhs & srhs
 	Par(std::string const& defn, std::initializer_list<std::string> candidate_eqns);
 	// parsing constructors (with single or multiple rhs);
@@ -184,7 +184,9 @@ public:
 	Ad advalue() const;
 	void advalue(const Ad& x);
 	Ad iradvalue();
+#ifdef NEVER // deprecate addata
 	const double* addata() const { return advalue_.data(); }
+#endif // NEVER // deprecate addata
 	// min()        returns the minimum value; Caution: returns -std::max() if none,
 	//              so check with has_min() first
 	// max()        returns the max value, numeric_limits<double>::max() if none,

@@ -28,9 +28,9 @@ using namespace std;
 Target::
 Target (string const& lhs, string const& rhs, bool cls) {
 // create a target by parsing a token lhs=rhs
-	Trace trc(1,"Target constructor");
+	T_(Trace trc(1,"Target constructor");)
 
-	trc.dprint(lhs," = ",rhs);
+	T_(trc.dprint(lhs," = ",rhs);)
 
 	parname = lhs;
 	double prevalue{0.0}; // default: 0
@@ -40,7 +40,7 @@ Target (string const& lhs, string const& rhs, bool cls) {
 	Par* pp = gpset::find(lhs);
 	if (pp == nullptr) {
 		string exc = vastr("target parameter \"",lhs,"\" has not been defined");
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 	convfactor = pp->conv.factor;
@@ -51,7 +51,7 @@ Target (string const& lhs, string const& rhs, bool cls) {
 Target::
 Target (string const& par, double val, bool cls, string const& limit) :
 		parname(par), value(val), closest(cls) {
-	Trace trc(1,"Target double constructor");
+	T_(Trace trc(1,"Target double constructor");)
 	// lower or upper limit?
 	if (limit == "lower")
 		is_lowerlimit = true;

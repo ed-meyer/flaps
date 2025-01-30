@@ -53,7 +53,7 @@ main(int argc, char** argv) {
 int
 dofile (string& filename) {
 // inventory "filename" by restoring & cataloging
-	Trace trc(1,"dofile ",filename);
+	T_(Trace trc(1,"dofile ",filename);)
 	int rval{0};
 
 	// check existence of the file, may need to append .pf

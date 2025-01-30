@@ -14,6 +14,7 @@
 #include "lexer.h"
 #include "matrix.h"
 #include "settings.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -25,7 +26,7 @@ static void dosym (Matrix& mat, vector<int>& dofs);
 //-------------------------------------------------------------------
 bool
 symmetrize (string const& options) {
-	Trace trc(2,"symmetrize");
+	T_(Trace trc(2,"symmetrize");)
 	vector<int> dofs;
 	string mid;
 	string newmid;

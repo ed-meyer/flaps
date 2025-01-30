@@ -51,7 +51,7 @@ bool
 Fem::
 ss_f (const Tok& tok) {
 // ss{ id=s, beams{...}, mass{...},   }
-	Trace trc(2,"ss_f");
+	T_(Trace trc(2,"ss_f");)
 	string id;
 	vector<int> node_numbers;
 	Material matl;
@@ -74,7 +74,7 @@ ss_f (const Tok& tok) {
 		throw runtime_error(vastr("unrecognized preferences: ",unrec));
 
 	SS* ss = new SS(id,beams,masses,freev,proj);
-	trc.dprint("got ss: ",*ss);
+	T_(trc.dprint("got ss: ",*ss);)
 
 	substructures_.push_back(ss);
 	return true;
@@ -83,10 +83,10 @@ ss_f (const Tok& tok) {
 SS*
 Fem::
 find_ss(const string& id) {
-	Trace trc(2, "find_ss");
+	T_(Trace trc(2, "find_ss");)
 	for (auto& si : substructures_) {
 		if (id == si->id()) {
-			trc.dprint("returning \"",si->id(),"\"");
+			T_(trc.dprint("returning \"",si->id(),"\"");)
 			return si;
 		}
 	}
@@ -97,7 +97,7 @@ bool
 Fem::
 bma_f(const Tok& p) {
 // definition of a BMA: root=ss{n}, branches=(ss1{n}, ss2,..),
-	Trace trc(2,"Fem::bma_f");
+	T_(Trace trc(2,"Fem::bma_f");)
 	this->bma = new BMA;
 	vector<Tok*> unrec = flaps::lexer(p.lopt, {
 		{"root",[&](const Tok& p) { 
@@ -118,7 +118,7 @@ bma_f(const Tok& p) {
 			return true;
 		}}
 	});
-	trc.dprint("got BMA: ",*bma);
+	T_(trc.dprint("got BMA: ",*bma);)
 	return true;
 }
 
@@ -126,7 +126,7 @@ bool
 Fem::
 cms_f(const Tok& tok) {
 // definition of a CMS: ss=(ss1{n}, ss2{n}, ..),
-	Trace trc(2,"Fem::cms_f");
+	T_(Trace trc(2,"Fem::cms_f");)
 	this->cms = new CMS;
 	vector<Tok*> unrec = flaps::lexer(tok.lopt, {
 		{"ss", [&](const Tok& p) {
@@ -140,7 +140,7 @@ cms_f(const Tok& tok) {
 			return true;
 		}}
 	});
-	trc.dprint("got CMS: ",*cms);
+	T_(trc.dprint("got CMS: ",*cms);)
 	return true;
 }
 
@@ -172,7 +172,7 @@ assemble(const vector<SS*> substructures) {
 // - Split freedoms into interior and attachment
 // - assemble the stiffness and mass matrices for a substructure
 // - compute Gia = K_{ii}^{-1}K_{ia}
-	Trace trc(1,"SS::assemble");
+	T_(Trace trc(1,"SS::assemble");)
 
 	size_t n = retained_.size();
 	// divide retained_ into interior and attachment freedoms
@@ -199,7 +199,7 @@ assemble(const vector<SS*> substructures) {
 	for (auto bp : beams_)
 		blas::copy(bp->freedoms(), bp->freedoms(), 1.0,
 			bp->data(), this->retained_, this->retained_, 1.0, stif_);
-	trc.dprintm(n,n,n,stif_,vastr(id()," stif matrix"));
+	T_(trc.dprintm(n,n,n,stif_,vastr(id()," stif matrix"));)
 
 	// Merge the mass matrix
 	// if any of the mass elements has a cg parameter (cg_p),
@@ -213,14 +213,14 @@ assemble(const vector<SS*> substructures) {
 			freedoms.push_back(Freedom(mi->node(),i+1));
 		if (!cgv.empty()) {
 			assert(cgv.size() == 3);
-			blas_scal(3, mi->cg(), &cgv[0], 1);
+			blas::scal(3, mi->cg(), &cgv[0], 1);
 		}
 		conmass(mi->mass(), mi->moi(), cgv, elem);
-		trc.dprintm(6,6,6,&elem[0],vastr("node ",mi->node()," mass ",mi->mass()));
+		T_(trc.dprintm(6,6,6,&elem[0],vastr("node ",mi->node()," mass ",mi->mass()));)
 		// insert into the gross matrix
 		blas::copy(freedoms, freedoms, 1.0, elem, retained_, retained_, 1.0, mass_);
 	}
-	trc.dprintm(n,n,n,mass_,vastr(id()," mass matrix"));
+	T_(trc.dprintm(n,n,n,mass_,vastr(id()," mass matrix"));)
 
 	// compute the transformation from attach to interior dof
 	Gia_ = gia();
@@ -235,14 +235,14 @@ gia() {
 // to the interace:
 //   G_{ia} = -K^{-1}_{ii} K_{ia}
 // where "a" subscripts are attachment dof, and "i" are interior
-	Trace trc(1,"gia");
+	T_(Trace trc(1,"gia");)
 
 	vector<Freedom> ret = this->retained();	// all freedoms for this branch
 	vector<Freedom> att = this->attach();		// attachment freedoms
 	vector<Freedom> inter = this->interior();	// interior freedoms
-	trc.dprint("retained: ",ret);
-	trc.dprint("attach: ",att);
-	trc.dprint("interior: ",inter);
+	T_(trc.dprint("retained: ",ret);)
+	T_(trc.dprint("attach: ",att);)
+	T_(trc.dprint("interior: ",inter);)
 
 	// extract K_{ii} and K_{ia}
 	int na = att.size();
@@ -251,8 +251,8 @@ gia() {
 	kii = vector<double>(ni*ni, 0.0);	// kii is a member
 	blas::copy(ret, ret, 1.0, stif(), inter, inter, 0.0, kii);
 	blas::copy(ret, ret, 1.0, stif(), inter, att, 0.0, kia);
-	trc.dprintm(ni,ni,ni,kii,vastr(id(),"_kii"));
-	trc.dprintm(ni,na,ni,kia,vastr(id(),"_kia"));
+	T_(trc.dprintm(ni,ni,ni,kii,vastr(id(),"_kii"));)
+	T_(trc.dprintm(ni,na,ni,kia,vastr(id(),"_kia"));)
 
 	int info = lapack::dposv("u",ni,na,&kii[0],ni,&kia[0],ni);
 	if (info != 0) {
@@ -264,8 +264,8 @@ gia() {
 
 	// Gia is returned from dposv in kia
 	// change the sign
-	blas_scal(ni*na, -1.0, kia.data(), 1);
-	trc.dprintm(ni,na,ni,kia,vastr(id(),"_gia"));
+	blas::scal(ni*na, -1.0, kia.data(), 1);
+	T_(trc.dprintm(ni,na,ni,kia,vastr(id(),"_gia"));)
 	return kia;
 }
 
@@ -282,21 +282,21 @@ lump(vector<double>& kaa) {
 //       | -K^{-1}_ii K_{ia} |
 // where "a" subscripts are attachment dof, and "i" are interior
 // The return mass matrix must be *added* to the root substructure attachment
-	Trace trc(1,"lump");
+	T_(Trace trc(1,"lump");)
 
 	vector<Freedom> ret = this->retained();
 	vector<Freedom> att = this->attach();
 	vector<Freedom> inter = this->interior();
-	trc.dprint("retained: ",ret);
-	trc.dprint("attach: ",att);
-	trc.dprint("interior: ",inter);
+	T_(trc.dprint("retained: ",ret);)
+	T_(trc.dprint("attach: ",att);)
+	T_(trc.dprint("interior: ",inter);)
 
 	int na = att.size();
 	int ni = inter.size();
 
 	// Gia = -K_{ii}^{-1} K_{ia}
 	vector<double> gia = Gia();
-	trc.dprintm(ni,na,ni,gia,"gia");
+	T_(trc.dprintm(ni,na,ni,gia,"gia");)
 
 	vector<double> rval(na*na, 0.0);
 
@@ -313,14 +313,14 @@ lump(vector<double>& kaa) {
 	kaa = vector<double>(na*na, 0.0);
 	lapack::triprod(nr, na, T.data(), stif().data(), kaa.data());
 
-	trc.dprintm(na,na,na,rval,vastr(id(),"_maa"));
-	trc.dprintm(na,na,na,kaa,vastr(id(),"_kaa"));
+	T_(trc.dprintm(na,na,na,rval,vastr(id(),"_maa"));)
+	T_(trc.dprintm(na,na,na,kaa,vastr(id(),"_kaa"));)
 
 	// kaa should have 1-6 rb modes
 	vector<double> kaas{kaa};
 	vector<double> w(na, 0.0);
 	lapack::dsyev("v", "u", na, kaas.data(), na, w.data());
-	trc.dprint("eigenvalues of kaa: ",w);
+	T_(trc.dprint("eigenvalues of kaa: ",w);)
 	return rval;
 }
 
@@ -353,8 +353,8 @@ SS::
 projection(vector<double>& v) {
 // project each column of v onto the corresponding 
 // axis (1-3) in member "proj_"
-	Trace trc(2,"SS::projection");
-	trc.dprint("ss ",id()," proj: ",proj_);
+	T_(Trace trc(2,"SS::projection");)
+	T_(trc.dprint("ss ",id()," proj: ",proj_);)
 	// v is (m,n) where n = proj_.size()
 	int n = proj_.size();
 	int m = v.size()/n;
@@ -388,7 +388,7 @@ transform (const Freev& gross) {
 // 4) do an eigensolution on the branch cantilevered at
 //    the attachment nodes; insert these eigenvectors in the
 //    branch dof rows, trailing columns
-	Trace trc(1,"BMA::transform");
+	T_(Trace trc(1,"BMA::transform");)
 
 	assert(root.ss != nullptr);
 	// 1) add lumped_masses, lumped_stif to root attachments
@@ -428,8 +428,8 @@ transform (const Freev& gross) {
 	vector<double> rval(n*m, 0.0);
 	// the eigenvectors were returned in K - save only the first mr
 	vector<double> v(nr*mr, 0.0);
-	blas_copy(nr*mr, &K[0], 1, &v[0], 1);
-	trc.dprintm(nr,mr,nr,&K[0],"root eigenvectors");
+	blas::copy(nr*mr, &K[0], 1, &v[0], 1);
+	T_(trc.dprintm(nr,mr,nr,&K[0],"root eigenvectors");)
 	// the eigenvectors go in columns 1-mr; ckey is a vector of
 	// ints from 1:m, next is the 1b column # to start putting vectors
 	vector<int> ckey;		// rval column keys
@@ -447,13 +447,13 @@ transform (const Freev& gross) {
 		int na = bp.ss->attach().size();
 		vector<double> att(na*mr, 0.0);
 		blas::copy(root.ss->retained(),ckeyr,1.0,v,bp.ss->attach(),ckeyr,0.0,att);
-		trc.dprintm(na,mr,na,att,vastr(bp.ss->id()," attachment motion"));
+		T_(trc.dprintm(na,mr,na,att,vastr(bp.ss->id()," attachment motion"));)
 		// rigid: (ni,na) # interior freedoms in the branch by # attach freedoms
 		// att:   (na,mr) # attach freedoms by root nmodes (mr)
 		// vint = rigid*att: (ni,mr)
 		int ni = bp.ss->interior().size();
 		vector<double> vint(ni*mr, 0.0);
-		blas_sgemm("n","n",ni,mr,na,1.0,bp.ss->Gia().data(),ni,&att[0],
+		blas::gemm("n","n",ni,mr,na,1.0,bp.ss->Gia().data(),ni,&att[0],
 			na, 0.0, vint.data(), ni);
 		blas::copy(bp.ss->interior(),ckeyr,1.0,vint,gross,ckey,0.0,rval);
 		// do a triple-product vint' Kii vint to check determinate-ness
@@ -462,17 +462,13 @@ transform (const Freev& gross) {
 		blas::copy(bp.ss->interior(),ckeyr,1.0,vint,bp.ss->retained(),ckeyr,0.0,vbp);
 		blas::copy(bp.ss->attach(),ckeyr,1.0,att,bp.ss->retained(),ckeyr,0.0,vbp);
 		vector<double> vkv(mr, 0.0);
-		//!! double knorm = blas_snrm2(nbp*nbp, bp.ss->stif().data(), 1);
 		for (int j=0; j<mr; j++) {
 			double* vp = &vbp[j*nbp];
 			//!! lapack::triprod(nbp, mr, vbp.data(), bp->stif().data(), vkv.data());
 			lapack::triprod(nbp, 1, vp, bp.ss->stif().data(), &vkv[j]);
 			vkv[j] /= std::max(w[j],1.0);
 		}
-		//!! trc.dprintm(mr,mr,mr,vkv,vastr(bp->id()," vkv"));
-		//!! trc.dprint("vkv = ",vkv);
-		//!! blas_scal(mr, 1.0/knorm, vkv.data(), 1);
-		trc.dprint("vkv scaled = ",vkv);
+		T_(trc.dprint("vkv scaled = ",vkv);)
 		// eigenvectors of the branch cantilevered at the attachment
 		// start in column "next"
 		vector<int> ckeyi;
@@ -489,21 +485,21 @@ transform (const Freev& gross) {
 			bp.ss->interior(), bp.ss->interior(), 0.0, K);
 		blas::copy(bp.ss->retained(), bp.ss->retained(), 1.0, bp.ss->mass(),
 			bp.ss->interior(), bp.ss->interior(), 0.0, M);
-		trc.dprintm(ni,ni,ni,K,vastr(bp.ss->id()," cantilevered stif"));
-		trc.dprintm(ni,ni,ni,M,vastr(bp.ss->id()," cantilevered mass"));
+		T_(trc.dprintm(ni,ni,ni,K,vastr(bp.ss->id()," cantilevered stif"));)
+		T_(trc.dprintm(ni,ni,ni,M,vastr(bp.ss->id()," cantilevered mass"));)
 		w = vector<double>(ni, 0.0);
 		int info = lapack::dsygv(1,"v","u",ni,&K[0],ni,&M[0],ni,&w[0]);
 		if (info != 0)
 			throw runtime_error(vastr("eigensolution on cantilevered ",bp.ss->id(),
 				" failed: info = ",info));
-		trc.dprint("cantilevered eigenvalues: ",w);
+		T_(trc.dprint("cantilevered eigenvalues: ",w);)
 		// save the first nmodes eigenvectors
 		vector<double> v(ni*nmodes, 0.0);
-		blas_copy(ni*nmodes, &K[0], 1, &v[0], 1);
+		blas::copy(ni*nmodes, &K[0], 1, &v[0], 1);
 		if ((int)bp.ss->proj().size() == nmodes)
 			bp.ss->projection(v);
 		string title = vastr(bp.ss->id()," cantilevered modes");
-		trc.dprintm(ni,nmodes,ni,v,title);
+		T_(trc.dprintm(ni,nmodes,ni,v,title);)
 		MM::exporter(title,title,&v[0],ni,nmodes);
 		// the eigenvectors go in columns ckeyi
 		blas::copy(bp.ss->interior(),ckeyi,1.0,v,gross,ckey,0.0,rval);
@@ -513,7 +509,7 @@ transform (const Freev& gross) {
 			sum.push_back(lapack::eigstring(sqrt(w[i])/(2.0*flaps::pi),ni,&v[i*ni]));
 		flaps::info(bp.ss->id()," frequencies (Hz): ",sum);
 	}
-	trc.dprintm(n,m,n,rval,"branch-mode transform");
+	T_(trc.dprintm(n,m,n,rval,"branch-mode transform");)
 	// export to a matrix-market file for viewing
 	MM::exporter("branch_modes.mm", "Branch modes", &rval[0], n, m);
 
@@ -528,7 +524,7 @@ transform (const Freev& gross) {
 //   - extract mii, kii
 //   - eigensolution on mii, kii, save phi_im
 //   - compute G_{ia} = -K^{-1}_{ii} K_{ia}
-	Trace trc(2,"CMS::transform");
+	T_(Trace trc(2,"CMS::transform");)
 
 	// the output matrix (rval) has 2 sets of columns
 	// - 0-(nm-1): interior modes for each ss (nm = sum(nmodes))
@@ -555,8 +551,8 @@ transform (const Freev& gross) {
 		rcol.push_back(fi);
 
 	int nc = rcol.size();		// number of columns in rval
-	trc.dprint(nc," modes total, all attachment freedoms: ",att);
-	trc.dprint("rval columns: ",rcol);
+	T_(trc.dprint(nc," modes total, all attachment freedoms: ",att);)
+	T_(trc.dprint("rval columns: ",rcol);)
 
 	vector<double> rval(n*nc);
 
@@ -584,7 +580,7 @@ transform (const Freev& gross) {
 				os << ": dsygv returned " << info;
 			throw runtime_error(os.str());
 		}
-		trc.dprint(ni," eigenvalues of ",ss->id()," interior: ",w);
+		T_(trc.dprint(ni," eigenvalues of ",ss->id()," interior: ",w);)
 		int m = comp.nmodes;
 		if (m <= 0)
 			throw runtime_error(vastr("nmodes was not given for ss ",ss->id()));

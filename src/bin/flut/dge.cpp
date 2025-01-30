@@ -318,7 +318,7 @@ makeab(vector<double>& a, vector<Interval>& b) {
 
 int
 main(int argc, char** argv) {
-	Trace trc(0,"dge");
+	T_(Trace trc(0,"dge");)
 	int n{5};
 	vector<double> a(n*n);
 	vector<Interval> b(n);
@@ -327,8 +327,8 @@ main(int argc, char** argv) {
 	vector<double> af{a};
 	vector<Interval> x{b};
 	int info;
-	trc.dprintm(n,n,n,a,"a");
-	trc.dprint("b",b);
+	T_(trc.dprintm(n,n,n,a,"a");)
+	T_(trc.dprint("b",b);)
 	// dgefa_(double *a, int *lda, int *n, int *ipvt, int *info);
 	dgefa_(&af[0], &n, &n, &ipvt[0], &info);
 	// dgesl_(double *a, int *lda, int *n, int *ipvt, Interval* b);
@@ -343,7 +343,7 @@ main(int argc, char** argv) {
 		resid[i] -= b[i];
 	}
 
-	trc.dprint("residual: ",resid);
+	T_(trc.dprint("residual: ",resid);)
 
 }
 #endif // MAIN

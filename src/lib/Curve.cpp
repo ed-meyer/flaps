@@ -12,6 +12,7 @@
 
 #include "config.h"
 #include "Curve.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -20,15 +21,15 @@ Curve(const string& analysis_id, const string& curveid,
 	const string& vzid, const pset* ps) {
 // main Curve constructor: set aid, cid,
 // initialize the pset to the current values in gpset
-	Trace trc(1,"Curve constructor ",curveid);
+	T_(Trace trc(1,"Curve constructor ",curveid);)
 	_aid = analysis_id;
 	_cid = curveid;
 	_vzid = vzid;
-	trc.dprint("aid \"",_aid,"\", cid \"",_cid,"\", vzid \"",_vzid,"\"");
+	T_(trc.dprint("aid \"",_aid,"\", cid \"",_cid,"\", vzid \"",_vzid,"\"");)
 	// set member "params" to a copy of the gpset if "ps" not included
 	if (ps != nullptr) {
 		params = *ps;
-		trc.dprint("using non-global parameter set");
+		T_(trc.dprint("using non-global parameter set");)
 	} else {
 		params = gpset::get();
 		// sanity check on pset assignment operator
@@ -39,14 +40,14 @@ Curve(const string& analysis_id, const string& curveid,
 	// ...and set it's description to curveid
 	params.desc(curveid);
 	// evaluate params and check for constant Derived parameters
-	trc.dprint("created curve aid<",_aid,"> cid<",_cid,">");
+	T_(trc.dprint("created curve aid<",_aid,"> cid<",_cid,">");)
 }
 
 // Destructor: stuff required for the Fio vtable
 Curve::
 ~Curve() {
 // virtual destructor body required in the .c file for Fio vtable
-	Trace trc(1,"Curve destructor ",_cid);
+	T_(Trace trc(1,"Curve destructor ",_cid);)
 }
 
 // register class Curve for fio serialization
@@ -57,14 +58,14 @@ Fio*
 Curve::
 get(Receiver& s) {
 // serialize a Curve
-	Trace trc(2,"Curve::get");
+	T_(Trace trc(2,"Curve::get");)
 
 	Curve* rval = new Curve();
 
 	s.serialize(rval->_aid);
 	s.serialize(rval->_cid);
 	s.serialize(rval->_vzid);
-	trc.dprint("got aid \"",rval->_aid,"\", cid \"",rval->_cid,"\", vzid \"",rval->_vzid,"\"");
+	T_(trc.dprint("got aid \"",rval->_aid,"\", cid \"",rval->_cid,"\", vzid \"",rval->_vzid,"\"");)
 	Fio* op = pset::get(s);
 	pset* pp = dynamic_cast<pset*>(op);
 	if (pp == nullptr) {
@@ -83,8 +84,8 @@ void
 Curve::
 put(Sender& s) const {
 // serialize a Curve
-	Trace trc(2,"Curve::put");
-	trc.dprint("putting aid \"",_aid,"\", cid \"",_cid,"\", vzid \"",_vzid,"\"");
+	T_(Trace trc(2,"Curve::put");)
+	T_(trc.dprint("putting aid \"",_aid,"\", cid \"",_cid,"\", vzid \"",_vzid,"\"");)
 	s.serialize(_aid);
 	s.serialize(_cid);
 	s.serialize(_vzid);
@@ -135,12 +136,12 @@ fetch (const string& mid) {
 // read a Curve from the flaps database, return nullptr if it
 // does not exist.
 // Note: Curve::mid(aid,cid) can be used to create argument "mid"
-	Trace trc(1,"Curve::fetch ",mid);
+	T_(Trace trc(1,"Curve::fetch ",mid);)
 	Curve* rval{nullptr};
 	try {
 		Receiver file(mid);
 		if (!file.good() || file.eof()) {
-			trc.dprint("returning empty: ",mid," does not exist");
+			T_(trc.dprint("returning empty: ",mid," does not exist");)
 			return rval;
 		}
 		Fio* op = Fio::get(file);
@@ -150,10 +151,10 @@ fetch (const string& mid) {
 					op->vid()));
 		}
 	} catch (std::exception& s) {
-		trc.dprint("returning empty: ",mid," does not exist");
+		T_(trc.dprint("returning empty: ",mid," does not exist");)
 		return rval;
 	}
-	trc.dprint("returning ",rval->cid(),", ",rval->params.nsolns()," points");
+	T_(trc.dprint("returning ",rval->cid(),", ",rval->params.nsolns()," points");)
 	return rval;
 }
 
@@ -163,7 +164,7 @@ store () {
 //------------------------------------------------------------------
 // Store a Curve in the flaps database with a mid given by Curve::mid()
 //------------------------------------------------------------------
-	Trace trc(1,"Curve::store ",this->aid());
+	T_(Trace trc(1,"Curve::store ",this->aid());)
 
 	const string mid = Curve::mid(this->aid(), this->cid());
 	// Solutions are stored using Curve::store() with a
@@ -200,8 +201,8 @@ Curve::
 plot (std::string const& path, std::string const& title,
 		string const& runid,
 		vector<string> const& toPlot, bool append) {
-	Trace trc(1,"Curve::plot");
-	trc.dprint(params.nsolns()," points to plot");
+	T_(Trace trc(1,"Curve::plot");)
+	T_(trc.dprint(params.nsolns()," points to plot");)
 
 	params.plot (path, title, runid, toPlot, append);
 }

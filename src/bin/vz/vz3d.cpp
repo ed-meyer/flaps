@@ -198,7 +198,7 @@ instance (const vector<Plotcurve*>& curves, Specs& specs) {
 Vz3d::
 Vz3d (const vector<Plotcurve*>& cv, Specs& specs) : curves(cv) {
 	// copy x, y, z values from curves, converting to PU
-	Trace trc(1,"Vz3d constructor");
+	T_(Trace trc(1,"Vz3d constructor");)
 
 	// x, y, z parameter names may not have been set in options
 	xname_ = specs.xname;
@@ -224,7 +224,7 @@ Vz3d (const vector<Plotcurve*>& cv, Specs& specs) : curves(cv) {
 		yname_ = cj->yparam->name;
 		Par* zp = cj->zparam;
 		zname_ = cj->zparam->name;
-		trc.dprint("working on ",cj->cid(),", nsolns ",cj->nsolns());
+		T_(trc.dprint("working on ",cj->cid(),", nsolns ",cj->nsolns());)
 		for (size_t i=0; i<xp->nsolns(); i++) {
 			double x = xp->solns[i]*xp->conv.factor;
 			double y = yp->solns[i]*yp->conv.factor;
@@ -239,7 +239,7 @@ Vz3d (const vector<Plotcurve*>& cv, Specs& specs) : curves(cv) {
 			ci.push_back(y);
 			ci.push_back(z);
 		}
-		trc.dprintm(3,ci.size()/3,3,ci.data(), cj->cid());
+		T_(trc.dprintm(3,ci.size()/3,3,ci.data(), cj->cid());)
 		data.push_back(ci);
 	}
 	// scale each curve to fit in a t-cube
@@ -247,33 +247,33 @@ Vz3d (const vector<Plotcurve*>& cv, Specs& specs) : curves(cv) {
 	//!! double xsf = abs(xmax-xmin)/2.0;
 	//!! double ysf = abs(ymax-ymin)/2.0;
 	//!! double zsf = abs(zmax-zmin)/2.0;
-	trc.dprint("x scale: ",xmax,", y ",ymax,", z ",zmax);
+	T_(trc.dprint("x scale: ",xmax,", y ",ymax,", z ",zmax);)
 	for (size_t i=0; i<data.size(); i++) {
 		int n = data[i].size()/3;
 		blas_scal(n, t/xmax, &data[i][0], 3);
 		blas_scal(n, t/ymax, &data[i][1], 3);
 		blas_scal(n, t/zmax, &data[i][2], 3);
-		trc.dprintm(3,n,3,data[i].data(), vastr("scaled",i));
+		T_(trc.dprintm(3,n,3,data[i].data(), vastr("scaled",i));)
 	}
 #else // NEVER // use load_data
 	// if x, y, z parameter names were spec'd load data
 	if (!(xname_.empty() || yname_.empty() || zname_.empty()))
 		load_data();
 #endif // NEVER // use load_data
-	trc.dprint("got ",data.size()," curves");
+	T_(trc.dprint("got ",data.size()," curves");)
 }
 
 void
 Vz3d::
 load_data() {
 // load the data array from current x, y, & z parameters
-	Trace trc(2, "load_data");
+	T_(Trace trc(2, "load_data");)
 	double big{std::numeric_limits<double>::max()};
 	double xmax{-big};
 	double ymax{-big};
 	double zmax{-big};
 
-	trc.dprint("x: ",xname_,", y: ",yname_,", z: ",zname_);
+	T_(trc.dprint("x: ",xname_,", y: ",yname_,", z: ",zname_);)
 
 	// clear the current data array
 	data.clear();
@@ -291,11 +291,11 @@ load_data() {
 		if (zp == nullptr)
 			throw runtime_error(vastr(cj->cid()," does not have parameter \"",zname_,"\""));
 		int n = cj->nsolns();
-		trc.dprint("working on ",cj->cid(),", nsolns = ",n);
+		T_(trc.dprint("working on ",cj->cid(),", nsolns = ",n);)
 		double xcf = xp->conv.factor;
 		double ycf = yp->conv.factor;
 		double zcf = zp->conv.factor;
-		trc.dprint("xcf: ",xcf,", ycf: ",ycf,", zcf: ",zcf);
+		T_(trc.dprint("xcf: ",xcf,", ycf: ",ycf,", zcf: ",zcf);)
 		for (int i=0; i<n; i++) {
 			double x = xp->solns[i]*xcf;
 			double y = yp->solns[i]*ycf;
@@ -307,7 +307,7 @@ load_data() {
 			ci.push_back(y);
 			ci.push_back(z);
 		}
-		trc.dprintm(3,ci.size()/3,3,ci.data(), cj->cid());
+		T_(trc.dprintm(3,ci.size()/3,3,ci.data(), cj->cid());)
 		data.push_back(ci);
 	}
 	// scale each curve to fit in a t-cube
@@ -315,21 +315,21 @@ load_data() {
 	//!! double xsf = abs(xmax-xmin)/2.0;
 	//!! double ysf = abs(ymax-ymin)/2.0;
 	//!! double zsf = abs(zmax-zmin)/2.0;
-	trc.dprint("x scale: ",xmax,", y ",ymax,", z ",zmax);
+	T_(trc.dprint("x scale: ",xmax,", y ",ymax,", z ",zmax);)
 	for (size_t i=0; i<data.size(); i++) {
 		int n = data[i].size()/3;
 		blas_scal(n, t/xmax, &data[i][0], 3);
 		blas_scal(n, t/ymax, &data[i][1], 3);
 		blas_scal(n, t/zmax, &data[i][2], 3);
-		trc.dprintm(3,n,3,data[i].data(), vastr("scaled",i));
+		T_(trc.dprintm(3,n,3,data[i].data(), vastr("scaled",i));)
 	}
-	trc.dprint("got ",data.size()," curves");
+	T_(trc.dprint("got ",data.size()," curves");)
 }
 
 void
 Vz3d::
 render() {
-	Trace trc(1,"render");
+	T_(Trace trc(1,"render");)
 
 	// if colormode == "none" use the reverse of the bg color
 	float red = 1.0 - BGRed;
@@ -401,7 +401,7 @@ render() {
 void
 Vz3d::
 run() {
-	Trace trc(1,"Vz3d::run");
+	T_(Trace trc(1,"Vz3d::run");)
 	int argc = 1;
 	char* argv[3];
 	char prog[8];
@@ -445,7 +445,7 @@ MyFrame* Theframe{nullptr};
 bool
 MyApp::
 OnInit() {
-	Trace trc(1,"OnInit");
+	T_(Trace trc(1,"OnInit");)
     // Create the main frame window...
 	Theframe = new MyFrame(nullptr, wxT("Flaps 3D plot"),
 			 wxDefaultPosition, wxSize(WindowSizeX,WindowSizeY));
@@ -526,7 +526,7 @@ END_EVENT_TABLE()
 #include "vz3d.xpm"
 MyFrame::MyFrame(wxFrame *frame, const wxString& title, const wxPoint& pos,
     const wxSize& size, long style) : wxFrame(frame, wxID_ANY, title, pos, size, style) {
-	 Trace trc(2,"MyFrame constructor");
+	 T_(Trace trc(2,"MyFrame constructor");)
 
 	// an icon for the app bar
 	SetIcon(wxIcon(vz3d_xpm));
@@ -877,11 +877,11 @@ void
 MyFrame::
 OnXChoice(wxCommandEvent& event) {
 // just get the new xname
-	Trace trc(1,"OnXChoice");
+	T_(Trace trc(1,"OnXChoice");)
 	Vz3d* vz3d{Vz3d::instance()};
 	int k = event.GetId()-ID_XPAR;		// 0b parameter number
 	vz3d->xname(vz3d->parnames()[k]);
-	trc.dprint("selection: ",k," x: ",vz3d->xname());
+	T_(trc.dprint("selection: ",k," x: ",vz3d->xname());)
 #ifdef NEVER // just get xname
 	int ncurves = vz3d->data.size();
 	for (int j=0; j<ncurves; j++) {
@@ -901,11 +901,11 @@ void
 MyFrame::
 OnYChoice(wxCommandEvent& event) {
 // just get the new yname
-	Trace trc(1,"OnYChoice");
+	T_(Trace trc(1,"OnYChoice");)
 	Vz3d* vz3d{Vz3d::instance()};
 	int k = event.GetId()-ID_YPAR;		// 0b parameter number
 	vz3d->yname(vz3d->parnames()[k]);
-	trc.dprint("selection: ",k," y: ",vz3d->yname());
+	T_(trc.dprint("selection: ",k," y: ",vz3d->yname());)
 }
 
 void
@@ -949,7 +949,7 @@ void
 MyFrame::
 OnCurvesSelect(wxCommandEvent& event) {
 // pop up a dialog for selecting which curves to plot
-	Trace trc(1,"OnCurvesSelect");
+	T_(Trace trc(1,"OnCurvesSelect");)
 	Vz3d* vz3d{Vz3d::instance()};
 	wxArrayString curve_names;
 	curve_names.Add("All");
@@ -958,7 +958,7 @@ OnCurvesSelect(wxCommandEvent& event) {
 	// create the dialog
 	wxMultiChoiceDialog curvestool(this,"Curve Selection", "Curves", curve_names);
 	// checkmark selections which are in "toplot" - all if toplot is empty
-	trc.dprint("input toplot: ",vz3d->toplot);
+	T_(trc.dprint("input toplot: ",vz3d->toplot);)
 	// put checkmarks on those already in "toplot"
 	wxArrayInt checkmarks;
 	if (vz3d->toplot.empty()) {
@@ -972,7 +972,7 @@ OnCurvesSelect(wxCommandEvent& event) {
 
 	// show the dialog, get selections
 	int stat = curvestool.ShowModal();
-	trc.dprint("dialog returned ",stat);
+	T_(trc.dprint("dialog returned ",stat);)
 	if (stat == wxID_CANCEL)
 		return;
 	wxArrayInt sel = curvestool.GetSelections();
@@ -990,11 +990,11 @@ OnCurvesSelect(wxCommandEvent& event) {
 	}
 	// otherwise sel are 1b curve numbers
 	for(size_t i=0; i<sel.size(); i++) {
-		trc.dprint("got ",sel[i]);
+		T_(trc.dprint("got ",sel[i]);)
 		vz3d->toplot.push_back(sel[i]-1);
 		checkmarks.push_back(sel[i]);
 	}
-	trc.dprint("output toplot: ",vz3d->toplot);
+	T_(trc.dprint("output toplot: ",vz3d->toplot);)
 	m_canvas->Refresh(false);
 	m_canvas->Render();
 }
@@ -1003,7 +1003,7 @@ string
 MyFrame::
 getParChoice(const string& current, const string& axis) {
 // popup a dialog with all parameter names to get the choice of one
-	Trace trc(1, "getParChoice");
+	T_(Trace trc(1, "getParChoice");)
 	string rval;
 
 	Vz3d* vz3d{Vz3d::instance()};
@@ -1017,7 +1017,7 @@ getParChoice(const string& current, const string& axis) {
 
 	// checkmark the parameter which is the current name
 	if (!current.empty()) {
-		trc.dprint("input name: ",current);
+		T_(trc.dprint("input name: ",current);)
 		for (int i=0; i<parnames.size(); i++) {
 			if (parnames[i] == current) {
 				pardlg.SetSelection(i);
@@ -1028,13 +1028,13 @@ getParChoice(const string& current, const string& axis) {
 
 	// show the dialog, get selections
 	int stat = pardlg.ShowModal();
-	trc.dprint("dialog returned ",stat);
+	T_(trc.dprint("dialog returned ",stat);)
 	if (stat == wxID_CANCEL)
 		return rval;
 	int sel = pardlg.GetSelection();
 
 	rval = parnames[sel];
-	trc.dprint("output parameter name: ",rval);
+	T_(trc.dprint("output parameter name: ",rval);)
 	return rval;
 }
 
@@ -1042,7 +1042,7 @@ void
 MyFrame::
 OnXParamSelect(wxCommandEvent& event) {
 // pop up a dialog for selecting which parameter is x
-	Trace trc(1,"OnXParamSelect");
+	T_(Trace trc(1,"OnXParamSelect");)
 	Vz3d* vz3d{Vz3d::instance()};
 	string newname = getParChoice(vz3d->xname(), "Z");
 	if (!newname.empty())
@@ -1053,7 +1053,7 @@ void
 MyFrame::
 OnYParamSelect(wxCommandEvent& event) {
 // pop up a dialog for selecting which parameter is y
-	Trace trc(1,"OnYParamSelect");
+	T_(Trace trc(1,"OnYParamSelect");)
 	Vz3d* vz3d{Vz3d::instance()};
 	string newname = getParChoice(vz3d->yname(), "Y");
 	if (!newname.empty())
@@ -1064,7 +1064,7 @@ void
 MyFrame::
 OnZParamSelect(wxCommandEvent& event) {
 // pop up a dialog for selecting which parameter is z
-	Trace trc(1,"OnZParamSelect");
+	T_(Trace trc(1,"OnZParamSelect");)
 	Vz3d* vz3d{Vz3d::instance()};
 	string newname = getParChoice(vz3d->zname(), "Z");
 	if (!newname.empty())
@@ -1075,7 +1075,7 @@ void
 MyFrame::
 OnPlot(wxCommandEvent& event) {
 // replot after choosing new parameter or curves
-	Trace trc(1,"OnPlot");
+	T_(Trace trc(1,"OnPlot");)
 	Vz3d* vz3d{Vz3d::instance()};
 	std::sort(vz3d->toplot.begin(), vz3d->toplot.end());
 	vz3d->load_data();
@@ -1343,7 +1343,7 @@ void
 FGLCanvas::
 Render() {
 // XXX merge with Vz3d::render()
-	Trace trc(1,"Render");
+	T_(Trace trc(1,"Render");)
 	this->setcurrent();
 	//!! vz3d->render();
 	Vz3d::instance()->render();
@@ -1803,7 +1803,7 @@ int
 main(int argc, char** argv) {
 	char* dbg = getenv("DEBUG");
 	if (dbg != nullptr) Trace::debug(std::stoi(dbg));
-	Trace trc(1,"vz3d");
+	T_(Trace trc(1,"vz3d");)
 	Ftmpdir ftmp;
 
 	if (argc < 1) {

@@ -24,12 +24,12 @@ void usage() {
 
 int
 main(int argc, char** argv) {
-	Trace trc(1, "wildcard");
+	T_(Trace trc(1, "wildcard");)
 	vector<string> args = cstr2tok(argc, argv, 1);
 	if (args.empty())
 		usage();
 	string pattern = args[0];
-	trc.dprint("checking wildcard for ",args);
+	T_(trc.dprint("checking wildcard for ",args);)
 	int flags{FNM_EXTMATCH};
 	for (size_t i=1; i<args.size(); i++) {
 		int res = fnmatch(pattern.c_str(), args[i].c_str(), flags);

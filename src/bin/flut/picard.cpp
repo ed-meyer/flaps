@@ -31,6 +31,7 @@
 #include "lapack.h"
 #include "picard.h"
 #include "ridders.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -70,7 +71,7 @@ face_coord(Face const& face,
 		vector<double> const& xmin, vector<double> const& xmax,
 		vector<int>& xlower, vector<int>& xupper) {
 // determine which coord is constant
-	Trace trc(1,"face_coord");
+	T_(Trace trc(1,"face_coord");)
 	size_t n = face.size();
 	vector<int> xl(n,0);
 	vector<int> xu(n,0);
@@ -104,7 +105,7 @@ void
 printPicardFace(Face const& face) {
 // if debug is on and this face has all Points at x[n]==+/-1
 // print it
-	Trace trc(1,"printPicardFace");
+	T_(Trace trc(1,"printPicardFace");)
 	if (trc() < 0) return;
 	size_t n = face.size();
 	size_t nm1 = n -1;
@@ -117,7 +118,7 @@ printPicardFace(Face const& face) {
 		if (lim != (int)face[i][nm1])
 			return;
 	}
-	trc.dprint("Picard (",lim,") boundary face: ",face);
+	T_(trc.dprint("Picard (",lim,") boundary face: ",face);)
 }
 #endif // NEVER : unused
 
@@ -169,13 +170,13 @@ angleReal (int n, const double *a, const double *b) {
 // Compute the angle (radians) between two vectors
 	double rval = 0.0;
 	double tcos, tsin, t;
-	double abnorm = blas_snrm2(n,a,1)*blas_snrm2(n,b,1);
+	double abnorm = blas::snrm2(n,a,1)*blas::snrm2(n,b,1);
 	double eps = sqrt(std::numeric_limits<double>::epsilon());
 
 	if (abnorm <= eps)
 		return 0.0;
 
-	blas_dot (n, a, 1, b, 1, tcos);
+	blas::dot (n, a, 1, b, 1, tcos);
 	tcos /= abnorm;
 	if (tcos > 1.0) tcos = 1.0;
 	if (tcos < -1.0) tcos = -1.0;
@@ -196,13 +197,13 @@ static
 double
 getangle (vector<double> const& a, vector<double> const& b) {
 // compute the angle (in degrees) between 2 vectors
-	Trace trc(1,"getangle");
+	T_(Trace trc(1,"getangle");)
 	double dpr = 45.0/atan(1.0);
 	double rval{0.0};
-	trc.dprint("angle between ",a," and ",b);
+	T_(trc.dprint("angle between ",a," and ",b);)
 	rval = angleReal(a.size(), &a[0], &b[0]);
 	rval = dpr*abs(rval);
-	trc.dprint("returning ",rval," degrees");
+	T_(trc.dprint("returning ",rval," degrees");)
 	return rval;
 }
 
@@ -211,13 +212,13 @@ void
 insertpt(vector<double> const& a, vector<double> const& b,
 		vector<double> const& mid, vector<vector<double> >& pts) {
 // insert "mid" between "a" and "b" in "pts"
-	Trace trc(1,"insertpt");
+	T_(Trace trc(1,"insertpt");)
 	size_t n = a.size();
 	double eps = sqrt(numeric_limits<double>::epsilon());
 
-	trc.dprintvv(a,b,"between");
-	// trc.dprintv(a,"between");
-	// trc.dprintv(b,"and");
+	T_(trc.dprintvv(a,b,"between");)
+	// T_(trc.dprintv(a,"between");)
+	// T_(trc.dprintv(b,"and");)
 
 	for (size_t i=0; i<n; i++) {
 		// if coord i changes:
@@ -228,13 +229,13 @@ insertpt(vector<double> const& a, vector<double> const& b,
 			for (size_t j=1; j<pts[i].size(); j++) {
 				// check that is not already there
 				if (is_equal(mid[i], pts[i][j], 8)) {
-					trc.dprint(mid[i]," is already in coord ",i);
+					T_(trc.dprint(mid[i]," is already in coord ",i);)
 					break;
 				}
 				if (is_greaterthan(pts[i][j], mid[i], 8)) {
 					vector<double>::iterator p = pts[i].begin() + j;
 					pts[i].insert(p, mid[i]);
-					trc.dprintv(pts[i],"added ",mid[i]," to coord ",i);
+					T_(trc.dprintv(pts[i],"added ",mid[i]," to coord ",i);)
 					break;
 				}
 			}
@@ -254,7 +255,7 @@ addpts(vector<double> const& a, vector<double> const& b,
 // add a mid-point, recursively add points to either
 // side if the angle is still too large
 // Returns the number of Points added
-	Trace trc(1,"addpts depth ",depth);
+	T_(Trace trc(1,"addpts depth ",depth);)
 	size_t n = a.size();
 	assert(b.size() == n);
 	assert(fa.size() == n);
@@ -292,8 +293,8 @@ addpts(vector<double> const& a, vector<double> const& b,
 	for (size_t i=0; i<pts.size(); i++) {
 		addedpts.push_back(pts[i].size() - ncoordpts[i]);
 	}
-	trc.dprintv(addedpts, "# added points in each coord:");
-	trc.dprint("added ",rval," Points");
+	T_(trc.dprintv(addedpts, "# added points in each coord:");)
+	T_(trc.dprint("added ",rval," Points");)
 	return rval;
 }
 
@@ -302,7 +303,7 @@ addpts(vector<double> const& a, vector<double> const& b,
 int
 intDet (size_t n, int* A) {
 // returns the determinant of integer matrix A
-	Trace trc(2,"intDet");
+	T_(Trace trc(2,"intDet");)
 	int rval =  0;
 	size_t i, j, kj;
 	size_t nm1 = n - 1;
@@ -382,7 +383,7 @@ intDet (size_t n, int* A) {
 	if (depth == 0) {
 		delete time;
 	}
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 #endif // NEVER : unused
@@ -392,7 +393,7 @@ Simplex::
 orientation(int& expon) const {
 // Returns the determinant of the (n,n) matrix whos
 // columns are the elements of each Point in the Face
-	Trace trc(2,"Simplex::orientation");
+	T_(Trace trc(2,"Simplex::orientation");)
 	size_t np1 = this->size();
 	size_t n = np1 - 1;
 	size_t i, j;
@@ -409,7 +410,7 @@ orientation(int& expon) const {
 	// compute the determinant using template function determ:
 	double rval = determ(np1, &A[0], expon);
 
-	trc.dprint("returning ",rval,"*10^",expon);
+	T_(trc.dprint("returning ",rval,"*10^",expon);)
 	return rval;
 }
 
@@ -445,7 +446,7 @@ orientation(int& expon) const {
 // except for the coord which is constant across
 // the Face. In addition, each column has a 1 in the
 // first row
-	Trace trc(2,"Face::orientation");
+	T_(Trace trc(2,"Face::orientation");)
 	size_t n = this->size();
 	size_t i, j;
 	size_t iconst{n+1};
@@ -463,7 +464,7 @@ orientation(int& expon) const {
 			iconst = i;
 		}
 	}
-	trc.dprint("coord ",iconst," is constant");
+	T_(trc.dprint("coord ",iconst," is constant");)
 
 	vector<double> A(n*n);
 	for (j=0; j<n; j++) {     // each Point
@@ -474,9 +475,9 @@ orientation(int& expon) const {
 				A[IJ(k++,j,n)] = (*this)[j][i];
 		}
 	}
-	trc.dprintm(n,n,n,&A[0],"computing determinant of:");
+	T_(trc.dprintm(n,n,n,&A[0],"computing determinant of:");)
 	double rval = determ(n, &A[0], expon);
-	trc.dprint("returning ",rval,"*10^",expon);
+	T_(trc.dprint("returning ",rval,"*10^",expon);)
 	return rval;
 }
 
@@ -484,14 +485,14 @@ int
 Face::
 orient (int dir) {
 // put this Face-s n Points into a matrix A
-	Trace trc(1,"Face::orient");
+	T_(Trace trc(1,"Face::orient");)
 	int rval = 0;
 	int expon;
-	trc.dprint("orienting ",*this);
+	T_(trc.dprint("orienting ",*this);)
 
 	double det = this->orientation(expon);
 
-	trc.dprint("dir ",dir,", det ",det);
+	T_(trc.dprint("dir ",dir,", det ",det);)
 	if (dir < 0 && det > 0.0) {
 		permute();
 		rval++;
@@ -530,12 +531,12 @@ void
 Face::
 permute() {
 // do a single permutation of the points
-	Trace trc(2,"Face::permute");
-	trc.dprintv(*this,"input face");
+	T_(Trace trc(2,"Face::permute");)
+	T_(trc.dprintv(*this,"input face");)
 	Point tmp = operator[](0);
 	operator[](0) = operator[](1);
 	operator[](1) = tmp;
-	trc.dprintv(*this,"output face");
+	T_(trc.dprintv(*this,"output face");)
 #ifdef NEVER
 	size_t n = operator[](0).size();
 	for (size_t i=0; i<n; i++) {
@@ -566,13 +567,13 @@ Face::
 plotgnu(int faceno) const {
 // Write a Face to a gnuplot plot file named "face"faceno
 // A Face has n n-dimensional Points
-	Trace trc(1,"Face::plotgnu");
+	T_(Trace trc(1,"Face::plotgnu");)
 	size_t n = operator[](0).size();
 	ostringstream os;
 	assert(size() == n);
 
 	if (n != 3) {
-		trc.dprint("quick return: only treat 3D");
+		T_(trc.dprint("quick return: only treat 3D");)
 		return;
 	}
 	std::ios_base::openmode om = std::ios::trunc;
@@ -581,7 +582,7 @@ plotgnu(int faceno) const {
 	ofstream path(file, om);
 	if (!path) {
 		string err = vastr("cannot open ",file);
-		trc.dprint("throwing exception: ",err);
+		T_(trc.dprint("throwing exception: ",err);)
 		throw runtime_error(err);
 	}
 
@@ -601,12 +602,12 @@ plotgnu(vector<Face>& faces, int faceno) {
 // Write a vector of Faces to a gnuplot plot file named
 // "face"faceno
 // A Face has n n-dimensional Points
-	Trace trc(1,"plotgnu");
+	T_(Trace trc(1,"plotgnu");)
 	size_t n = faces[0][0].size();
 	ostringstream os;
 
 	if (n != 3) {
-		trc.dprint("quick return: only treat 3D");
+		T_(trc.dprint("quick return: only treat 3D");)
 		return;
 	}
 	std::ios_base::openmode om = std::ios::trunc;
@@ -615,7 +616,7 @@ plotgnu(vector<Face>& faces, int faceno) {
 	ofstream path(file, om);
 	if (!path) {
 		string err = vastr("cannot open ",file);
-		trc.dprint("throwing exception: ",err);
+		T_(trc.dprint("throwing exception: ",err);)
 		throw runtime_error(err);
 	}
 
@@ -705,13 +706,13 @@ plotFaces (vector<Face> const& faces, string const& file) {
 Simplex::
 Simplex (vector<Point> const& points) {
 // Create a Simplex: n+1 n-dimensional Points
-	Trace trc(2,"Simplex constructor");
+	T_(Trace trc(2,"Simplex constructor");)
 	size_t n = points[0].size();
 	size_t npts = points.size();
 	assert (npts == n+1);
 
 	for (size_t i=0; i<npts; i++) {
-		trc.dprintv(points[i],"point ",i);
+		T_(trc.dprintv(points[i],"point ",i);)
 		assert(points[i].size() == n);
 		this->push_back(points[i]);
 	}
@@ -758,7 +759,7 @@ cube_bndry() {
 // get the min and max indices for this simplex,
 // then find all faces which have all points
 // for some coord at the min or max
-	Trace trc(2,"cube_bndry");
+	T_(Trace trc(2,"cube_bndry");)
 	vector<Face> all = faces();
 	size_t n = this->size() - 1;
 	int big{std::numeric_limits<int>::max()};
@@ -779,8 +780,8 @@ cube_bndry() {
 			}
 		}
 	}
-	trc.dprintv(idxmin,"min indices");
-	trc.dprintv(idxmax,"max indices");
+	T_(trc.dprintv(idxmin,"min indices");)
+	T_(trc.dprintv(idxmax,"max indices");)
 	// now find all faces having a coord at min or max
 	for (i=0; i<all.size(); i++) {   // face
 		for (k=0; k<n; k++) {         // coord
@@ -801,7 +802,7 @@ cube_bndry() {
 			}
 			if (j == all[i].size()) {
 				rval.push_back(all[i]);
-				trc.dprint("added face ",i);
+				T_(trc.dprint("added face ",i);)
 			}
 		}
 	}
@@ -810,7 +811,7 @@ cube_bndry() {
 	// 	cerr << "wrong number of boundary faces for n=" << n
 	// 		<< ": " << rval.size();
 	// }
-	trc.dprint("returning ",rval.size()," boundary faces");
+	T_(trc.dprint("returning ",rval.size()," boundary faces");)
 	return rval;
 }
 
@@ -867,10 +868,10 @@ plot(int simpno, string const& file, bool append) const {
 
 void
 plotSimplices (vector<Simplex> simplices, string const& file) {
-	Trace trc(2,"plotSimplices");
+	T_(Trace trc(2,"plotSimplices");)
 	bool append = false;
 
-	trc.dprint(simplices.size()," Simplex, to file ",file);
+	T_(trc.dprint(simplices.size()," Simplex, to file ",file);)
 	for (size_t i=0; i<simplices.size(); i++) {
 		simplices[i].plot(i, file, append);
 		append = true;
@@ -926,7 +927,7 @@ public:
 	class fless {
 	public:
 		bool operator()(vector<char> const& a, vector<char> const& b) const {
-			Trace trc(3,"fless");
+			T_(Trace trc(3,"fless");)
 			auto p = a.begin();
 			auto q = b.begin();
 
@@ -947,7 +948,7 @@ public:
 	map<vector<char>,size_t,fless> fmap;
 
 	vector<char> makekey (vector<double> x) {
-		Trace trc(3,"makekey");
+		T_(Trace trc(3,"makekey");)
 
 		size_t n = x.size();
 		union {
@@ -968,14 +969,14 @@ public:
 				}
 			}
 		}
-		trc.dprintv(rval,"returning");
+		T_(trc.dprintv(rval,"returning");)
 		return rval;   // need move
 	}
 
 	bool find (const vector<double>& x, vector<double>& f, vector<double>& jac) {
 		// search member xs for x, set "f" to corresponding "fs"
-		Trace trc(3,"Fx::find");
-		trc.dprintv(x,"x");
+		T_(Trace trc(3,"Fx::find");)
+		T_(trc.dprintv(x,"x");)
 		bool found{false};
 
 		auto k = fmap.find(makekey(x));
@@ -986,7 +987,7 @@ public:
 			// sgndet = sgndets[idx];
 			found = true;
 		}
-		trc.dprint("returning ",found?"true":"false");
+		T_(trc.dprint("returning ",found?"true":"false");)
 		return found;
 	}
 
@@ -1017,7 +1018,7 @@ double FnormMax{-std::numeric_limits<double>::max()};
 void
 callfcn(const vector<double>& x, vector<double>& f,
 		vector<double>& jac, Userfcn fcn) {
-	Trace trc(1,"callfcn");
+	T_(Trace trc(1,"callfcn");)
 	// f need not be the correct size - resize if necessary
 	size_t n = x.size();
 	assert(n > 0);
@@ -1030,9 +1031,9 @@ callfcn(const vector<double>& x, vector<double>& f,
 	// previously computed f(x) are saved in fx
 	static Fx fx;
 	if (fx.find(x, f, jac)) {
-		trc.dprintv(f,"found existing f(x): ");
-		trc.dprintv(x,"at x: ");
-		// trc.dprint("sgndet = ",sgndet);
+		T_(trc.dprintv(f,"found existing f(x): ");)
+		T_(trc.dprintv(x,"at x: ");)
+		// T_(trc.dprint("sgndet = ",sgndet);)
 		return;
 	}
 
@@ -1042,7 +1043,7 @@ callfcn(const vector<double>& x, vector<double>& f,
 	Nfcn++;
 
 	// check for (near) zero f
-	double fnorm = blas_snrm2(n, &f[0], 1);
+	double fnorm = blas::snrm2(n, &f[0], 1);
 	FnormMin = std::min(fnorm, FnormMin);
 	FnormMax = std::max(fnorm, FnormMax);
 	if (is_equal(fnorm, 0.0, 12)) {
@@ -1054,8 +1055,8 @@ callfcn(const vector<double>& x, vector<double>& f,
 	}
 	// save for future calls
 	fx.add(x, f, jac);
-	trc.dprintv(f,"add f(x)");
-	trc.dprint("now have ",fx.fs.size());
+	T_(trc.dprintv(f,"add f(x)");)
+	T_(trc.dprint("now have ",fx.fs.size());)
 
 	// check the Jacobian
 	if (Check_jacobian) {
@@ -1072,11 +1073,11 @@ callfcn(const vector<double>& x, vector<double>& f,
 
 void
 picardfcn(const vector<double>& px, vector<double>& pf, Userfcn fcn) {
-	Trace trc(2,"picardfcn");
+	T_(Trace trc(2,"picardfcn");)
 	size_t np1 = px.size();
 	size_t n = np1 - 1;
 	assert(n > 0);
-	trc.dprint("n = ",n," pf.size = ",pf.size());
+	T_(trc.dprint("n = ",n," pf.size = ",pf.size());)
 	assert(pf.size() == np1);
 	// callfcn computes the n-dimensional f(x)
 	vector<double> x(n, 0.0);
@@ -1094,7 +1095,7 @@ picardfcn(const vector<double>& px, vector<double>& pf, Userfcn fcn) {
 	int expon;
 	double det = determ(n, &jac[0], expon);
 	pf[n] = px[n]*det;
-	trc.dprint("f[n] = det(J))*x[n] = ",det,"*",px[n]);
+	T_(trc.dprint("f[n] = det(J))*x[n] = ",det,"*",px[n]);)
 
 	return;
 }
@@ -1119,7 +1120,7 @@ Cube::
 limits() {
 // get the min and max coordinates for this Cube
 // Returns 2 Points: the minimums and the maximums
-	Trace trc(2,"Cube::limits");
+	T_(Trace trc(2,"Cube::limits");)
 	size_t n = this->order();
 	double big{std::numeric_limits<double>::max()};
 	vector<double> xmin(n, big);
@@ -1142,7 +1143,7 @@ limits() {
 	vector<Point> rval;
 	rval.push_back(Point(xmin));
 	rval.push_back(Point(xmax));
-	trc.dprintv(rval,"returning min/max ");
+	T_(trc.dprintv(rval,"returning min/max ");)
 	return rval;
 }
 
@@ -1153,7 +1154,7 @@ boundary() {
 // get the min and max indices for this Cube,
 // then find all faces which have all points
 // for some coord at the min or max
-	Trace trc(2,"Cube::boundary");
+	T_(Trace trc(2,"Cube::boundary");)
 	vector<Face> all = faces();
 	vector<Point> lim = this->limits();
 	size_t n = this->order();
@@ -1166,8 +1167,8 @@ boundary() {
 		xmin[i] = lim[0][i];
 		xmax[i] = lim[1][i];
 	}
-	trc.dprintv(xmin,"min coords");
-	trc.dprintv(xmax,"max coords");
+	T_(trc.dprintv(xmin,"min coords");)
+	T_(trc.dprintv(xmax,"max coords");)
 
 	// now find all faces having a coord at min or max
 	for (i=0; i<all.size(); i++) {   // face
@@ -1189,7 +1190,7 @@ boundary() {
 			}
 			if (j == all[i].size()) {
 				rval.push_back(all[i]);
-				trc.dprint("added face ",i);
+				T_(trc.dprint("added face ",i);)
 			}
 		}
 	}
@@ -1201,14 +1202,14 @@ boundary() {
 			<< 2*factorial(n) << endl;
 		throw runtime_error(os.str());
 	}
-	trc.dprint("returning ",rval.size()," boundary faces");
+	T_(trc.dprint("returning ",rval.size()," boundary faces");)
 	return rval;
 }
 
 int
 bisect(vector<vector<double> > pts, vector<double> a, vector<double> b) {
 // add a mid-point to each coord between a and b
-	Trace trc(1,"bisect");
+	T_(Trace trc(1,"bisect");)
 	int nadded{0};
 	size_t n = pts.size();
 	size_t i, j;
@@ -1219,19 +1220,19 @@ bisect(vector<vector<double> > pts, vector<double> a, vector<double> b) {
 		size_t m = pts[i].size();
 		for (j=1; j<m; j++) {
 			if (is_equal(pts[i][j], mid, 8)) {
-				trc.dprint(mid," is already in coord ",i);
+				T_(trc.dprint(mid," is already in coord ",i);)
 				break;
 			}
 			if (is_greaterthan(pts[i][j], mid, 8)) {
 				auto q = pts[i].begin() + j;
 				pts[i].insert(q, mid);
-				trc.dprintv(pts[i], "added ",mid," to coord ",i);
+				T_(trc.dprintv(pts[i], "added ",mid," to coord ",i);)
 				nadded++;
 				break;
 			}
 		}
 	}
-	trc.dprint("added ",nadded," midpoints");
+	T_(trc.dprint("added ",nadded," midpoints");)
 	return nadded;
 }
 
@@ -1248,7 +1249,7 @@ td(vector<vector<double> > pts,
 // and sum the determinant of the sgn(\Matrix{B}^k)
 // A Cube is the triangulation of one interval in each
 // coordinate consisting of n! simplices
-	Trace trc(2,"Cube::td");
+	T_(Trace trc(2,"Cube::td");)
 	vector<Face> faces = this->boundary();
 	size_t n = (*this)[0][0].size();
 	size_t i, j, k;
@@ -1279,29 +1280,29 @@ td(vector<vector<double> > pts,
 				}
 			}
 		}
-		trc.dprintm(n,n,n,&Bk[0],"computing determinant of:");
+		T_(trc.dprintm(n,n,n,&Bk[0],"computing determinant of:");)
 		// sum += intDet(n, &Bk[0]);
 		int expon;
 		sum += determ(n, &Bk[0], expon);
-		trc.dprint("face ",k,": summation now = ",sum);
+		T_(trc.dprint("face ",k,": summation now = ",sum);)
 	}
 
-	trc.dprint("added ",nadded," Points");
+	T_(trc.dprint("added ",nadded," Points");)
 
 	// the td is \fac{1}{2^n n!} times sum
 	int denom = pow(2, n)*factorial(n);
 	if (sum % denom != 0) {
-		trc.dprint("grid too course: sum = ",sum,", denom = ",denom);
+		T_(trc.dprint("grid too course: sum = ",sum,", denom = ",denom);)
 		vector<Point> lim = this->limits();
 		// callfcn(lim[0], fcn);
 		// callfcn(lim[1], fcn);
 		// int na = addpts(lim[0], lim[1], lim[0].f, lim[1].f, fcn, pts, 0);
-		// trc.dprint("added ",na," Points");
+		// T_(trc.dprint("added ",na," Points");)
 		bisect(pts,  lim[0], lim[1]);
 	}
 
 	this->topdeg = (double)sum/(double)denom;
-	trc.dprint("returning topological degree ",this->topdeg);
+	T_(trc.dprint("returning topological degree ",this->topdeg);)
 	return this->topdeg;
 }  // Cube::td
 
@@ -1319,7 +1320,7 @@ tdpicard(vector<double> const& xmin, vector<double> const& xmax,
 // and sum the determinant of the sgn(\Matrix{B}^k)
 // A Cube is the triangulation of one interval in each
 // coordinate consisting of n! simplices
-	Trace trc(2,"Cube::tdpicard");
+	T_(Trace trc(2,"Cube::tdpicard");)
 	size_t n = nintvl.size();
 	size_t np1 = n + 1;
 	size_t i, j, k;
@@ -1354,23 +1355,23 @@ tdpicard(vector<double> const& xmin, vector<double> const& xmax,
 				// return false;
 		// 	}
 		// }
-		trc.dprintm(np1,np1,np1,&Bk[0],"computing determinant of:");
+		T_(trc.dprintm(np1,np1,np1,&Bk[0],"computing determinant of:");)
 		// sum += intDet(np1, &Bk[0]);
 		int expon;
 		sum += determ(np1, &Bk[0], expon);
-		trc.dprint("Simplex ",k,": summation now = ",sum);
+		T_(trc.dprint("Simplex ",k,": summation now = ",sum);)
 	}
 
 	// the td is \fac{1}{2^n n!} times sum
 	// int denom = pow(2, n)*factorial(n);
 	// if (sum % denom != 0) {
-	// 	trc.dprint("grid too course: sum = ",sum,", denom = ",denom);
+	// 	T_(trc.dprint("grid too course: sum = ",sum,", denom = ",denom);)
 	// }
 
 	// this->topdeg = (double)sum/(double)denom;
-	// trc.dprint("returning ",this->topdeg);
+	// T_(trc.dprint("returning ",this->topdeg);)
 	// return this->topdeg;
-	trc.dprint("returning sum ",sum);
+	T_(trc.dprint("returning sum ",sum);)
 	return sum;
 }
 #endif // NEVER : unused
@@ -1378,7 +1379,7 @@ tdpicard(vector<double> const& xmin, vector<double> const& xmax,
 void
 Cube::
 plot (string const& file) {
-	Trace trc(2,"Cube::plot");
+	T_(Trace trc(2,"Cube::plot");)
 	plotSimplices (*this, file);
 }
 
@@ -1393,7 +1394,7 @@ checkAngles (vector<vector<double> >& pts, Userfcn fcn) {
 //       the angle between f(k) and f(k-1)
 //     - if the angle is greater than maxangle add
 //       points between x(k-1) and x(k)
-	Trace trc(1,"checkAngles");
+	T_(Trace trc(1,"checkAngles");)
 	int rval{0};
 	size_t i, j, k;
 	size_t n = pts.size();
@@ -1407,7 +1408,7 @@ checkAngles (vector<vector<double> >& pts, Userfcn fcn) {
 			if (j != i)
 				npts.push_back(pts[j].size());
 		}
-		trc.dprint("working on coord ",i,", npts = ",npts);
+		T_(trc.dprint("working on coord ",i,", npts = ",npts);)
 		int idx{0};
 		vector<int> ind(nm1);
 		vector<double> xk(n);
@@ -1435,16 +1436,16 @@ checkAngles (vector<vector<double> >& pts, Userfcn fcn) {
 							addpts(xk, xkm1, fk, fkm1, fcn, pts, 0);
 						rval += nadd;
 						naddi += nadd;
-						trc.dprint("function angle ",angle, " > ",maxangle,", added ",nadd," points");
+						T_(trc.dprint("function angle ",angle, " > ",maxangle,", added ",nadd," points");)
 					}
 				}
 				fkm1 = fk;
 				xkm1[i] = xk[i];
 			}
 		}
-		trc.dprint("finished working on coord ",i,", added ",naddi);
+		T_(trc.dprint("finished working on coord ",i,", added ",naddi);)
 	}
-	trc.dprint("returning ",rval, " added points, new # pts: ",coordpts(pts));
+	T_(trc.dprint("returning ",rval, " added points, new # pts: ",coordpts(pts));)
 	return rval;
 }
 
@@ -1459,13 +1460,13 @@ topdeg (vector<vector<double> >& pts, Userfcn fcn) {
 // angle between adjacent function values below 90 degrees,
 // then re-triangulate with the new points. Repeat this
 // process until no new points are added.
-	Trace trc(1,"topdeg");
+	T_(Trace trc(1,"topdeg");)
 	int rval{0};
 	size_t n = pts.size();
 	size_t i, j, k;
 	size_t idx;
 
-	trc.dprintv(coordpts(pts),"begining # pts: ");
+	T_(trc.dprintv(coordpts(pts),"begining # pts: ");)
 
 	// get xmin, xmax from pts
 	vector<double> xmin(n);
@@ -1490,7 +1491,7 @@ topdeg (vector<vector<double> >& pts, Userfcn fcn) {
 		// compute the nD TD
 		// with extra points inserted as needed to keep
 		// the angle between function vectors down
-		trc.dprint(cubes.size()," Cube");
+		T_(trc.dprint(cubes.size()," Cube");)
 
 		for (size_t ic=0; ic<cubes.size(); ic++) {
 			for (idx=0; idx<cubes[ic].size(); idx++) {
@@ -1509,7 +1510,7 @@ topdeg (vector<vector<double> >& pts, Userfcn fcn) {
 					for (j=0; j<n; j++) {          // Point j
 						if (faces[k][j].f.empty()) {
 							faces[k][j].f = vector<double>(n, 0.0);
-							trc.dprint("calling fcn for Cube ",ic, " Face ",k,", Point ",j,": ",faces[k][j]);
+							T_(trc.dprint("calling fcn for Cube ",ic, " Face ",k,", Point ",j,": ",faces[k][j]);)
 							callfcn(faces[k][j], faces[k][j].f, faces[k][j].jac, fcn);
 						}
 						for (i=0; i<n; i++) {
@@ -1526,36 +1527,36 @@ topdeg (vector<vector<double> >& pts, Userfcn fcn) {
 							}
 						}
 					}
-					trc.dprintm(n,n,n,&Bk[0],"computing det of:");
+					T_(trc.dprintm(n,n,n,&Bk[0],"computing det of:");)
 					int expon;
 					int detk = determ(n, &Bk[0], expon);
 					sum += detk;
-					trc.dprint(n,"D cube/simplex/face ",ic,'/',idx,'/',k, " det ",detk," summation now = ",sum);
+					T_(trc.dprint(n,"D cube/simplex/face ",ic,'/',idx,'/',k, " det ",detk," summation now = ",sum);)
 				}
 			}
 		}
-		trc.dprint("processed ",nbf," boundary faces, ", Nperm," permutations");
+		T_(trc.dprint("processed ",nbf," boundary faces, ", Nperm," permutations");)
 
-		trc.dprint("sum of ",n,"D td:",sum);
+		T_(trc.dprint("sum of ",n,"D td:",sum);)
 		int denom = pow(2, n)*factorial(n);
 		if (sum % denom != 0) {
-			trc.dprint("grid too course: sum = ", sum,", denom = ",denom);
+			T_(trc.dprint("grid too course: sum = ", sum,", denom = ",denom);)
 		}
 		rval = sum/denom;
-		trc.dprint("estimated TD: ",rval);
+		T_(trc.dprint("estimated TD: ",rval);)
 
 			// Compute the TD for each Cube in the final grid
 #ifdef NEVER
 		if (!newgrid) {
-			trc.dprint("final grid has ",cubes.size(), " Cubes, computing TD for each Cube");
+			T_(trc.dprint("final grid has ",cubes.size(), " Cubes, computing TD for each Cube");)
 			int npts = countpts(pts);
 			int nnewpts{0};
 			for (i=0; i<cubes.size(); i++) {
 				int nadded{0};
-				trc.dprint("working on Cube ",i,"/",cubes.size());
+				T_(trc.dprint("working on Cube ",i,"/",cubes.size());)
 				int td = cubes[i].td(pts, fcn, nadded);	
 				nnewpts += nadded;
-				trc.dprint("Cube ",i," td = ",td," added ",nadded," Points");
+				T_(trc.dprint("Cube ",i," td = ",td," added ",nadded," Points");)
 				if (td > 0) {
 					vector<Point> lim = cubes[i].limits();
 					cout << "possible root between " << lim[0]
@@ -1567,12 +1568,12 @@ topdeg (vector<vector<double> >& pts, Userfcn fcn) {
 		}
 #endif // NEVER
 		if (newgrid) {
-			trc.dprint("added points: re-triangulate");
-			trc.dprintv(coordpts(pts),"new # pts: ");
+			T_(trc.dprint("added points: re-triangulate");)
+			T_(trc.dprintv(coordpts(pts),"new # pts: ");)
 		}
 	} while (newgrid);
 
-	trc.dprint("returning TD = ",rval);
+	T_(trc.dprint("returning TD = ",rval);)
 	return rval;
 }  // topdeg
 
@@ -1585,7 +1586,7 @@ picard (vector<double> const& xmin, vector<double> const& xmax,
 // Returns  (int) TD with the Picard extension, also:
 //   nDtd   (int) TD without the Picard extension
 
-	Trace trc(1,"picard");
+	T_(Trace trc(1,"picard");)
 	size_t n = xmin.size(); // number of eqns in f(x)
 	size_t i, j;
 	ostringstream os;
@@ -1596,9 +1597,9 @@ picard (vector<double> const& xmin, vector<double> const& xmax,
 	if (chk != nullptr)
 		Check_jacobian = true;
 
-	trc.dprintv(nintvl,"intervals");
-	trc.dprintv(xmin,"minimums");
-	trc.dprintv(xmax,"maximums");
+	T_(trc.dprintv(nintvl,"intervals");)
+	T_(trc.dprintv(xmin,"minimums");)
+	T_(trc.dprintv(xmax,"maximums");)
 
 	// sanity checks
 	if (xmax.size() != n) {
@@ -1627,14 +1628,14 @@ picard (vector<double> const& xmin, vector<double> const& xmax,
 	// adding points to "pts" as necessary to keep the
 	// angle between adjacent function values below 90 deg
 	nDtd = topdeg (pts, fcn);
-	trc.dprint("TD without Picard: ",nDtd);
+	T_(trc.dprint("TD without Picard: ",nDtd);)
 
 	// check angle between function values, add pts if necessary
 	int nadd{0};
 	// do {
 		nadd = checkAngles(pts, fcn);
 	// } while (nadd > 0);
-		trc.dprint(nadd," points added to ",n,"D grid");
+		T_(trc.dprint(nadd," points added to ",n,"D grid");)
 
 	// compute the TD with the Picard extension
 	// add a dimension to pts: the Picard extension
@@ -1663,7 +1664,7 @@ picard (vector<double> const& xmin, vector<double> const& xmax,
 	vector<int> sumsl(np1, 0);
 	vector<int> sumsu(np1,0);
 	for (size_t idx=0; idx<np1; idx++) {     // each coord lower
-		trc.dprint("working on coord ",idx," lower");
+		T_(trc.dprint("working on coord ",idx," lower");)
 		// coord idx lower
 		vector<Face> faces = regionFaces(pcubes, idx, pxmin[idx]);
 		for (i=0; i<faces.size(); i++) {    // each facet of lower
@@ -1677,17 +1678,17 @@ picard (vector<double> const& xmin, vector<double> const& xmax,
 					Bk[IJ(j,k,np1)] = sgn(faces[i][j].f[k]);
 				}
 			}
-			trc.dprintm(np1,np1,np1,&Bk[0],"compute det of:");
+			T_(trc.dprintm(np1,np1,np1,&Bk[0],"compute det of:");)
 			// int sumk = intDet(np1, &Bk[0]);
 			int expon;
 			int deti = determ(np1, &Bk[0], expon);
 			psum += deti;
 			sumsl[idx] += deti;
-			trc.dprint(np1,"D region face ",idx, " lower face ",i,", det = ",deti, " summation now = ",psum);
+			T_(trc.dprint(np1,"D region face ",idx, " lower face ",i,", det = ",deti, " summation now = ",psum);)
 		}
 		plotgnu(faces, faceno++);
 
-		trc.dprint("working on coord ",idx," upper");
+		T_(trc.dprint("working on coord ",idx," upper");)
 		// coord idx upper
 		faces = regionFaces(pcubes, idx, pxmax[idx]);
 		for (i=0; i<faces.size(); i++) {
@@ -1700,30 +1701,30 @@ picard (vector<double> const& xmin, vector<double> const& xmax,
 					Bk[IJ(k,j,np1)] = sgn(faces[i][j].f[k]);
 				}
 			}
-			trc.dprintm(np1,np1,np1,&Bk[0],"compute det of:");
+			T_(trc.dprintm(np1,np1,np1,&Bk[0],"compute det of:");)
 			// int sumk = intDet(np1, &Bk[0]);
 			int expon;
 			int deti = determ(np1, &Bk[0], expon);
 			psum += deti;
 			sumsu[idx] += deti;
-			trc.dprint(np1,"D region face ",idx, " upper face ",i,", det = ",deti, " summation now = ",psum);
+			T_(trc.dprint(np1,"D region face ",idx, " upper face ",i,", det = ",deti, " summation now = ",psum);)
 		}
 		plotgnu(faces, faceno++);
 	}
-	trc.dprint("lower sums: ",sumsl);
-	trc.dprint("upper sums: ",sumsu);
+	T_(trc.dprint("lower sums: ",sumsl);)
+	T_(trc.dprint("upper sums: ",sumsu);)
 
 	Face::makegnucmd(nbf);
 
 	int denom = pow(2, np1)*factorial(np1);
 	if (psum % denom != 0) {
-		trc.dprint("grid too course: sum = ",psum,", denom = ",denom);
+		T_(trc.dprint("grid too course: sum = ",psum,", denom = ",denom);)
 	}
 
 	int rval = psum/denom;
 
-	trc.dprint("topological degree with Picard extension: ",rval);
-	trc.dprint("processed ",nbf," Picard boundary faces");
+	T_(trc.dprint("topological degree with Picard extension: ",rval);)
+	T_(trc.dprint("processed ",nbf," Picard boundary faces");)
 	// compute the number of calls to picardfcn and the
 	// final grid size
 	int sum{0};
@@ -1740,7 +1741,7 @@ picard (vector<double> const& xmin, vector<double> const& xmax,
 			os << " x ";
 	}
 	int ncall = 2*factorial(n)*np1*sum;
-	trc.dprint("there should be ",ncall," calls to picardfcn");
+	T_(trc.dprint("there should be ",ncall," calls to picardfcn");)
 	cerr << "final grid: " << os.str() << " points\n";
 	cerr << "min, max f(x) = " << FnormMin
 			<< ", " << FnormMax << endl;
@@ -1753,11 +1754,11 @@ bool
 indices(int idx, vector<int> const& nitem, vector<int>& rval) {
 // given an index (idx) into an m-dimensional array with "nitem"
 // items in each coord, set the index of each coord in "rval"
-	Trace trc(2,"indices ",idx);
+	T_(Trace trc(2,"indices ",idx);)
 	size_t m = nitem.size();
 	size_t i;
 
-	trc.dprintv(nitem,"number of items in each coord:");
+	T_(trc.dprintv(nitem,"number of items in each coord:");)
 
 	// initialize and check for idx out of range
 	int maxidx = 1;
@@ -1766,7 +1767,7 @@ indices(int idx, vector<int> const& nitem, vector<int>& rval) {
 		maxidx *= nitem[i];
 	}
 	if (idx >= maxidx) {
-		trc.dprint("returning false: ",idx," out of the range 0-",maxidx-1);
+		T_(trc.dprint("returning false: ",idx," out of the range 0-",maxidx-1);)
 		return false;
 	}
 
@@ -1776,7 +1777,7 @@ indices(int idx, vector<int> const& nitem, vector<int>& rval) {
 		rval[i] = idx%nitem[i];
 		idx /= nitem[i];
 	}
-	trc.dprintv(rval,"returning");
+	T_(trc.dprintv(rval,"returning");)
 	return true;
 }
 
@@ -1789,7 +1790,7 @@ boundaryFaces (vector<double> const& lower,
 // point, or a coord is at it's upper bound at each point.
 // These n Points form a boundary Face, an (n-1)-dimensional
 // hypersurface.
-	Trace trc(2,"boundaryFaces");
+	T_(Trace trc(2,"boundaryFaces");)
 	vector<Face> rval;
 	size_t i, j;
 
@@ -1798,9 +1799,9 @@ boundaryFaces (vector<double> const& lower,
 	assert(lower.size() == n);
 	assert(upper.size() == n);
 
-	trc.dprint("searching Simplex ",*this);
-	trc.dprintv(lower,"lower");
-	trc.dprintv(upper,"upper");
+	T_(trc.dprint("searching Simplex ",*this);)
+	T_(trc.dprintv(lower,"lower");)
+	T_(trc.dprintv(upper,"upper");)
 	if (trc()) {
 		int expon;
 		double det = this->orientation(expon);
@@ -1856,7 +1857,7 @@ boundaryFaces (vector<double> const& lower,
 			rval.push_back(face);
 		}
 	}
-	trc.dprintv(rval,"returning ",rval.size()," faces");
+	T_(trc.dprintv(rval,"returning ",rval.size()," faces");)
 	return rval;
 }
 
@@ -1866,7 +1867,7 @@ regionFaces (vector<Cube>& cubes, int idx, double idxval) {
 // nD region, find all Faces ((n-1)D Simplexes) with 
 // all n Points having coordinate "idx" = idxval.
 // These Faces comprise a face of the nD region.
-	Trace trc(2,"regionFaces");
+	T_(Trace trc(2,"regionFaces");)
 	vector<Face> rval;
 	size_t i, j, k;
 
@@ -1910,7 +1911,7 @@ regionFaces (vector<Cube>& cubes, int idx, double idxval) {
 			}
 		}
 	}
-	trc.dprintv(rval,"returning ",rval.size()," faces");
+	T_(trc.dprintv(rval,"returning ",rval.size()," faces");)
 	return rval;
 }
 
@@ -1922,7 +1923,7 @@ triangulate (vector<vector<double> >& pts) {
 // points in n dimensions.
 // Returns: prod(nintvl) Cube, each Cube contains n! Simplex
 	size_t n = pts.size();
-	Trace trc(2,"triangulate",n,"D");
+	T_(Trace trc(2,"triangulate",n,"D");)
 	size_t np1 = n + 1;
 	size_t i, j, k;
 	vector<double> pt(n);
@@ -1934,18 +1935,18 @@ triangulate (vector<vector<double> >& pts) {
 	// nintvl are the number of intervals in each coord
 	for (i=0; i<n; i++) {
 		nintvl[i] = pts[i].size() - 1;
-		trc.dprintv(pts[i], "coord ",i," pts: ");
+		T_(trc.dprintv(pts[i], "coord ",i," pts: ");)
 	}
-	trc.dprintv(nintvl,"number of intervals in each coord: ");
+	T_(trc.dprintv(nintvl,"number of intervals in each coord: ");)
 
 	// compute ncube = prod(nintvl)
 	int prod = 1;
 	for (i=0; i<n; i++) {
 		prod *= nintvl[i];
 	}
-	trc.dprint("number of Cube: ",prod);
+	T_(trc.dprint("number of Cube: ",prod);)
 	if (prod == 0) {
-		trc.dprint("quick return: too few pts in a coord");
+		T_(trc.dprint("quick return: too few pts in a coord");)
 		return rval;
 	}
 
@@ -1968,7 +1969,7 @@ triangulate (vector<vector<double> >& pts) {
 	vector<int> intvl(n,0);
 	while (true) {
 		if (!indices(idx++, nintvl, intvl)) {
-			trc.dprint("finished duping Cubes");
+			T_(trc.dprint("finished duping Cubes");)
 			break;
 		}
 		// get the lower and upper values for each coord
@@ -2006,7 +2007,7 @@ triangulate (vector<vector<double> >& pts) {
 	// 	plotSimplices(simplices, "triangulation");
 	// 	checkSimp(simplices);
 	// }
-	trc.dprint("returning ",rval.size()," Cube");
+	T_(trc.dprint("returning ",rval.size()," Cube");)
 	return rval;
 } // triangulate
 
@@ -2060,7 +2061,7 @@ cjfcn(int n, double xi, double* y) {
 
 double
 check_jac(const vector<double>& x, Userfcn fcn, size_t& maxi, size_t& maxj) {
-	Trace trc(1,"check_jac");
+	T_(Trace trc(1,"check_jac");)
 	double maxre{0.0};
 
 #ifdef NEVER // needs work: convert to ridders
@@ -2081,17 +2082,17 @@ check_jac(const vector<double>& x, Userfcn fcn, size_t& maxi, size_t& maxj) {
 		double dx = std::max(xj*0.01, 0.01);
 		double xmin = xj - dx;
 		double xmax = xj + dx;
-		trc.dprint("working on column ",CJidx," x[",CJidx,"] = ",xj);
+		T_(trc.dprint("working on column ",CJidx," x[",CJidx,"] = ",xj);)
 
 		richardson (n,xj,xmin, xmax, scale,
 				&appjac[IJ(0,CJidx,n)], cjfcn);
 	}
-	trc.dprintm(n,n,n,appjac,"approx jacobian");
+	T_(trc.dprintm(n,n,n,appjac,"approx jacobian");)
 	int expon;
-	trc.dprint("determinant = ",determ(n,&appjac[0],expon));
+	T_(trc.dprint("determinant = ",determ(n,&appjac[0],expon));)
 
-	trc.dprintm(n,n,n,exjac,"exact jacobian");
-	trc.dprint("determinant = ",determ(n,&exjac[0],expon));
+	T_(trc.dprintm(n,n,n,exjac,"exact jacobian");)
+	T_(trc.dprint("determinant = ",determ(n,&exjac[0],expon));)
 
 	maxi = 0;
 	maxj = 0;
@@ -2106,7 +2107,7 @@ check_jac(const vector<double>& x, Userfcn fcn, size_t& maxi, size_t& maxj) {
 			}
 		}
 	}
-	trc.dprint("max rel error in Jacobian: ",maxre," in the (", maxi,',',maxj,") term");
+	T_(trc.dprint("max rel error in Jacobian: ",maxre," in the (", maxi,',',maxj,") term");)
 
 #endif // NEVER // needs work: convert to ridders
 	return maxre;
@@ -2151,7 +2152,7 @@ linfcn (vector<double> const& x, vector<double>& f, vector<double>& jac) {
 // f(n-1) = (x_0 - r_0)(x_0 - r_1)...(x_0 - r_{m-1})
 //   f'(n-1) = (x_0 - r_1)...(x_0 - r_{m-1}) + 
 // m roots at x = [r_i r_i ... r_i]^t   (i=1, m)
-	Trace trc(1,"linfcn");
+	T_(Trace trc(1,"linfcn");)
 	vector<double> roots;
 	// double r = 0.62;
 	// double q = 0.12;
@@ -2172,7 +2173,7 @@ linfcn (vector<double> const& x, vector<double>& f, vector<double>& jac) {
 		}
 		fac *= -1.0;
 	}
-	trc.dprint("f(",x,") = ",f);
+	T_(trc.dprint("f(",x,") = ",f);)
 
 	// df/dx = d/dx(x-r_0)*(r1-x)*(x-r2) ...
 	//       = (r1-x)*(x-r2) ... + (x-r_0)*(-1)*... +
@@ -2191,7 +2192,7 @@ linfcn (vector<double> const& x, vector<double>& f, vector<double>& jac) {
 	}
 	vector<double> det(2,0.0);
 	// determinant(n, &jac[0], &det[0]);
-	trc.dprintm(n,n,n,&jac[0],"Jacobian:");
+	T_(trc.dprintm(n,n,n,&jac[0],"Jacobian:");)
 	// int expon;
 	// double d =  determ(n, &jac[0], expon);
 	// if (det[0] < 0.0)
@@ -2226,12 +2227,12 @@ parfcn (vector<double> const& x, vector<double>& f, vector<double>& jac) {
 // det(f') = 4x_0
 // sgn(det(f')) = sgn(x_0)
 // roots: (-2,4) (2,4)
-	Trace trc(1,"parfcn");
+	T_(Trace trc(1,"parfcn");)
 	size_t n = x.size();
 
 	assert(n%2 == 0);  // only allow even orders
 
-	trc.dprintv(x,"parfcn x");
+	T_(trc.dprintv(x,"parfcn x");)
 	// 2m eqns:
 	//   x_i^2 - x_{i+1} = x_i^2 + x_{i+1} - 8 = 0
 	for (size_t i=0; i<n; i+=2) {
@@ -2293,9 +2294,9 @@ determinant(size_t n, double* a, double* det) {
 //   det 2-vector
 // Compute the determinant of the (n,n) real matrix "a",
 // return it as 2 numbers: d = det[0]*10^det[1]
-	Trace trc(2,"determinant (double)");
+	T_(Trace trc(2,"determinant (double)");)
 
-	trc.dprintm(n,n,n,a,"A");
+	T_(trc.dprintm(n,n,n,a,"A");)
 
 	// factorize the matrix
 	vector<int> pivots(n);
@@ -2304,7 +2305,7 @@ determinant(size_t n, double* a, double* det) {
 	if (info != 0) {
 		ostringstream os;
 		os << "determinant failed: dgetrf returned " << info;
-		trc.dprint("returning 0: ",os.str());
+		T_(trc.dprint("returning 0: ",os.str());)
 		// throw runtime_error(os.str());
 		det[0] = 0.0;
 		det[1] = 0.0;
@@ -2329,13 +2330,13 @@ determinant(size_t n, double* a, double* det) {
 			det[1] += 1.0;
 		}
 	}
-	trc.dprint("returning ",det[0]," 10^",det[1]);
+	T_(trc.dprint("returning ",det[0]," 10^",det[1]);)
 }
 
 
 void
 testdeterm(int n) {
-	Trace trc(1,"testdeterm");
+	T_(Trace trc(1,"testdeterm");)
 
 	cout << "testing template<> determ"
 		<< " with n = " << n << endl;
@@ -2345,27 +2346,27 @@ testdeterm(int n) {
 	vector<int> Ai(n*n);
 	for (i=0; i<n*n; i++)
 		Ai[i] = (int)(10.0*flaps::xrand());
-	trc.dprintm(n,n,n,Ai,"calling determ with");
+	T_(trc.dprintm(n,n,n,Ai,"calling determ with");)
 	int di = determ(n, &Ai[0], expon);
-	trc.dprint("integer determ: ",di,"*10^",expon);
+	T_(trc.dprint("integer determ: ",di,"*10^",expon);)
 	// repeat with determinant(double)
 	vector<double> Ad(n*n);
 	for (i=0; i<n*n; i++)
 		Ad[i] = (double)Ai[i];
 	vector<double> det(2);
 	determinant(n, &Ad[0], &det[0]);
-	trc.dprint("using determinant(): ",det[0],"*10^",det[1]);
+	T_(trc.dprint("using determinant(): ",det[0],"*10^",det[1]);)
 
 	// double
 	for (i=0; i<n*n; i++)
 		Ad[i] = 10.0*flaps::xrand();
-	trc.dprintm(n,n,n,Ad,"calling determ with");
+	T_(trc.dprintm(n,n,n,Ad,"calling determ with");)
 	double dd = determ(n, &Ad[0], expon);
-	trc.dprint("double determ: ",dd,"*10^",expon);
+	T_(trc.dprint("double determ: ",dd,"*10^",expon);)
 
 	// repeat with determinant
 	determinant(n, &Ad[0], &det[0]);
-	trc.dprint("using determinant(): ",det[0],"*10^",det[1]);
+	T_(trc.dprint("using determinant(): ",det[0],"*10^",det[1]);)
 
 	cout << "determ(double): " << dd << "*10^" << expon << endl;
 	cout << "determinant(): " << det[0] << "*10^" << det[1] << endl;

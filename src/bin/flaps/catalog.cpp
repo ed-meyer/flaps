@@ -13,6 +13,7 @@
 #include "functions.h"
 #include "lexer.h"
 #include "settings.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -23,7 +24,7 @@ static void doCat (string const& pat, bool sum);
 //--------------------------------------------------------------------
 bool
 catalog (string const& options) {
-	Trace trc(2,"catalog");
+	T_(Trace trc(2,"catalog");)
 	bool summary{false};	// give a summary, not just names
 	string pat{".*"};	// default: all
 
@@ -55,7 +56,7 @@ catalog (string const& options) {
 
 static void
 doCat (string const& pat, bool sum) {
-	Trace trc(2,"doCat");
+	T_(Trace trc(2,"doCat");)
 	vector<string> cat;
 
 	// get the catalog from the data manager...

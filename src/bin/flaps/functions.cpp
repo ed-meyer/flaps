@@ -62,7 +62,7 @@ fcnptr(const string& name) {
 
 bool
 unix_cmd (const string& cmd) {
-	Trace trc(1,"unix_cmd");
+	T_(Trace trc(1,"unix_cmd");)
 	bool rval = true;
 	ostringstream os;
 
@@ -75,7 +75,7 @@ unix_cmd (const string& cmd) {
 
 	if (status != 0) {
 		string exc = vastr(cmd, " returned status ",status);
-		trc.dprint("unix cmd error: : ",exc);
+		T_(trc.dprint("unix cmd error: : ",exc);)
 		flaps::error(exc);
 		return false;
 	}

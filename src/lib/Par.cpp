@@ -14,6 +14,7 @@
 #include "adeqn.h"
 #include "matrix.h"
 #include "Par.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -62,13 +63,13 @@ Par(const string& defn, initializer_list<string> eqns) {
 //	and a set of candidate equations in a std::initializer_list, e.g.
 //	   {"mach/vsound", "freq/rf"}
 //	see pset.c:make_biparams() for examples
-	Trace trc(1,"Par initializer_list");
+	T_(Trace trc(1,"Par initializer_list");)
 
 	// candidate equations
 	for (auto& s : eqns)
 		candidates.push_back(s);
 
-	trc.dprint(candidates.size()," candidates");
+	T_(trc.dprint(candidates.size()," candidates");)
 
 	std::string minstr;
 	std::string maxstr;
@@ -103,14 +104,14 @@ Par(const string& defn, initializer_list<string> eqns) {
 	pref = 0;
 	state = State::nostate;
 	fresh = false;
-	trc.dprint("returning ",this->longsummary());
+	T_(trc.dprint("returning ",this->longsummary());)
 }
 
 
 Par::
 Par (std::string const& lhs, std::vector<std::string> const& rhsvec) {
 // "Parser" constructor (multiple rhs).
-	Trace trc(1,"Par parser constructor ",rhsvec.size()," rhs");
+	T_(Trace trc(1,"Par parser constructor ",rhsvec.size()," rhs");)
 	std::string minstr;
 	std::string maxstr;
 	std::string srhs;
@@ -161,7 +162,7 @@ Par (std::string const& lhs, std::vector<std::string> const& rhsvec) {
 					x /= factor;
 					altval.push_back(x);
 				}
-				trc.dprint("now have ",altval.size()," altvalues");
+				T_(trc.dprint("now have ",altval.size()," altvalues");)
 			}
 		} else {
 			// not floats - take them as equation candidates
@@ -176,14 +177,14 @@ Par (std::string const& lhs, std::vector<std::string> const& rhsvec) {
 		}
 	}
 
-	trc.dprint("returning ",this->summary());
+	T_(trc.dprint("returning ",this->summary());)
 }
 
 Par::
 Par (const std::string& lhs, const std::string& srhs) {
 // "Parser" constructor (single rhs). Just put the rhs in
 // a vector and call the multiple rhs version.
-	Trace trc(2,"Par parser(",lhs,") = ",srhs);
+	T_(Trace trc(2,"Par parser(",lhs,") = ",srhs);)
 
 	std::vector<std::string> svec;
 	if (!srhs.empty())
@@ -197,7 +198,7 @@ adrealloc() {
 // reallocate the advalue_ member of this parameter in order that
 // it have the current number of AD derivatives. If there
 // is currently an advalue_ transfer it's value to the new one.
-	Trace trc(2,"adrealloc ",this->name," ",Ad::nder()," derivs");
+	T_(Trace trc(2,"adrealloc ",this->name," ",Ad::nder()," derivs");)
 	advalue_.realloc();
 }
 
@@ -237,14 +238,14 @@ deriv(size_t j) const {
 		throw runtime_error(vastr("attempt to return a stale derivative for ",name));
 	}
 #endif // NEVER // disable for Eduardo
-	return advalue_.deriv(j);
+	return advalue_.der(j);
 }
 
 void
 Par::
 deriv(size_t j, double x) {
 // set my Ad derivative "j" (0-Ad::nder()-1) to "x"
-	advalue_.deriv(j,x);
+	advalue_.der(j,x);
 }
 
 Ad
@@ -308,14 +309,14 @@ Ad&
 Par::
 eval(pset& plt) {
 // Evaluate this parameter by passing its equation to adeqn::eval
-	Trace trc(2,"Par::eval ",name);
+	T_(Trace trc(2,"Par::eval ",name);)
 
-	trc.dprint("state ",state_desc(),", uptodate ",fresh);
+	T_(trc.dprint("state ",state_desc(),", uptodate ",fresh);)
 	// quick return if not derived, constant, or has nostate
 	// the State may not be set yet so check for an equation
 	//!! if (equation.empty() || is_constant()) XXX cannot rely on constant
 	if (equation.empty()) {
-		trc.dprint("quick return (",advalue_,"): derived? ",is_derived(),", constant? ",is_constant(),", state? ",state);
+		T_(trc.dprint("quick return (",advalue_,"): derived? ",is_derived(),", constant? ",is_constant(),", state? ",state);)
 		this->fresh = true;
 	} else if (!equation.empty()) {
 		bool noexc{false};	// throw exception on error
@@ -330,7 +331,7 @@ eval(pset& plt) {
 		if (!plt.monitoring())
 			throw runtime_error(vastr(name," is Derived but has no equation"));
 	}
-	trc.dprint("returning ",advalue_);
+	T_(trc.dprint("returning ",advalue_);)
 	return advalue_;
 }
 
@@ -338,20 +339,20 @@ bool
 Par::
 inRange(int sigfig) const {
 // returns true if this parameter is in range
-	Trace trc(2,"Par::inrange");
+	T_(Trace trc(2,"Par::inrange");)
 	double v{value()};
 	double mn{min()};
 	double mx{max()};
-	trc.dprint(name," value ",v,", min ",mn,", max ",mx);
+	T_(trc.dprint(name," value ",v,", min ",mn,", max ",mx);)
 	if (has_min() && is_lessthan(v, mn, sigfig)) {
-		trc.dprint("returning false: ",name," is < ",mn," to ",sigfig," places");
+		T_(trc.dprint("returning false: ",name," is < ",mn," to ",sigfig," places");)
 		return false;
 	}
 	if (has_max() && is_greaterthan(v, mx, sigfig)) {
-		trc.dprint("returning false: ",name," is > ",mx," to ",sigfig," places");
+		T_(trc.dprint("returning false: ",name," is > ",mx," to ",sigfig," places");)
 		return false;
 	}
-	trc.dprint("returning true");
+	T_(trc.dprint("returning true");)
 	return true;
 }
 
@@ -398,7 +399,7 @@ parse(string const& lhs, string const& rhs, string& name, string& desc,
  *
  * Throws runtime_error exception if parsing fails
  *------------------------------------------------------------------*/
-	Trace trc(2,"Par::parse(string rhs)");
+	T_(Trace trc(2,"Par::parse(string rhs)");)
 
 	if (lhs.empty())
 		throw runtime_error("no left-hand side");
@@ -415,7 +416,7 @@ parse(string const& lhs, string const& rhs, string& name, string& desc,
 			throw runtime_error(vastr("lhs has an equal-sign: ",lhsbuf));
 		}
 	}
-	trc.dprint("lhs<",lhsbuf,"> = rhs<",rhsbuf,">");
+	T_(trc.dprint("lhs<",lhsbuf,"> = rhs<",rhsbuf,">");)
 
 	string::size_type idx;
 	string::size_type current = 0;
@@ -429,7 +430,7 @@ parse(string const& lhs, string const& rhs, string& name, string& desc,
 		desc = delimitedString(lhsbuf, '(', ')', idx, end);
 		if (desc.empty()) {
 			string exc = vastr("no closing ) in ",lhsbuf.substr(idx));
-			trc.dprint("throwing exception: ",exc);
+			T_(trc.dprint("throwing exception: ",exc);)
 			throw runtime_error(exc);
 		}
 		current = end + 1;
@@ -441,7 +442,7 @@ parse(string const& lhs, string const& rhs, string& name, string& desc,
 		string limitsStr = delimitedString(lhsbuf, '[', ']', idx, end);
 		if (limitsStr.empty()) {
 			string exc = vastr("no closing ] in ",lhsbuf.substr(idx));
-			trc.dprint("throwing exception: ",exc);
+			T_(trc.dprint("throwing exception: ",exc);)
 			throw runtime_error(exc);
 		}
 		// if parsing the limits fails this is part of the name
@@ -452,7 +453,7 @@ parse(string const& lhs, string const& rhs, string& name, string& desc,
 		} else {
 			if (current != 0) {
 				string exc = vastr("illegal limits: ",limitsStr);
-				trc.dprint("throwing exception: ",exc);
+				T_(trc.dprint("throwing exception: ",exc);)
 				throw runtime_error(exc);
 			}
 		}
@@ -467,7 +468,7 @@ parse(string const& lhs, string const& rhs, string& name, string& desc,
 		string convStr = delimitedString(lhsbuf, '<', '>', idx, end);
 		if (convStr.empty()) {
 			string exc = vastr("no closing > in ",lhsbuf.substr(idx));
-			trc.dprint("throwing exception: ",exc);
+			T_(trc.dprint("throwing exception: ",exc);)
 			throw runtime_error(exc);
 		}
 		conv = Conv(convStr);
@@ -484,7 +485,7 @@ parse(string const& lhs, string const& rhs, string& name, string& desc,
 	// not intended to be a parameter
 	if (name.find_first_of(" ={}()") != string::npos) {
 		string exc = vastr("illegal parameter name: \"",name,"\"");
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 
@@ -492,7 +493,7 @@ parse(string const& lhs, string const& rhs, string& name, string& desc,
 	// parse it because we don't know the datatype
 	eqn = rhsbuf;
 
-	trc.dprint("returning name<",name,"> desc<",desc,"> minstr<", minstr,"> maxstr<",maxstr,">  eqn<",eqn,">");
+	T_(trc.dprint("returning name<",name,"> desc<",desc,"> minstr<", minstr,"> maxstr<",maxstr,">  eqn<",eqn,">");)
 
 	return;
 }
@@ -500,13 +501,13 @@ parse(string const& lhs, string const& rhs, string& name, string& desc,
 bool
 Par::
 parseLimits (string const& limits, string& minstr, string& maxstr) {
-	Trace trc(1,"Par::parseLimits");
+	T_(Trace trc(1,"Par::parseLimits");)
 	ostringstream os;
 
-	trc.dprint("parsing \"",limits,"\"");
+	T_(trc.dprint("parsing \"",limits,"\"");)
 
 	if (limits.empty()) {
-		trc.dprint("returning false: no limits");
+		T_(trc.dprint("returning false: no limits");)
 		return false;
 	}
 
@@ -517,7 +518,7 @@ parseLimits (string const& limits, string& minstr, string& maxstr) {
 
 	std::string::size_type last = limits.find(':', idx);
 	if (last == std::string::npos) {
-		trc.dprint("returning false: \"",limits, "\" is not a limits string: missing colon");
+		T_(trc.dprint("returning false: \"",limits, "\" is not a limits string: missing colon");)
 		return false;
 	}
 	if (last != idx)
@@ -531,7 +532,7 @@ parseLimits (string const& limits, string& minstr, string& maxstr) {
 		maxstr = limits.substr(idx, last - idx);
 	}
 
-	trc.dprint("returning true: min(",minstr,") max(",maxstr,")");
+	T_(trc.dprint("returning true: min(",minstr,") max(",maxstr,")");)
 	return true;
 }
 
@@ -543,7 +544,7 @@ addConversion (const Conv& cp) {
 // value, altval and limits from their current units (assumed
 // to be presentation) to the new equation units.
 // Throws an exception if this Par already has a Conv
-	Trace trc(1,"Par::addConversion ",cp);
+	T_(Trace trc(1,"Par::addConversion ",cp);)
 	std::ostringstream os;
 	size_t i;
 
@@ -563,7 +564,7 @@ addConversion (const Conv& cp) {
 	if (!altval.empty())
 		for (i=0; i<altval.size(); i++)
 			altval[i] /= conv.factor;
-	trc.dprint("returning converted parameter: ",*this);
+	T_(trc.dprint("returning converted parameter: ",*this);)
 }
 
 void
@@ -573,7 +574,7 @@ update_from_solns (size_t index, const Par* from) {
 // element of its (or "from"s) solns array. Do this even if the
 // parameter is Fixed
 // "from" will be a nullptr if we are called with 1 arg
-	Trace trc(2,"Par::update_from_solns ",index);
+	T_(Trace trc(2,"Par::update_from_solns ",index);)
 	if (index >= solns.size()) {
 		string exc = vastr("attempt to access value ",
 				index, "(0b) of ", name, " - only ",
@@ -600,7 +601,7 @@ update_from_solns (size_t index, const Par* from) {
 
 	if (is_fixed()) {
 		if (!is_equal(x, this->value(), 8)) {
-			trc.dprint("changing fixed parameter ",name," from ",this->value()," to ",x);
+			T_(trc.dprint("changing fixed parameter ",name," from ",this->value()," to ",x);)
 			valuef(x);
 		}
 	} else {
@@ -654,13 +655,13 @@ Par::
 upgrade(const Par* from) {
 // Copy certain members from "from" if missing, and if the defnloc
 // of "from->pref" is true copy certain values.
-	Trace trc(2,"Par::upgrade ", from->desc());
+	T_(Trace trc(2,"Par::upgrade ", from->desc());)
 	double factor = 1.0;
 
 	// Description
 	if (desc().empty() && !from->desc().empty()) {
 		desc_ = from->desc();
-		trc.dprint("taking desc ",desc_);
+		T_(trc.dprint("taking desc ",desc_);)
 	}
 	// Conversion factor: error if there already is one and it
 	// is different...
@@ -690,9 +691,9 @@ upgrade(const Par* from) {
 	// of the input parameter is equal to or higher than the existing,
 	// e.g. value, altval, min, max.
 	if (from->pref > 0) {
-		trc.dprint("input has higher precedence");
+		T_(trc.dprint("input has higher precedence");)
 		this->valuef(from->valuef()/factor);
-		trc.dprint("took input value ", advalue_);
+		T_(trc.dprint("took input value ", advalue_);)
 
 		if (from->has_min())
 			min(from->min()/factor);
@@ -704,7 +705,7 @@ upgrade(const Par* from) {
 			altval.clear();
 			for (size_t i=0; i<from->altval.size(); i++)
 				altval.push_back(from->altval[i]/factor);
-			trc.dprint("taking ",from->altval.size()," alt values");
+			T_(trc.dprint("taking ",from->altval.size()," alt values");)
 		}
 		// state...
 		set_state(from->get_state());
@@ -719,7 +720,7 @@ upgrade(const Par* from) {
 		}
 		pref = 1;
 	}
-	trc.dprint("returning ", *this);
+	T_(trc.dprint("returning ", *this);)
 }  // upgrade()
 
 vector<pair<size_t, double> >
@@ -732,21 +733,21 @@ find_solns(double val) const {
 //        = (1-t)*solns[start] + t*solns[start+1]
 // The interpolated value for any other Par can be set by a call
 // to Par::interp(pair<start,t>)
-	Trace trc(2,"Par::find_solns");
+	T_(Trace trc(2,"Par::find_solns");)
 	std::vector<pair<size_t, double> > rval;
 	double eps{sqrt(numeric_limits<double>::epsilon())};
 
-	trc.dprint("searching for ",name," = ",val," in ",solns.size(),"-value array");
+	T_(trc.dprint("searching for ",name," = ",val," in ",solns.size(),"-value array");)
 	
 	if (solns.empty()) {
-		trc.dprint("returning empty: solns is empty");
+		T_(trc.dprint("returning empty: solns is empty");)
 		return rval;
 	}
 	if (solns.size() == 1) {
 		if (is_equal(val, solns[0], 8)) {
 			rval.push_back(std::pair<size_t,double>(0,0.0));
 		}
-		trc.dprint("returning ",rval.size()," locations");
+		T_(trc.dprint("returning ",rval.size()," locations");)
 		return rval;
 	}
 
@@ -756,14 +757,14 @@ find_solns(double val) const {
 		double b = solns[i+1] - val;
 		if (std::abs(a) < eps) {
 			rval.push_back(make_pair(i,0.0));
-			trc.dprint("found one at solns ",i,": ",solns[i]);
+			T_(trc.dprint("found one at solns ",i,": ",solns[i]);)
 			// continue until solns[i] - val > eps
 			while(i<nm && abs(val-solns[i]) < eps) i++;
 			continue;
 		}
 		if (std::abs(b) < eps) {
 			rval.push_back(make_pair(i+1,0.0));
-			trc.dprint("found one at solns ",i+1,": ",solns[i+1]);
+			T_(trc.dprint("found one at solns ",i+1,": ",solns[i+1]);)
 			// continue until solns[i] - val > eps
 			while (i<nm && abs(val-solns[i+1]) < eps) i++;
 			continue;
@@ -779,7 +780,7 @@ find_solns(double val) const {
 			// ignore if this was found at upper end of previous interval
 			if (i == 0 || t > 0.0) {
 				rval.push_back(make_pair(i,t));
-				trc.dprint("found one between solns ",i," and ",i+1,", t = ",t);
+				T_(trc.dprint("found one between solns ",i," and ",i+1,", t = ",t);)
 			}
 		}
 	}
@@ -787,10 +788,10 @@ find_solns(double val) const {
 	if (rval.empty() || rval[rval.size()-1].first < nm-1) {
 		if(is_equal( val, solns[nm],8)) {
 			rval.push_back(make_pair(nm,0));
-			trc.dprint("found one at ",nm+1);
+			T_(trc.dprint("found one at ",nm+1);)
 		}
 	}
-	trc.dprint("returning ",rval.size()," locations");
+	T_(trc.dprint("returning ",rval.size()," locations");)
 	return rval;
 }
 
@@ -802,13 +803,13 @@ find_closest(double val) const {
 //     (v[j] - v[j-1])*(v[j+1]-v[j]) < 0
 // and return a vector of pair<idx,t> such that solns[idx] is approx
 // where the slope changes (t is zero).
-	Trace trc(1,"Par::find_closest");
+	T_(Trace trc(1,"Par::find_closest");)
 	std::vector<pair<size_t,double> > rval;
 
-	trc.dprint("search for closest to ",val," in ",solns.size(),"-value array");
+	T_(trc.dprint("search for closest to ",val," in ",solns.size(),"-value array");)
 	
 	if (solns.size() <= 3) {
-		trc.dprint("returning empty: only ",solns.size()," solns");
+		T_(trc.dprint("returning empty: only ",solns.size()," solns");)
 		return rval;
 	}
 
@@ -837,7 +838,7 @@ interp(pair<size_t,double> loc) {
 // set the current value (advalue_.value, no derivatives) to the value
 // interpolated from the "solns" array at "loc":
 //   value = solns[loc.first] + loc.second*(solns[loc.first+1]-solns[loc.first])
-	Trace trc(2,"Par::interp ",name);
+	T_(Trace trc(2,"Par::interp ",name);)
 	size_t start = loc.first;
 	double t = loc.second;
 	double v1{solns[start]};
@@ -845,7 +846,7 @@ interp(pair<size_t,double> loc) {
 	if (start+1 < solns.size()) {
 		double v2{solns[start+1]};
 		v = v1 + t*(v2 - v1);
-		trc.dprint(name," = ",v1," + ",t,"*",v2-v1," = ",v);
+		T_(trc.dprint(name," = ",v1," + ",t,"*",v2-v1," = ",v);)
 	}
 	advalue_.value(v);
 	this->fresh = true;
@@ -960,11 +961,11 @@ parSum (int full) const {
  * the string returned when full=1 should result in the exact same
  * parameter if passed to the Param(lhs,srhs) constructor.
  *------------------------------------------------------------------*/
-	Trace trc(3,"Par::parSum");
+	T_(Trace trc(3,"Par::parSum");)
 	std::string minstr, maxstr;
 	std::ostringstream os;
 
-	trc.dprint("full = ",full);
+	T_(trc.dprint("full = ",full);)
 
 	os << name;
 
@@ -999,7 +1000,7 @@ parSum (int full) const {
 		os << " {" << solns.size() << " solns}";
 	}
 
-	trc.dprint("returning ",os.str());
+	T_(trc.dprint("returning ",os.str());)
 	return os.str();
 }
 
@@ -1090,19 +1091,19 @@ Fio*
 Par::
 get(Receiver& s) {
 	std::ostringstream os;
-	Trace trc(2,"Par::get");
+	T_(Trace trc(2,"Par::get");)
 
 	Par* rval = new Par();
 	s.serialize(rval->name);
-	trc.dprint("got name \"", rval->name, "\"");
+	T_(trc.dprint("got name \"", rval->name, "\"");)
 	s.serialize(rval->desc_);
-	trc.dprint("got desc \"", rval->desc_, "\"");
+	T_(trc.dprint("got desc \"", rval->desc_, "\"");)
 	s.serialize(rval->pref);
-	trc.dprint("got pref \"", rval->pref, "\"");
+	T_(trc.dprint("got pref \"", rval->pref, "\"");)
 	int ist;
 	s.serialize(ist);
 	rval->state = static_cast<State>(ist);
-	trc.dprint("got state \"", rval->state, "\"");
+	T_(trc.dprint("got state \"", rval->state, "\"");)
 
 	// conv
 	rval->conv = Conv(s);
@@ -1121,13 +1122,13 @@ get(Receiver& s) {
 
 	// candidates
 	s.serialize(rval->candidates);
-	trc.dprint("got ",rval->candidates.size()," candidates");
+	T_(trc.dprint("got ",rval->candidates.size()," candidates");)
 
 	s.serialize(rval->equation);
 
 	// solns
 	s.serialize(rval->solns);
-	trc.dprint("got ", rval->solns.size(), " solns");
+	T_(trc.dprint("got ", rval->solns.size(), " solns");)
 
 	// do not serialize the altval
 
@@ -1138,7 +1139,7 @@ get(Receiver& s) {
 void
 Par::
 put(Sender& s) const {
-	Trace trc(2,"Par::put ", *this);
+	T_(Trace trc(2,"Par::put ", *this);)
 	s.serialize(name);
 	s.serialize(desc_);
 	s.serialize(pref);
@@ -1156,7 +1157,7 @@ put(Sender& s) const {
 	s.serialize(maxp);
 
 	// candidates & solns: send using serialize(vector<T>)
-	trc.dprint(name, " has ",candidates.size(), " candidates");
+	T_(trc.dprint(name, " has ",candidates.size(), " candidates");)
 	s.serialize(candidates);
 	// the chosen candidate
 	s.serialize(equation);
@@ -1218,7 +1219,7 @@ Conv (const string& des) {
  * If factor is not included it defaults to 1.0
  * If only pu is included eu defaults to pu
  */
-	Trace trc(2,"Conv parser constructor");
+	T_(Trace trc(2,"Conv parser constructor");)
 	Conv::parse (des, factor, punits, eunits);
 }
 
@@ -1276,12 +1277,12 @@ parse (const string& des, double& factor, string& pu, string& eu) {
 //   double factor (2.54)
 //   pu: presentation units (furlongs/fortnight)
 //   eu: equation units (m/s)
-	Trace trc(2,"Conv::parse ",des);
+	T_(Trace trc(2,"Conv::parse ",des);)
 	std::string::size_type end;
 	string thestring(delimitedSubstr(des, '<', '>', end));
 	ostringstream os;
 
-	trc.dprint("thestring ",thestring);
+	T_(trc.dprint("thestring ",thestring);)
 	// check for some standard conversions, string versions of
 	// the builtin conversion factors
 	if (thestring == "m2ft") {
@@ -1303,7 +1304,7 @@ parse (const string& des, double& factor, string& pu, string& eu) {
 		factor = flaps::radps2Hz;
 		eu = "rad/s";
 		pu = "Hz";
-		trc.dprint("returning eu<",eu,"> pu<",pu,"> fac ",factor);
+		T_(trc.dprint("returning eu<",eu,"> pu<",pu,"> fac ",factor);)
 		return;
 	} else if (thestring == "radps2rpm") {
 		factor = flaps::radps2rpm;
@@ -1333,7 +1334,7 @@ parse (const string& des, double& factor, string& pu, string& eu) {
 	vector<string> quotes;
 	quotes.push_back("()");
 	vector<string> tok = string2tok(thestring, " ", quotes);
-	trc.dprint("split into tokens: ",tok);
+	T_(trc.dprint("split into tokens: ",tok);)
 	double x;
 	if (tok.size() == 1) {
 		if (str2double(thestring, x)) {
@@ -1359,7 +1360,7 @@ parse (const string& des, double& factor, string& pu, string& eu) {
 		if (!str2double(tok[0], x)) {
 			string exc{"conversion factors must have the form "
 				"<factor presentation_units equation_units>"};
-			trc.dprint("throwing exception: ",exc);
+			T_(trc.dprint("throwing exception: ",exc);)
 			throw runtime_error(exc);
 		}
 		factor = str2double(tok[0], factor);
@@ -1377,15 +1378,15 @@ parse (const string& des, double& factor, string& pu, string& eu) {
 			return;
 		} else {
 			string exc{vastr("illegal conversion factor: \"", des, '\"')};
-			trc.dprint("throwing exception: ",exc);
+			T_(trc.dprint("throwing exception: ",exc);)
 			throw runtime_error(exc);
 		}
 	} else {
 		string exc{vastr("illegal conversion factor: \"", des, '\"')};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
-	trc.dprint("returning eu<",eu,"> pu<",pu,"> fac ",factor);
+	T_(trc.dprint("returning eu<",eu,"> pu<",pu,"> fac ",factor);)
 	return;	
 }
 
@@ -1403,12 +1404,12 @@ delimitedSubstr (string const& str, char open, char close,
  *   end    index of the character just past the "close" char or
  *          string::npos if "close" is the last char in the string
  *------------------------------------------------------------------*/
-	Trace trc(1,"delimitedSubstr");
+	T_(Trace trc(1,"delimitedSubstr");)
 	bool needclose = false;
 	string rval;
 	int level = 0;
 
-	trc.dprint("str ",str,", open ",open,", close ",close);
+	T_(trc.dprint("str ",str,", open ",open,", close ",close);)
 	
 	std::string::size_type first = 0;
 	if (str[0] == open) {
@@ -1416,7 +1417,7 @@ delimitedSubstr (string const& str, char open, char close,
 		first = 1;
 	}
 
-	trc.dprint("first<",first,">");
+	T_(trc.dprint("first<",first,">");)
 	/*
 	 * go through the string a char at a time, increasing
 	 * "level" if an open delimiter is found, decreasing
@@ -1437,7 +1438,7 @@ delimitedSubstr (string const& str, char open, char close,
 
 	if (needclose && str[last] != close) {
 		string exc = vastr("no matching ", close, " in ", str);
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	} else {
 		rval = str.substr(first, last-first);
@@ -1448,17 +1449,17 @@ delimitedSubstr (string const& str, char open, char close,
 	} else {
 		end = last+1;
 	}
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
 Conv::
 Conv (Receiver& s) {
-	Trace trc(2,"Conv receiver constructor");
+	T_(Trace trc(2,"Conv receiver constructor");)
 	s.serialize(factor);
 	s.serialize(eunits);
 	s.serialize(punits);
-	trc.dprint("returning ",*this);
+	T_(trc.dprint("returning ",*this);)
 }
 
 void

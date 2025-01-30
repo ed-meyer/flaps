@@ -383,12 +383,12 @@ int color)			/* Line color (if any)  */
  * xgOut structure passed back from xg_init().
  */
 {
-	Trace trc(1,"seg_X");
+	T_(Trace trc(1,"seg_X");)
 	struct x_state *st = (struct x_state *) user_state;
 	param_style ps;
 	GC gc;
 
-	trc.dprint(ns," segments, style ",style,", color ",color);
+	T_(trc.dprint(ns," segments, style ",style,", color ",color);)
 
 	if (style == L_AXIS) {
 		ps = PM_STYLE("GridStyle");
@@ -413,7 +413,7 @@ int color)			/* Line color (if any)  */
 		}
 	} else {
 		/* Color and line style vary */
-		trc.dprint("calling setGC with lappr = ",lappr);
+		T_(trc.dprint("calling setGC with lappr = ",lappr);)
 		if (lappr == 0) {
 			gc = segGC(st->win, AllAttrs[color].pixelValue, LineSolid,
 			    width, (char *) 0, 0);
@@ -444,10 +444,10 @@ int color)			/* Marker color (if any)   */
  * `color' (0-7) which corresponds with the color for xg_line.
  */
 {
-	Trace trc(1,"dot_X");
+	T_(Trace trc(1,"dot_X");)
 	struct x_state *st = (struct x_state *) user_state;
 
-	trc.dprint("x,y = (",x,',',y,"), style ",style,", color ",color);
+	T_(trc.dprint("x,y = (",x,',',y,"), style ",style,", color ",color);)
 
 	if (style == P_PIXEL) {
 		XDrawPoint(disp, st->win,
@@ -463,7 +463,7 @@ int color)			/* Marker color (if any)   */
 	} else if (style == P_MARK) {
 		int x0 = x - mark_cx;
 		int y0 = y - mark_cy;
-		trc.dprint("calling XFillRectangle wth x0 ",x0,", y0 ",y0, ", width ",mark_w,", height ",mark_h);
+		T_(trc.dprint("calling XFillRectangle wth x0 ",x0,", y0 ",y0, ", width ",mark_w,", height ",mark_h);)
 		XFillRectangle(disp, st->win,
 		    dotGC(st->win, AllAttrs[color].pixelValue,
 		    AllAttrs[type].markStyle, x0, y0), x0, y0, mark_w, mark_h);

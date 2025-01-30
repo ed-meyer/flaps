@@ -254,7 +254,7 @@ static bool modes (const Tok& opt, GSpecs& sp);
 
 static bool
 parser (string const& options, GSpecs& specs) {
-	Trace trc(1,"parser");
+	T_(Trace trc(1,"parser");)
 	bool rval = true;
 
 	// Note: some options are parsed in node() since
@@ -288,12 +288,12 @@ parser (string const& options, GSpecs& specs) {
 
 static bool
 modes (const Tok& opt, GSpecs& sp) {
-	Trace trc(1,"modes");
+	T_(Trace trc(1,"modes");)
 	if (opt.srhs.empty()) {
-		trc.dprint("output gyro matrix will be in modal dof");
+		T_(trc.dprint("output gyro matrix will be in modal dof");)
 	} else {
 		sp.modes = new Matrix(opt.srhs);
-		trc.dprint("got Modes Matrix <",sp.modes->mid());
+		T_(trc.dprint("got Modes Matrix <",sp.modes->mid());)
 	}
 	sp.modal = true;
 	return true;
@@ -389,7 +389,7 @@ node (const Tok& opt, GSpecs& sp) {
  *                orient=-1
  *
  */
-	Trace trc(1,"node");
+	T_(Trace trc(1,"node");)
 
 	assert(opt.ivec.size() == opt.roptvec.size());
 	
@@ -416,7 +416,7 @@ node (const Tok& opt, GSpecs& sp) {
 		if (np.orient.empty())
 			throw runtime_error("at least one orientation component must be included");
 
-		trc.dprint("got gyro element: ",np);
+		T_(trc.dprint("got gyro element: ",np);)
 		sp.gelem.push_back(np);
 	}
 	return true;
@@ -460,7 +460,7 @@ gyroMatrix (GSpecs& specs) {
  *   H = Io
  * where I is the inertia tensor and o is the spin vector.
  *------------------------------------------------------------------*/
-	Trace trc(0,"gyroMatrix");
+	T_(Trace trc(0,"gyroMatrix");)
 	double scale;
 	double x[3];
 	size_t i, j, k;
@@ -468,7 +468,7 @@ gyroMatrix (GSpecs& specs) {
 	// the return matrix will be square with order n
 	size_t n = freedoms.size();
 	
-	trc.dprint("creating ",specs.output,", nelem: ",specs.gelem.size(),", freedoms:",freedoms);
+	T_(trc.dprint("creating ",specs.output,", nelem: ",specs.gelem.size(),", freedoms:",freedoms);)
 
 	// Allocate sparse structures large enough to hold all gyro elements
 	// assuming all gyro elements are full 3x3 matrices
@@ -525,7 +525,7 @@ gyroMatrix (GSpecs& specs) {
 			int ifree = 10.0*freedom;
 			if (inode == ge.node && (ifree > 3 && ifree <= 6)) {
 				ge.dof[ifree-4] = j+1;
-				trc.dprint("freedom ",ifree,", node ",inode," is row ",j+1," 1b");
+				T_(trc.dprint("freedom ",ifree,", node ",inode," is row ",j+1," 1b");)
 			}
 		}
 		if ((ge.dof[0] + ge.dof[1] + ge.dof[2]) == 0)
@@ -546,9 +546,9 @@ gyroMatrix (GSpecs& specs) {
 				if (p == nzs.end()) {
 					nzs.push_back(nzij);
 					colnnz[ge.dof[j]-1]++;
-					trc.dprint("got nzs[",nzs.size(),"] = ",nzij);
+					T_(trc.dprint("got nzs[",nzs.size(),"] = ",nzij);)
 				} else {
-					trc.dprint("adding ",nzij.x," to ",*p);
+					T_(trc.dprint("adding ",nzij.x," to ",*p);)
 					p->x += nzij.x;
 				}
 			}
@@ -558,8 +558,8 @@ gyroMatrix (GSpecs& specs) {
 
 	size_t nnz = nzs.size();
 
-	trc.dprint("nnz = ",nnz);
-	trc.dprint("nnz in each column: ",colnnz);
+	T_(trc.dprint("nnz = ",nnz);)
+	T_(trc.dprint("nnz in each column: ",colnnz);)
 
 	vector<double> nz(nnz,0.0);
 	vector<int> ri(nnz,0);
@@ -600,7 +600,7 @@ gyroMatrix (GSpecs& specs) {
 	rval->cs = cs;
 	rval->nz = nz;
 
-	trc.dprint("returning: ",*rval);
+	T_(trc.dprint("returning: ",*rval);)
 
 	return rval;
 }

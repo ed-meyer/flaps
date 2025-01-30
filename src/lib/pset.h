@@ -69,12 +69,12 @@ public:
 	pset() : eqns_made{false} { }
 	pset(std::string const& ident);
 	pset(const pset& from);  // copy constructor
+	pset& operator=(const pset& rhs); // assignment operator
+	// XXX move ctor & assignment?
 
 	// pset destructor deletes all contained Par
 	~pset();
 
-	// assignment operator
-	pset& operator=(const pset& rhs);
 
 	// to access the maps:
 	std::map<std::string,Par*>& pmap() { return pmap_; }

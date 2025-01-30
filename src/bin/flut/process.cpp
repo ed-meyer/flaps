@@ -46,7 +46,7 @@ pre_process(string const& prog) {
 //      correct autodiff parameters
 //   6) set some defaults & print some user info
 //   7) create targets for independent variable limits
-	Trace trc(1,"pre_process");
+	T_(Trace trc(1,"pre_process");)
 	vector<Matrix*>& stdmat = Matrix::collection();
 	ostringstream os;
 	Specs& sp = flutspecs();
@@ -77,7 +77,7 @@ pre_process(string const& prog) {
 	// matrix or the "source" option
 	if (stdmat.empty()) {
 		os << "no input matrices were specified";
-		trc.dprint("throwing exception: ",os.str());
+		T_(trc.dprint("throwing exception: ",os.str());)
 		throw runtime_error(os.str());
 	}
 	// Mass, stiffness are mandatory, missing aerodynamics
@@ -139,7 +139,7 @@ pre_process(string const& prog) {
 	//    if a parameter has not been declared Fixed or Indep and has
 	//    no equations, set it to Fixed.
 	vector<string> dep = Flutcurve::dependson(gpset::get());
-	trc.dprint("dmatrix dependencies: ",dep);
+	T_(trc.dprint("dmatrix dependencies: ",dep);)
 
 	// get the nonlinear eigenvector components for automatic differentiation
 	// and check for "nostate"
@@ -153,7 +153,7 @@ pre_process(string const& prog) {
 					pp->set_fixed();
 				else
 					pp->set_derived();
-				trc.dprint("set ",pp->name," to ",pp->state);
+				T_(trc.dprint("set ",pp->name," to ",pp->state);)
 			}
 			// add to the list of nonlinear eigenvector components
 			if (pp->is_eigv())
@@ -186,7 +186,7 @@ pre_process(string const& prog) {
 			pp.set_aux();
 			pp.pref = true;
 			gpset::get().add(&pp);
-			trc.dprint("VOE process: added lcostab");
+			T_(trc.dprint("VOE process: added lcostab");)
 		}
 		// turn on lco stability calc
 		adnames.push_back("sigma");
@@ -235,7 +235,7 @@ pre_process(string const& prog) {
 	Ad::initialize(adnames);
 	gpset::get().realloc();
 
-	trc.dprint("AD parameters: ",Ad::toString());
+	T_(trc.dprint("AD parameters: ",Ad::toString());)
 
 	 // 6) do some checking of the parameters
 	check_param();
@@ -321,7 +321,7 @@ print_prefs() {
 
 static bool
 post_preferences_defaults(string const& prog) {
-	Trace trc(1,"post_preferences_defaults");
+	T_(Trace trc(1,"post_preferences_defaults");)
 	bool rval = true;
 	size_t i, j;
 	vector<Par*> indep = gpset::get().get_indep();
@@ -421,19 +421,19 @@ check_param() {
 //   - must have at least 3 indep
 //   - check that Fixed parameters are in range
 //   - if gcnorm is indep it must have limits
-	Trace trc(1,"check_param");
+	T_(Trace trc(1,"check_param");)
 	ostringstream os;
 	vector<Par*> indep = gpset::get().get_indep();
 	size_t nindep = indep.size();
 	Specs& sp = flutspecs();
 
-	trc.dprint(nindep," indep");
+	T_(trc.dprint(nindep," indep");)
 
 	if (nindep == 0) {
-		trc.dprint("throwing exception: no indep");
+		T_(trc.dprint("throwing exception: no indep");)
 		throw runtime_error("no indep parameters were specified");
 	} else if (nindep < 3) {
-		trc.dprint("throwing exception: 3 indep needed");
+		T_(trc.dprint("throwing exception: 3 indep needed");)
 		throw runtime_error("at least 3 parameters must be indep");
 	} else if (nindep > 3 && sp.project.empty()) {
 		throw runtime_error("the optimize option must be included when"
@@ -448,7 +448,7 @@ check_param() {
 	if (gcnorm->is_indep()) {
 		// gcnorm is indep - set to it's minimum if no source run
 		if (!gcnorm->has_min() || !gcnorm->has_max()) {
-			trc.dprint("throwing exception: gcnorm indep without limits");
+			T_(trc.dprint("throwing exception: gcnorm indep without limits");)
 			throw runtime_error("gcnorm is indep with no limits");
 		}
 	}
@@ -466,12 +466,12 @@ check_param() {
 			}
 		}
 	}
-	trc.dprint("returning:\n",gpset::get());
+	T_(trc.dprint("returning:\n",gpset::get());)
 }	//check_param
 
 void
 print_start(vector<Flutcurve*>& startpts) {
-	Trace trc(1,"print_start");
+	T_(Trace trc(1,"print_start");)
 	ostringstream os;
 	Specs& sp = flutspecs();
 
@@ -518,7 +518,7 @@ post_process(vector<Flutcurve*>& curves) {
 //   3) print the results
 //   4) plot the results
 //   5) search each curve for the requested targets and print them
-	Trace trc(1,"postProcess");
+	T_(Trace trc(1,"postProcess");)
 	string runid;
 	int number = 0;
 	Specs& sp = flutspecs();
@@ -528,7 +528,7 @@ post_process(vector<Flutcurve*>& curves) {
 
 	// 1) check for bifurcation
 	if (sp.bifurcation) {
-		//!! Trace trc(2,2,"postProcess");
+		//!! T_(Trace trc(2,2,"postProcess");)
 		Fstack bifstack;
 		for (auto curve : curves) {
 			int i{1};
@@ -562,7 +562,7 @@ post_process(vector<Flutcurve*>& curves) {
 		string error = curve->error;
 		string finished = curve->finished;
 		size_t npts = curve->nsolns();
-		trc.dprint(curve->aid(),": ",curveid," has ",npts," data points");
+		T_(trc.dprint(curve->aid(),": ",curveid," has ",npts," data points");)
 		if (npts == 0) {
 			string msg{vastr("no solutions computed for ", curveid)};
 			if (!error.empty()) {
@@ -653,7 +653,7 @@ seek_target(vector<Flutcurve*>& curves, Target* target, vector<string>& leaders)
 // search each curve for "target", put each found target into the solns
 // of rval and the curve id into "leaders" for printing.
 // Returns: a pset* with targets found in solns, or nullptr if none
-	Trace trc(1,"seek_target ",*target);
+	T_(Trace trc(1,"seek_target ",*target);)
 	pset* rval{nullptr};
 	Specs& sp = flutspecs();
 
@@ -672,14 +672,14 @@ seek_target(vector<Flutcurve*>& curves, Target* target, vector<string>& leaders)
 		if (!sortname.empty())
 			sortpar = curve->params.findp(sortname);
 		vector<pair<size_t,double> > locs = pp->find_solns(val);
-		trc.dprint(curve->cid()," has ",locs.size()," ",*target);
+		T_(trc.dprint(curve->cid()," has ",locs.size()," ",*target);)
 		for (auto loc : locs) {
 			curve->params.interp(loc);
 			// check target windows
 			bool oor{false};
 			for (auto& window : target->windows) {
 				if (!window.inrange(curve->params)) {
-					trc.dprint("reject target: out of window");
+					T_(trc.dprint("reject target: out of window");)
 					oor = true;
 					break;
 				}
@@ -702,7 +702,7 @@ seek_target(vector<Flutcurve*>& curves, Target* target, vector<string>& leaders)
 
 	// sort if requested
 	if (!sortname.empty() && sortstuff.size() > 2) {
-		trc.dprint("before sorting:\n",rval->summary_solns(sp.toprint,"",leaders,false));
+		T_(trc.dprint("before sorting:\n",rval->summary_solns(sp.toprint,"",leaders,false));)
 		sort (sortstuff.begin(), sortstuff.end(), targetcmp());
 		for (auto& par : rval->pmap()) {
 			Par* pp = par.second;
@@ -729,10 +729,10 @@ seek_target(vector<Flutcurve*>& curves, Target* target, vector<string>& leaders)
 			newlead.push_back(leaders[si.loc]);
 		}
 		leaders = newlead;
-		trc.dprint("sorted:\n",rval->summary_solns(sp.toprint,"",leaders,false));
+		T_(trc.dprint("sorted:\n",rval->summary_solns(sp.toprint,"",leaders,false));)
 	}
 
-	trc.dprint("returning ",rval==nullptr?0:rval->nsolns()," found");
+	T_(trc.dprint("returning ",rval==nullptr?0:rval->nsolns()," found");)
 	return rval;
 }
 
@@ -741,13 +741,13 @@ get_order(size_t* basic) {
 // Returns the size of the largest matrix. All matrices must have
 // the same basic size but some may have user-subroutine
 // parameterizations with "extra" equations
-	Trace trc(2,"get_order");
+	T_(Trace trc(2,"get_order");)
 	vector<Matrix*>& stdmat = Matrix::collection();
 	static size_t rval{0};
 	static size_t smallest{std::numeric_limits<int>::max()};
 
 	if (rval > 0) {
-		trc.dprint("already called: matrix order=",rval,", smallest = ",smallest);
+		T_(trc.dprint("already called: matrix order=",rval,", smallest = ",smallest);)
 		if (basic != nullptr) *basic = smallest;
 		return rval;
 	}
@@ -760,7 +760,7 @@ get_order(size_t* basic) {
 		if (!is_flutmat(mp->desc()))
 			continue;
 		if (mp->rsize() != mp->csize()) {
-			trc.dprint(mp->desc()," is not square: ",mp->summary());
+			T_(trc.dprint(mp->desc()," is not square: ",mp->summary());)
 			continue;
 		}
 		size_t order = mp->rsize();
@@ -768,7 +768,7 @@ get_order(size_t* basic) {
 		smallest = std::min(smallest, order);
 		rval = std::max(rval, order);
 	}
-	trc.dprint("returning ",rval,", smallest ",smallest);
+	T_(trc.dprint("returning ",rval,", smallest ",smallest);)
 	if (basic != nullptr) *basic = smallest;
 	return rval;
 }

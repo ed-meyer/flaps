@@ -50,7 +50,7 @@ putEnv (string const& var) {
 // constant string argument, and throws an exception if there
 // is an error; more importantly the input string does not
 // need to be static - it is copied to a new char array from the heap
-	Trace trc(1,"putEnv", ": ",var);
+	T_(Trace trc(1,"putEnv", ": ",var);)
 	// putenv wants a pointer to permanent memory
 	char* ev = new char[var.size()+1];
 	strcpy (ev, var.c_str());
@@ -75,16 +75,16 @@ expenv(const string& str) {
  *    str      string with (possibly) environment variable(s)
  * returns string with environment variables expanded.
  *------------------------------------------------------------------*/
-	Trace trc(3,"expenv");
+	T_(Trace trc(3,"expenv");)
 	string rval;
 	string::size_type i = 0;
 
-   trc.dprint("expanding <",str,">");
+   T_(trc.dprint("expanding <",str,">");)
 	// quick return if str does not contain $ or ~
 	string::size_type dollarpos = str.find('$');
 	string::size_type tildepos = str.find('~');
 	if (dollarpos == string::npos && tildepos == string::npos) {
-		trc.dprint("returning unchanged");
+		T_(trc.dprint("returning unchanged");)
 		return str;
 	}
 
@@ -144,16 +144,16 @@ expenv(const string& str) {
 				while (i<str.size() && std::isalnum(str[i]))
 					ev.push_back(str[i++]);
 			}
-			trc.dprint("got ev <",ev,">");
+			T_(trc.dprint("got ev <",ev,">");)
 			char* val = getenv(ev.c_str());
 			// if this env var is undefined leave blank
 			if (val) {
 				rval += val;
-				trc.dprint("appended <",val,">");
+				T_(trc.dprint("appended <",val,">");)
 			}
 		}
 	}
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -367,10 +367,10 @@ compare(const string& a, const string& b, int nsig) {
 // name is "input" but you want to allow "i", "in",
 // "inp", etc, put the Tok in the second arg:
 //     compare("input", pref->srhs)
-	Trace trc(3,"compare");
+	T_(Trace trc(3,"compare");)
 	string aa = stripwhitespace(a);
 	string bb = stripwhitespace(b);
-	trc.dprint("\"",aa,"\" =? \"",bb,"\"");
+	T_(trc.dprint("\"",aa,"\" =? \"",bb,"\"");)
 	if (aa == bb)
 		return true;
 	// b may be shorter than a but not longer
@@ -416,7 +416,7 @@ stringUpper(string const& a) {
 string
 stripwhitespace(string const& s) {
 // Strip leading and trailing whitespace from a string
-	Trace trc(3,"stripwhitespace "," <",s,">");
+	T_(Trace trc(3,"stripwhitespace "," <",s,">");)
 	string rval;
 	string::size_type first = s.find_first_not_of(" \t\n");
 	if (first != string::npos)
@@ -428,7 +428,7 @@ stripwhitespace(string const& s) {
 	if (last != string::npos)
 		rval = rval.substr(0, last+1);
 
-	trc.dprint("returning <",rval,">");
+	T_(trc.dprint("returning <",rval,">");)
 	return rval;
 }
 
@@ -453,11 +453,11 @@ stripDelim (string const& s, char open, char close) {
 vector<string>
 string2tok (string const& str, char delim) {
 // Simplest string2tok: single-character delimiter and no quotes
-	Trace trc(3,"string2tok(char)");
+	T_(Trace trc(3,"string2tok(char)");)
 	vector<string> rval;
 	string::size_type first = 0, last;
 	
-	trc.dprint("str<",str,"> delim<",delim,'>');
+	T_(trc.dprint("str<",str,"> delim<",delim,'>');)
 
 	// is whitespace a delimiter?
 	string white(" \t\n");
@@ -489,7 +489,7 @@ string2tok (string const& str, char delim) {
 		while (str[lst-1] == ' ' || str[lst-1] == '\t') lst--;
 		tok = str.substr(first, lst-first);
 		if (!tok.empty()) {
-			trc.dprint("got <",tok,">");
+			T_(trc.dprint("got <",tok,">");)
 			rval.push_back(tok);
 		}
 		last++;
@@ -510,11 +510,11 @@ string2tok (string const& str, string const& delim, vector<string> const& quotes
 		char cdelim{delim[0]};
 		return string2tok(str, cdelim);
 	}
-	Trace trc(3,"string2tok(quotes)");
+	T_(Trace trc(3,"string2tok(quotes)");)
 	vector<string> rval;
 	string::size_type first = 0, last;
 	
-	trc.dprint("str<",str,"> delim<",delim,"> ",quotes.size()," quotes");
+	T_(trc.dprint("str<",str,"> delim<",delim,"> ",quotes.size()," quotes");)
 
 	// is whitespace a delimiter?
 	string white(" \t\n");
@@ -558,7 +558,7 @@ string2tok (string const& str, string const& delim, vector<string> const& quotes
 		while (str[lst-1] == ' ' || str[lst-1] == '\t') lst--;
 		tok = str.substr(first, lst-first);
 		if (!tok.empty()) {
-			trc.dprint("got <",tok,">");
+			T_(trc.dprint("got <",tok,">");)
 			rval.push_back(tok);
 		}
 		last++;
@@ -747,9 +747,9 @@ str2complex (string const& s, complex<double>& x, string::size_type start,
  * complex, we do not allow that here because there are times
  * (e.g. alge) when it is important to distinguish.
  *------------------------------------------------------------------*/
-	Trace trc(3,"str2complex");
+	T_(Trace trc(3,"str2complex");)
 
-	trc.dprint("<",s,"> start ",start);
+	T_(trc.dprint("<",s,"> start ",start);)
 
 	if (start >= s.size()) {
 		ostringstream os;
@@ -758,7 +758,7 @@ str2complex (string const& s, complex<double>& x, string::size_type start,
 			os << " in an empty string";
 		else
 			os << " in \"" << s << '\"';
-		trc.dprint("throwing exception: ",os.str());
+		T_(trc.dprint("throwing exception: ",os.str());)
 		throw runtime_error(os.str());
 	}
 	/*
@@ -773,25 +773,25 @@ str2complex (string const& s, complex<double>& x, string::size_type start,
 	// Grab the relevant part - enclosed in parentheses
 	string str = s.substr(start, end-start);
 
-	trc.dprint("testing substring ",str);
+	T_(trc.dprint("testing substring ",str);)
 
 	smatch mch;
 	if (regex_match(str, mch, make_regex(R"(\s*([^-+ ]*)\s*([-+])\s*[ij](.*))"))) {
 		double re{0.0};
 		double im{0.0};
 		if (mch.size() < 4) {
-			trc.dprint("returning false: regex does not match");
+			T_(trc.dprint("returning false: regex does not match");)
 			return false;
 		}
 		if (str2double(mch[1],re) && str2double(mch[3],im)) {
 			if (mch[2] == "-")
 				im = -im;
 			x = complex<double>(re,im);
-			trc.dprint("returning true: ",x);
+			T_(trc.dprint("returning true: ",x);)
 			return true;
 		}
 	}
-	trc.dprint("returning false");
+	T_(trc.dprint("returning false");)
 	return false;
 }
 
@@ -901,7 +901,7 @@ page_width(int newpw) {
 // The pagewidth can be set either by setting environment variable
 // PAGEWIDTH or calling this function with an integer argument, e.g.
 //     page_width(380);
-	Trace trc(3,"page_width");
+	T_(Trace trc(3,"page_width");)
 	static int pagewidth{0};  // default
 	int defaultpw{160};
 	char *s;
@@ -918,7 +918,7 @@ page_width(int newpw) {
 			flaps::info("set page width to ",pagewidth," from the environment");
 		} else {
 			pagewidth = defaultpw;
-			trc.dprint("setting default page width ",pagewidth);
+			T_(trc.dprint("setting default page width ",pagewidth);)
 		}
 	}
 
@@ -926,9 +926,9 @@ page_width(int newpw) {
 	int rval = pagewidth;
 	if (newpw > 0) {
 		pagewidth = newpw;
-		trc.dprint("re-setting page width to ",pagewidth);
+		T_(trc.dprint("re-setting page width to ",pagewidth);)
 	}
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -1194,7 +1194,7 @@ int
 main (int argc, char** argv) {
 	char* dbg = getenv("DEBUG");
 	if (dbg != nullptr) Trace::debug(std::stoi(dbg));
-	Trace trc(1,argv[0]);
+	T_(Trace trc(1,argv[0]);)
 	if (argc < 2 || argv[1][0] != '-') {
 		usage(argv[0]);
 	}

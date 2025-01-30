@@ -33,19 +33,19 @@ SVD (int nrow, int ncol, double const* A) {
  *
  * Returns an SVD structure
  *------------------------------------------------------------------*/
-	Trace trc(2,"SVD constructor");
+	T_(Trace trc(2,"SVD constructor");)
 	nr = nrow;
 	nc = ncol;
 	double eps = 100.0*std::numeric_limits<double>::epsilon();
 
-	trc.dprint("m ",nr,", n ",nc);
+	T_(trc.dprint("m ",nr,", n ",nc);)
 
 	int mn = std::min(nr, nc);
 
 	// Copy the matrix to another spot for factorization
 	a = A;
 	vector<double> af(nr*nc);
-	blas_copy (nr*nc, &A[0], 1, &af[0], 1);
+	blas::copy (nr*nc, &A[0], 1, &af[0], 1);
 
 	s.resize(mn);
 	u.resize(nr*nr);
@@ -58,8 +58,8 @@ SVD (int nrow, int ncol, double const* A) {
 
 	if (info != 0) {
 		string exc = vastr("SVD failed: info ",info);
-		// trc.dprint("throwing exception: ",exc);
-		trc.dprintm(nr,nc,nr,&af[0],"throwing exception: ",exc);
+		// T_(trc.dprint("throwing exception: ",exc);)
+		T_(trc.dprintm(nr,nc,nr,&af[0],"throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 
@@ -72,7 +72,7 @@ SVD (int nrow, int ncol, double const* A) {
 
 	rankdef = this->rank_def();
 
-	trc.dprint("rcond = ",rcond,", rankdef = ",rankdef);
+	T_(trc.dprint("rcond = ",rcond,", rankdef = ",rankdef);)
 }
 
 ostream&
@@ -98,10 +98,10 @@ solve (vector<double> const& b, vector<double>& x) {
  *    b: nr-vector
  * throws runtime_error if an error occured.
  *------------------------------------------------------------------*/
-	Trace trc(2,"SVD::solve");
+	T_(Trace trc(2,"SVD::solve");)
 	int j;
 
-	trc.dprintm(nr,1,nr,b,"b");
+	T_(trc.dprintm(nr,1,nr,b,"b");)
 
 	assert((int)b.size() >= nr && nr > 0);
 	assert((int)x.size() >= nc && nc > 0);
@@ -125,31 +125,31 @@ solve (vector<double> const& b, vector<double>& x) {
 		if (s[j] < tol)
 			break;
 		double ub;
-		blas_dot(nr, &u[IJ(0,j,nr)], 1, &b[0], 1, ub);
-		trc.dprint("u_",j,"^t b = ",ub);
+		blas::dot(nr, &u[IJ(0,j,nr)], 1, &b[0], 1, ub);
+		T_(trc.dprint("u_",j,"^t b = ",ub);)
 		ub /= s[j];
-		blas_axpy (nc, ub, &vt[j], nc, &x[0], 1);
+		blas::axpy (nc, ub, &vt[j], nc, &x[0], 1);
 		rank++;
 	}
-	trc.dprint("rankdef by rank_def ",rankdef,", and here: ",nr-rank);
+	T_(trc.dprint("rankdef by rank_def ",rankdef,", and here: ",nr-rank);)
 	rankdef = nr - rank;
 	// the last nc-nr+rankdef rows of vt are null vectors
 	if (rankdef == 1) {
 		int nnull = nc - nr + rankdef;
 		vector<double> nv(nc);
 		for (int i=1; i<=nnull; i++) {
-			blas_copy(nc, &vt[nc-i], nc, &nv[0], 1);
+			blas::copy(nc, &vt[nc-i], nc, &nv[0], 1);
 			cerr << "null vector " << i << ", s=" << s[nc-1] <<
 				": " << flaps::summarize(nv, 80) << endl;
 			double alpha{1.0};
 			double beta{0.0};
 			vector<double> y(nr);
-			blas_sgemv("n",nr,nc,alpha,&a[0],nr,&nv[0],1,beta,&y[0],1);
-			cerr << "norm J*nv = " << blas_snrm2(nr, &y[0], 1) << endl;
+			blas::gemv("n",nr,nc,alpha,&a[0],nr,&nv[0],1,beta,&y[0],1);
+			cerr << "norm J*nv = " << blas::snrm2(nr, &y[0], 1) << endl;
 		}
 	}
 
-	trc.dprint(rankdef," rank deficiencies");
+	T_(trc.dprint(rankdef," rank deficiencies");)
 }
 
 vector<Interval>
@@ -164,9 +164,9 @@ solve (vector<Interval> const& b) {
  *    b: nr-vector
  * throws runtime_error if an error occured.
  *------------------------------------------------------------------*/
-	Trace trc(2,"SVD::solve(Interval)");
+	T_(Trace trc(2,"SVD::solve(Interval)");)
 
-	trc.dprint("b",b);
+	T_(trc.dprint("b",b);)
 	
 	//!! if (nr != nc)
 		//!! throw runtime_error(vastr("only square matrices allowed, input is (",nr,',',nc,")"));
@@ -207,7 +207,7 @@ solve (vector<Interval> const& b) {
 			ident[i+j*nr] = t;
 		}
 	}
-	trc.dprint("a*ainv = ",ident);
+	T_(trc.dprint("a*ainv = ",ident);)
 
 	// x = A^{-1} b
 	vector<Interval> rval(nc);
@@ -218,31 +218,31 @@ solve (vector<Interval> const& b) {
 		}
 		rval[i] = t;
 	}
-	trc.dprint("solution x:",rval);
+	T_(trc.dprint("solution x:",rval);)
 	return rval;
 }
 
 std::vector<double>
 SVD::
 nullProj(const vector<double>& proj) {
-	Trace trc(2,"SVD::nullProj");
+	T_(Trace trc(2,"SVD::nullProj");)
 // given an svd factorization A = U \Sigma V^t project a
 // vector "proj" onto the nullspace:
 //   p = V V^t proj
 // The last nc-nr+rankdef columns of V (rows of vt) are null vectors
 	vector<double> rval(nc, 0.0);
 	int nnull = nc - nr + rankdef;
-	trc.dprint(nnull, " null vectors, start at V[",nc-nnull,"] 0b");
+	T_(trc.dprint(nnull, " null vectors, start at V[",nc-nnull,"] 0b");)
 	double vtp;
 	int start = (int)(nr - rankdef);
 	int end = (int)nc;
 	for (int i=start; i<end; i++) {
-		blas_dot(nc, &vt[i], nc, &proj[0], 1, vtp);
-		trc.dprint("row ",i," vtp ",vtp);
+		blas::dot(nc, &vt[i], nc, &proj[0], 1, vtp);
+		T_(trc.dprint("row ",i," vtp ",vtp);)
 		if (vtp != 0.0)
-			blas_axpy(nc, vtp, &vt[i], nc, &rval[0], 1);
+			blas::axpy(nc, vtp, &vt[i], nc, &rval[0], 1);
 		else {
-			blas_copy(nc, &vt[i], nc, &rval[0], 1);
+			blas::copy(nc, &vt[i], nc, &rval[0], 1);
 			string msg = vastr("attempt to project ",proj," onto svd null vector:",rval);
 			flaps::warning(msg);
 		}
@@ -250,12 +250,12 @@ nullProj(const vector<double>& proj) {
 	// check that the projection is in the same direction as the
 	// projected vector
 	double t;
-	blas_dot (nc, &rval[0], 1, &proj[0], 1, t);
+	blas::dot (nc, &rval[0], 1, &proj[0], 1, t);
 	if (t < 0.0) {
 		t = -1.0;
-		blas_scal (nc, t, &rval[0], 1);
+		blas::scal (nc, t, &rval[0], 1);
 	}
-	trc.dprint("returning ",flaps::summarize(rval));
+	T_(trc.dprint("returning ",flaps::summarize(rval));)
 	return rval;
 }
 
@@ -285,13 +285,13 @@ rank_def() {
  *    a ratio is less than machine epsilon that is a rank
  *    deficiency.
  *------------------------------------------------------------------*/
-	Trace trc(2,"SVD::rank_def");
+	T_(Trace trc(2,"SVD::rank_def");)
 	int ns = std::min(nr, nc);
 	int rank;
 	//!! double eps = sqrt(std::numeric_limits<double>::epsilon());
 	double eps = rcondeps();
 
-	trc.dprint("m ",nr,", n ",nc);
+	T_(trc.dprint("m ",nr,", n ",nc);)
 //!! #ifdef NEVER
 	// method (1): estimate the interval each s lies in,
 	// decrement rank if interval contains zero
@@ -311,7 +311,7 @@ rank_def() {
 //!! #else
 	// method (2): the number of s which are < eps*largest s
 	eps = s[0]*rcondeps();
-	trc.dprint("eps = ",s[0],"*",rcondeps()," = ",eps);
+	T_(trc.dprint("eps = ",s[0],"*",rcondeps()," = ",eps);)
 	rank = 0;
 	for (int i=0; i<ns; i++) {
 		if (s[i] < eps)
@@ -319,8 +319,8 @@ rank_def() {
 		rank++;
 	}
 //!! #endif // NEVER
-	trc.dprint("rank by method 1 ",rank1,", and by method 2 ",rank);
-	trc.dprint("returning rank def ",ns-rank);
+	T_(trc.dprint("rank by method 1 ",rank1,", and by method 2 ",rank);)
+	T_(trc.dprint("returning rank def ",ns-rank);)
 	return ns-rank;
 }
 
@@ -375,21 +375,21 @@ static double xrand() {
 static int
 irand(int range) {
 // Random integer in the range 1 to range
-	Trace trc(1,"irand");
+	T_(Trace trc(1,"irand");)
 	int rval;
 	double x;
 
-	trc.dprint("range: ",range);
+	T_(trc.dprint("range: ",range);)
 
 	initRand();
 
 	x = (double)rand()/(double)RAND_MAX;
-	trc.dprint("rand/RAND_MAX ",x);
+	T_(trc.dprint("rand/RAND_MAX ",x);)
 	x = ((double)range)*x;
 	rval = (int)x;
 	if (rval <= 0)
 		rval = 1;
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -397,10 +397,10 @@ irand(int range) {
 static void
 norm (int n, double* x) {
 // scale input "x" so it's 2-norm is 1.0
-	double t = blas_snrm2 (n, x, 1);
+	double t = blas::snrm2 (n, x, 1);
 	if (t != 0.0)
 		t = 1.0/t;
-	blas_scal (n, t, x, 1);
+	blas::scal (n, t, x, 1);
 }
 
 static bool
@@ -409,7 +409,7 @@ isResOk (int nr, int nc, int exp, vector<double>& a, vector<double>& x, vector<d
  * Answers the question "is the residual (Ax-b) in the computed
  * solution small enough?"
  *------------------------------------------------------------------*/
-	Trace trc(1,"isResOk");
+	T_(Trace trc(1,"isResOk");)
 	long double rmin, rmax;
 	long double ax;
 	long double tlo, thi;
@@ -421,7 +421,7 @@ isResOk (int nr, int nc, int exp, vector<double>& a, vector<double>& x, vector<d
 	tlo = 1.0 - eps;
 	thi = 1.0 + eps;
 
-	trc.dprint("eps ",eps,", tlo ",tlo,", thi ",thi);
+	T_(trc.dprint("eps ",eps,", tlo ",tlo,", thi ",thi);)
 
 	for (i=0; i<nr; i++) {
 		rmin = rmax = 0.0;
@@ -436,10 +436,10 @@ isResOk (int nr, int nc, int exp, vector<double>& a, vector<double>& x, vector<d
 			}
 		}
 		if (rmin > b[i] || rmax < b[i]) {
-			trc.dprint("returning false: ",rmin," <= ",b[i]," <= ",rmax," failed");
+			T_(trc.dprint("returning false: ",rmin," <= ",b[i]," <= ",rmax," failed");)
 			return false;
 		} else {
-			trc.dprint(rmin," <= ",b[i]," <= ",rmax);
+			T_(trc.dprint(rmin," <= ",b[i]," <= ",rmax);)
 		}
 	}
 	return true;
@@ -472,11 +472,11 @@ newA (int nr, int nc, double rcond) {
 //      between rcond and 1.0
 //   3) form the return matrix as A = U \Sigma V^t where
 //      \Sigma is the new set of singular values.
-	Trace trc(1,"newA");
+	T_(Trace trc(1,"newA");)
 	vector<double> rval(nr*nc, 0.0);
 	int i, j, k;
 
-	trc.dprint("nr ",nr,", nc ",nc,", rcond ",rcond);
+	T_(trc.dprint("nr ",nr,", nc ",nc,", rcond ",rcond);)
 
 	int mn = std::min(nr, nc);
 
@@ -486,7 +486,7 @@ newA (int nr, int nc, double rcond) {
 			rval[IJ(i,j,nr)] = xrand();
 		}
 	}
-	trc.dprintm(nr,nc,nr,&rval[0],"random A");
+	T_(trc.dprintm(nr,nc,nr,&rval[0],"random A");)
 
 	// SVD the random matrix
 	vector<double> s(mn, 0.0);
@@ -499,11 +499,11 @@ newA (int nr, int nc, double rcond) {
 		throw runtime_error(vastr("svd failed: info ",info));
 	}
 
-	trc.dprintm(nr,nr,nr,&u[0],"U");
-	trc.dprintm(nc,nc,nc,&vt[0],"Vt");
+	T_(trc.dprintm(nr,nr,nr,&u[0],"U");)
+	T_(trc.dprintm(nc,nc,nc,&vt[0],"Vt");)
 
 	vector<double> utu(nr*nr, 0.0);
-	blas_sgemm("t","n",nr,nr,nr,1.0,&u[0],nr,&u[0],nr,0.0,&utu[0],nr);
+	blas::gemm("t","n",nr,nr,nr,1.0,&u[0],nr,&u[0],nr,0.0,&utu[0],nr);
 
 	for (i=0; i<nr; i++)
 		for (j=0; j<nc; j++)
@@ -523,7 +523,7 @@ newA (int nr, int nc, double rcond) {
 		double sk = smin + k*dels;
 		if (k < Rankdef)
 			sk = 0.0;
-		trc.dprint("setting singular value ",k," to ",sk);
+		T_(trc.dprint("setting singular value ",k," to ",sk);)
 		for (i=0; i<nr; i++) {
 			for (j=0; j<nc; j++) {
 				rval[IJ(i,j,nr)] = rval[IJ(i,j,nr)] + u[IJ(i,k,nr)]*sk*vt[IJ(k,j,nc)];
@@ -532,12 +532,12 @@ newA (int nr, int nc, double rcond) {
 	}
 
 	vector<double> as(nr*nc);
-	blas_copy (nr*nc, &rval[0], 1, &as[0], 1);
-	trc.dprintm(nr,nc,nr,&as[0],"new A");
+	blas::copy (nr*nc, &rval[0], 1, &as[0], 1);
+	T_(trc.dprintm(nr,nc,nr,&as[0],"new A");)
 	info = lapack::dgesvd("N", "N", nr, nc, &as[0], nr,
 				&s[0], &u[0], nr, &vt[0], nc);
 	if (info != 0) cerr << "info= " << info << endl;
-	trc.dprint("singular values of return A:",s);
+	T_(trc.dprint("singular values of return A:",s);)
 	return rval;
 }
 
@@ -553,7 +553,7 @@ newb (int nr, int nc, vector<double>& a) {
 		vector<double> x(nc, 0.0);
 		for (i=0; i<nc; i++)
 			x[i] = (double)randReal(1.0);
-		blas_sgemv("n",nr,nc,1.0,&a[0],nr,&x[0],1,0.0,&rval[0],1);
+		blas::gemv("n",nr,nc,1.0,&a[0],nr,&x[0],1,0.0,&rval[0],1);
 	}
 	return rval;
 }
@@ -569,7 +569,7 @@ testFile (char const* file) {
 	// if the matrix is complex copy the real part only
 	if (iscmplx) {
 		double* ta = new double[nr*nc];
-		blas_copy(nr*nc, a, 2, ta, 1);
+		blas::copy(nr*nc, a, 2, ta, 1);
 		a = ta;
 	}
 	SVD af(nr, nc, a);
@@ -583,7 +583,7 @@ testFile (char const* file) {
 
 int
 main(int argc, char** argv) {
-	Trace trc(1,argv[0]);
+	T_(Trace trc(1,argv[0]);)
 	int nr, nc, nrnc;
 	int i, k;
 	double resNorm, nullResNorm;
@@ -616,7 +616,7 @@ main(int argc, char** argv) {
 	for (k=0; k<Nsol; k++) {
 		nr = irand(Maxsize);
 		nr = std::max(nr, Minsize);
-		trc.dprint("solution ",k+1,": nr = ",nr);
+		T_(trc.dprint("solution ",k+1,": nr = ",nr);)
 		if (Square) {
 			nc = nr;
 		} else {
@@ -647,8 +647,8 @@ main(int argc, char** argv) {
 		vector<double> b = newb(nr,nc,a);
 
 		// save copies of A and b for computing the residual
-		blas_copy (nrnc, &a[0], 1, &as[0], 1);
-		blas_copy (nr, &b[0], 1, &bs[0], 1);
+		blas::copy (nrnc, &a[0], 1, &as[0], 1);
+		blas::copy (nr, &b[0], 1, &bs[0], 1);
 
 		string shape("ls");
 		if (nr < nc)
@@ -663,16 +663,16 @@ main(int argc, char** argv) {
 			cerr << "factorization failed: " << s << endl;
 			continue;
 		}
-		trc.dprint(" rcond = ",af->rcond);
+		T_(trc.dprint(" rcond = ",af->rcond);)
 
 		// ... and solve Ax = b
 		af->solve(b, x);
-		trc.dprint("solution: \n",x);
+		T_(trc.dprint("solution: \n",x);)
 
 		multMv (nr, nc, as, x, bs, res);
 
-		resNorm = blas_snrm2 (nr, &res[0], 1);
-		trc.dprint("residual: \n",res);
+		resNorm = blas::snrm2 (nr, &res[0], 1);
+		T_(trc.dprint("residual: \n",res);)
 		bool resok = isResOk (nr, nc, 4, as, x, bs);
 		// If we have a rectangular matrix compute the nullspace
 		if (nc > nr) {
@@ -683,9 +683,9 @@ main(int argc, char** argv) {
 			norm(nc, &xv[0]);						/* normalize the null vector */
 			vector<double> zero(nr, 0.0);
 			multMv (nr, nc, as, xv, zero, res);
-			nullResNorm = blas_snrm2 (nr, &res[0], 1);
-			trc.dprint("null vector:\n",xv);
-			trc.dprint("residual of null vector:\n",res);
+			nullResNorm = blas::snrm2 (nr, &res[0], 1);
+			T_(trc.dprint("null vector:\n",xv);)
+			T_(trc.dprint("residual of null vector:\n",res);)
 			for (i=0; i<nc; i++)
 				dir[i] = 0.0;
 		} else {

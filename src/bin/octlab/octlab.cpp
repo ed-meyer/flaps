@@ -31,12 +31,12 @@ static bool do_matlab (const string& cmd, const string& script,
 //-------------------------------------------------------------------
 bool
 octlab () {
-	Trace trc(2,"octlab");
+	T_(Trace trc(2,"octlab");)
 	vector<string> matrices;
 	string script;
 	Specs& sp = specs();
 
-	trc.dprint("specs: ",sp);
+	T_(trc.dprint("specs: ",sp);)
 	
 	for (auto& s : sp.input) {
 		if (rsubstr(s, 2) == ".m")
@@ -44,7 +44,7 @@ octlab () {
 		else
 			matrices.push_back(s);
 	}
-	trc.dprint("input matrices: ",matrices);
+	T_(trc.dprint("input matrices: ",matrices);)
 
 	// check the user's PATH for either matlab or octave:
 	// take the first one found unless use_* set
@@ -90,9 +90,9 @@ void
 evaluate(vector<Matrix*> ml) {
 // evaluate all matrices in "ml", putting the evaluated matrix into
 // the Matrix.data_ array. Use gpset as the pset
-	Trace trc(2,"evaluate");
+	T_(Trace trc(2,"evaluate");)
 	for (auto mp : ml) {
-		trc.dprint("working on ",mp->mid());
+		T_(trc.dprint("working on ",mp->mid());)
 		if (mp->pz.empty())
 			continue;
 		int nr = mp->rsize();
@@ -106,14 +106,14 @@ evaluate(vector<Matrix*> ml) {
 				double im = imag(result[i]).value();
 				cp[i] = complex(re,im);
 			}
-			trc.dprintm(nr,nc,nr,cp,mp->mid());
+			T_(trc.dprintm(nr,nc,nr,cp,mp->mid());)
 		} else {
 			double* rp = mp->elem();
 			for (int i=0; i<nr*nc; i++) {
 				double re = real(result[i]).value();
 				rp[i] = re;
 			}
-			trc.dprintm(nr,nc,nr,rp,mp->mid());
+			T_(trc.dprintm(nr,nc,nr,rp,mp->mid());)
 		}
 	}
 }
@@ -128,7 +128,7 @@ do_matlab (const string& matlab_cmd, const string& script,
 //   XXX to the same .mat file??
 // - run Matlab to execute the script
 // - import the .mat file
-	Trace trc(2,"do_matlab");
+	T_(Trace trc(2,"do_matlab");)
 
 	// change to temp directory using RAII class Chdir
 	string ftmp = getftmp();
@@ -225,23 +225,23 @@ do_matlab (const string& matlab_cmd, const string& script,
 		// one, and get the new vzid from the imported gct
 		string midi = mi->mid();
 		if (fma != nullptr && midi.substr(0,3) == "gct") {
-			trc.dprint("read gct: ",mi);
+			T_(trc.dprint("read gct: ",mi);)
 			vector<string> toks = string2tok(midi, ".");
 			string newvzid;
 			if (toks.size() > 1)
 				newvzid = toks[toks.size()-1];
 			fma->vzid = newvzid;
 			size_t n = mi->rsize()*mi->csize();
-			trc.dprint("resize gct to ",n);
+			T_(trc.dprint("resize gct to ",n);)
 			fma->gct.resize(n, 0.0);
 			// gct may have gotten converted to real in matlab - convert
 			// back to complex
 			if (mi->is_complex())
-				blas_copy(n, mi->celem(), 1, fma->gct.data(), 1);
+				blas::copy(n, mi->celem(), 1, fma->gct.data(), 1);
 			else
-				blas_copy(n, mi->elem(), 1, (double*)fma->gct.data(), 2);
+				blas::copy(n, mi->elem(), 1, (double*)fma->gct.data(), 2);
 			fma->store();
-			trc.dprint("saving new Fma:", *fma);
+			T_(trc.dprint("saving new Fma:", *fma);)
 		} else {
 			mi->store();
 		}

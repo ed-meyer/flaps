@@ -117,14 +117,14 @@ Tok::Iterator::
 next () {
 // Returns (a pointer to) the next preference in the preference string; this
 // is the heart of the lexical analyzer lexer()
-	Trace trc(3,"Tok::Iterator::next");
+	T_(Trace trc(3,"Tok::Iterator::next");)
 	Tok* rval{nullptr};
 
-	trc.dprint("current ",current);
+	T_(trc.dprint("current ",current);)
 
 	// watch out for empty option list
 	if (this->prefstr.empty()) {
-		trc.dprint("returning nullptr: empty option list");
+		T_(trc.dprint("returning nullptr: empty option list");)
 		return rval;
 	}
 
@@ -132,7 +132,7 @@ next () {
 	while(1) {
 		current = this->prefstr.find_first_not_of(" \t\n", current);
 		if (current == string::npos) {
-			trc.dprint("returning nullptr: end of preferences");
+			T_(trc.dprint("returning nullptr: end of preferences");)
 			return nullptr;
 		}
 		if (prefstr[current] != comma)
@@ -140,7 +140,7 @@ next () {
 		else {
 			current++;
 			if (current == prefstr.size()) {
-				trc.dprint("returning nullptr: end of preferences");
+				T_(trc.dprint("returning nullptr: end of preferences");)
 				return nullptr;
 			}
 		}
@@ -166,7 +166,7 @@ next () {
 			current = find_close(prefstr, current+1, '(', ')');
 		if (ops.find(ch) != string::npos && prefstr[current+1] == '=') {
 			op = ch;
-			trc.dprint("got operator <",op,">");
+			T_(trc.dprint("got operator <",op,">");)
 			lhs_term = current;
 			end = current+1;
 			break;
@@ -199,7 +199,7 @@ next () {
 		lhs_term = prefstr.size();
 		end = prefstr.size();
 	}
-	trc.dprint("finished w/lhs: end ",end,", lhs_term ",lhs_term,", current ",current);
+	T_(trc.dprint("finished w/lhs: end ",end,", lhs_term ",lhs_term,", current ",current);)
 	string lhs = prefstr.substr(start, lhs_term-start);
 
 	// get the rhs if the lhs ended with an =: might be a
@@ -254,7 +254,7 @@ next () {
 			current++;
 	}
 
-	trc.dprint("lhs<",lhs,"> op<",op,"> rhs<",rhs,">");
+	T_(trc.dprint("lhs<",lhs,"> op<",op,"> rhs<",rhs,">");)
 
 	// Expand environment variables
 	lhs = expenv(lhs);
@@ -263,7 +263,7 @@ next () {
 	// Create the return Tok
 	rval = new Tok(lhs, rhs, false, op);
 
-	trc.dprint("returning ",*rval);
+	T_(trc.dprint("returning ",*rval);)
 	return rval;
 }
 
@@ -290,7 +290,7 @@ flaps::
 wildcard(const std::string& pattern, const std::string& str) {
 // test a string against a wildcard pattern; see the manual for details
 // on valid wildcard syntax
-	Trace trc(2,"wildcard");
+	T_(Trace trc(2,"wildcard");)
 	bool rval{false};
 
 	int res = fnmatch(pattern.c_str(), str.c_str(), FNM_EXTMATCH);
@@ -322,9 +322,9 @@ Tok(string const& l, string const& r, bool leaveQuotes, char oper) {
  * as in
  *     Tok("a{x=y, z=1.0} = b{c=d, e=2}","")
  *------------------------------------------------------------------*/
-	Trace trc(3,"Tok lexing constructor");
+	T_(Trace trc(3,"Tok lexing constructor");)
 
-	trc.dprint("lhs<",l,"> rhs<",r,"> leave quotes? ",leaveQuotes," op? ",oper);
+	T_(trc.dprint("lhs<",l,"> rhs<",r,"> leave quotes? ",leaveQuotes," op? ",oper);)
 
 	op = oper;
 	lhs = l;
@@ -375,7 +375,7 @@ Tok(string const& l, string const& r, bool leaveQuotes, char oper) {
 		si = stripwhitespace(si);
 		stripquotes(si);
 	}
-	trc.dprint("returning ",*this);
+	T_(trc.dprint("returning ",*this);)
 }
 
 /*------------------------------------------------------------------
@@ -402,7 +402,7 @@ flaps::
 lexer (string const& setstr, const vector<Parser>& handlers) {
 // Create a vector<Tok*> from "setstr", then call lexer(vector<Tok*>)
 // "setstr" may be empty in which case it is read from cin
-	Trace trc(2,"flaps::lexer(string,vector<Parser>&)");
+	T_(Trace trc(2,"flaps::lexer(string,vector<Parser>&)");)
 	vector<Tok*> rval;
 
 	string s = setstr;
@@ -410,7 +410,7 @@ lexer (string const& setstr, const vector<Parser>& handlers) {
 	if (s.empty())
 		s = get_thestring();
 	if (s.empty()) {
-		trc.dprint("no input string and nothing from cin");
+		T_(trc.dprint("no input string and nothing from cin");)
 		return rval;
 	}
 
@@ -419,19 +419,19 @@ lexer (string const& setstr, const vector<Parser>& handlers) {
 
 	// no handlers? just return setgs
 	if (handlers.empty()) {
-		trc.dprint("returning ",setgs.size()," Tok: no handlers");
+		T_(trc.dprint("returning ",setgs.size()," Tok: no handlers");)
 		return setgs;
 	}
 	// lexer(vector<Tok*>) calls the appropriate handler for each Tok
 	rval = flaps::lexer(setgs, handlers);
-	trc.dprint("returning ",rval.size()," unrecognized Tok");
+	T_(trc.dprint("returning ",rval.size()," unrecognized Tok");)
 	return rval;
 }
 
 vector<Tok*>
 flaps::
 lexer (string const& setstr, vector<Parser>&& handlers) {
-	Trace trc(2,"flaps::lexer(string,vector<Parser>&&)");
+	T_(Trace trc(2,"flaps::lexer(string,vector<Parser>&&)");)
 	vector<Parser> hl = handlers;
 	return flaps::lexer(setstr, hl);
 }
@@ -451,24 +451,24 @@ lexer (vector<Tok*> const& prefs, const vector<Parser>& handlers) {
 //    Parser that matches. If none of the Parsers match the Tok*
 //    is inserted into a vector which will be returned.
 //------------------------------------------------------------------
-	Trace trc(2,"flaps::lexer(vector<Tok*>,vector<Parser>)");
+	T_(Trace trc(2,"flaps::lexer(vector<Tok*>,vector<Parser>)");)
 	vector<Tok*> rval;
 
 	for (auto pref : prefs) {
-		trc.dprint("working on <",*pref,"> ");
-		trc.dprint(pref->svec.size()," rhs, ",pref->roptvec.size()," rhs opts");
+		T_(trc.dprint("working on <",*pref,"> ");)
+		T_(trc.dprint(pref->svec.size()," rhs, ",pref->roptvec.size()," rhs opts");)
 		bool matched = false;
 		// check the lhs of this Tok with the regex of each Parser until one matches
 		for (auto& ap : handlers) {
-			trc.dprint("testing ",ap);
+			T_(trc.dprint("testing ",ap);)
 			if (regex_match(pref->lhs, ap.rx)) {
-				trc.dprint("identified <",ap.pattern,">");
+				T_(trc.dprint("identified <",ap.pattern,">");)
 				if (ap.handler == nullptr) {
 					matched = true;
-					trc.dprint("ignoring and returning true: null handler");
+					T_(trc.dprint("ignoring and returning true: null handler");)
 				} else {
 					matched = ap.handler(*pref);
-					trc.dprint("handler returned ",matched?"true":"false");
+					T_(trc.dprint("handler returned ",matched?"true":"false");)
 				}
 			}
 			if (matched)
@@ -478,7 +478,7 @@ lexer (vector<Tok*> const& prefs, const vector<Parser>& handlers) {
 		if (!matched)
 			rval.push_back(pref);
 	}
-	trc.dprint("returning ",rval.size()," unrecognized Tok");
+	T_(trc.dprint("returning ",rval.size()," unrecognized Tok");)
 	return rval;
 }
 
@@ -486,10 +486,10 @@ static vector<Tok*>
 prelim (string const& options) {
 // Given a string of preferences separated by commas or newlines,
 // break it into Tok pointers, return in a vector<Tok*>
-	Trace trc(3,"prelim");
+	T_(Trace trc(3,"prelim");)
 	vector<Tok*> rval;
 
-	trc.dprint("options string: <",options,'>');
+	T_(trc.dprint("options string: <",options,'>');)
 
 	// create an Iterator: breaks up "options" into Tok* which are
 	// returned by Iterator::next()
@@ -541,10 +541,10 @@ prelim (string const& options) {
 		if (iv.size() == rv.size())
 			solo->ivec = iv;
 		rval.push_back(solo);
-		trc.dprint("special case: put all lhs values in rvec: ",rv);
+		T_(trc.dprint("special case: put all lhs values in rvec: ",rv);)
 	}
 
-	trc.dprint("returning ",rval.size()," Tok");
+	T_(trc.dprint("returning ",rval.size()," Tok");)
 	return rval;
 }
 
@@ -628,7 +628,7 @@ flaps::
 implist(const string& str) {
 // given an implicit list like 1:2:5, returns the expanded
 // list (1,3,5)
-	Trace trc(2,"implist");
+	T_(Trace trc(2,"implist");)
 	vector<string> rval;
 	vector<string> toks = string2tok(str, ":");
 	if (toks.size() < 2)
@@ -663,7 +663,7 @@ tokenize(const string& str) {
 // tokenize a string based on character classes, i.e. a group
 // of letters forms a token, likewise a group of digits, blanks,
 // or 'other' characters such as .,:#/[]{}, etc
-	Trace trc(1,"tokenize ",str);
+	T_(Trace trc(1,"tokenize ",str);)
 	vector<string> rval;
 	size_t start{0};
 	size_t n = str.size();
@@ -678,14 +678,14 @@ tokenize(const string& str) {
 			start = i;
 		}
 	}
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
 vector<string>
 expand(const string& first, int incr, const string& last) {
 // Given pieces of an implicit list, expand into the equivalent strings
-	Trace trc(2,"expand");
+	T_(Trace trc(2,"expand");)
 	vector<string> rval;
 
 	// split first & last into leader/var/trailer
@@ -716,7 +716,7 @@ expand(const string& first, int incr, const string& last) {
 	}
 	for (; i<n; i++)
 		trailer += firsttok[i];
-	trc.dprint("leader<",leader,"> va<",va,"> vb<",vb,"> trailer<",trailer,">");
+	T_(trc.dprint("leader<",leader,"> va<",va,"> vb<",vb,"> trailer<",trailer,">");)
 
 	// now we are ready to create the list
 	int v1;
@@ -740,7 +740,7 @@ expand(const string& first, int incr, const string& last) {
 		for (string v = va; v[k] <= vb[k]; v[k] += incr)
 			rval.push_back(leader + v + trailer);
 	}
-	trc.dprint("returning ",rval.size()," items: ",rval);
+	T_(trc.dprint("returning ",rval.size()," items: ",rval);)
 	return rval;
 }
 
@@ -748,16 +748,16 @@ static vector<double>
 get_lhs_doubles(string const& prefs) {
 // parse "prefs" and get the doubles which are the lhs of
 // each pref
-	Trace trc(1,"get_lhs_doubles");
+	T_(Trace trc(1,"get_lhs_doubles");)
 	vector<double> rval;
 	// parse "prefs" with an rvalue vector of a lambda handler
 	vector<Tok*> ol = flaps::lexer(prefs,
 			vector<Parser>{{".*",[&](const Tok& p){
-				trc.dprint("got pref ",p);
+				T_(trc.dprint("got pref ",p);)
 				rval = p.rvec;
 				return true;}}
 			});
-	trc.dprint("returning ",rval.size()," doubles: ",rval);
+	T_(trc.dprint("returning ",rval.size()," doubles: ",rval);)
 	return rval;
 }
 
@@ -772,7 +772,7 @@ expand_lhs(Tok* pref) {
 // 3) first and last both have either 1 or 0 lopt
 // 4) only allow ints for stride?
 // 5) first and last have the form prefix+double+suffix
-	Trace trc(1,"expand_lhs");
+	T_(Trace trc(1,"expand_lhs");)
 	vector<Tok*> rval;
 	constexpr auto nop = string::npos;
 
@@ -795,7 +795,7 @@ expand_lhs(Tok* pref) {
 	string first = lhs.substr(0,i);
 	while(lhs[++idx] == ' ');
 	string therest = lhs.substr(idx);
-	trc.dprint("first: ",first,", the rest: ",therest);
+	T_(trc.dprint("first: ",first,", the rest: ",therest);)
 	idx = therest.find(':');
 	string last;
 	string first_lopt;
@@ -807,26 +807,26 @@ expand_lhs(Tok* pref) {
 		for (i=idx; therest[i-1]==' '; i--);
 		stride = therest.substr(0,i);
 		last = therest.substr(idx+1);
-		trc.dprint("stride: ",stride, ", last: ",last);
+		T_(trc.dprint("stride: ",stride, ", last: ",last);)
 	}
 	// strip the first lopt if there and if input pref has
 	// an lopt from 'last'
 	last_lopt = pref->lopt;
 	//!! if (!last_lopt.empty()) {
-		trc.dprint("last lopt: ",last_lopt);
+		T_(trc.dprint("last lopt: ",last_lopt);)
 		idx = first.find('{');
 		if (idx != string::npos) {
 			first_lopt = first.substr(idx);
 			string::size_type end;
 			first_lopt = delimitedString(first_lopt, '{', '}', 0, end);
 			first = first.substr(0,idx);
-			trc.dprint("first: ",first,", first lopt: ",first_lopt);
+			T_(trc.dprint("first: ",first,", first lopt: ",first_lopt);)
 		}
 	//!! }
 
 	// 3) first and last both have lopt
 	if (!(last_lopt.empty() == first_lopt.empty())) {
-		trc.dprint("no expansion: first,last opt");
+		T_(trc.dprint("no expansion: first,last opt");)
 		rval.push_back(pref);	// return the input
 		return rval;
 	}
@@ -846,19 +846,19 @@ expand_lhs(Tok* pref) {
 		fpre = mch.prefix().str();
 		fnum = mch[1].str();
 		fsuf = mch.suffix().str();
-		trc.dprint("first: <",fpre,"><",fnum,"><",fsuf,">");
+		T_(trc.dprint("first: <",fpre,"><",fnum,"><",fsuf,">");)
 	}
 	if (regex_search(last, mch, re)) {
 		lpre = mch.prefix().str();
 		lnum = mch[1].str();
 		lsuf = mch.suffix().str();
-		trc.dprint("last: <",lpre,"><",lnum,"><",lsuf,">");
+		T_(trc.dprint("last: <",lpre,"><",lnum,"><",lsuf,">");)
 	}
 
 	// 5) convert the first and last numbers to ints
 	int a, b;
 	if (!str2int(fnum,a) || !str2int(lnum,b)) {
-		trc.dprint("returning input Tok: first or last do not have a number");
+		T_(trc.dprint("returning input Tok: first or last do not have a number");)
 		rval.push_back(pref);
 		return rval;
 	}
@@ -874,7 +874,7 @@ expand_lhs(Tok* pref) {
 			throw runtime_error("lhs options are not the same size");
 		for (size_t i=0; i<first_val.size(); i++)
 			del.push_back((last_val[i] - first_val[i])/(n-1));
-		trc.dprint("dels: ",del);
+		T_(trc.dprint("dels: ",del);)
 	}
 
 	// create new Toks interpolating the lhs number and it's subopt
@@ -895,7 +895,7 @@ expand_lhs(Tok* pref) {
 		pi->lopt = os.str();
 		rval.push_back(pi);
 	}
-	trc.dprint("returning ",rval.size()," new Tok");
+	T_(trc.dprint("returning ",rval.size()," new Tok");)
 	return rval;
 }
 
@@ -907,12 +907,12 @@ embeddedlist (string const& str) {
 // or equivalently
 //   abcd(1:2:11)efg
 // returns the expanded list in a vector of strings
-	Trace trc(2,"embeddedlist ",str);
+	T_(Trace trc(2,"embeddedlist ",str);)
 	vector<string> rval;
 
 	// watch out for quoted string
 	if (str[0] == '\"' || str[0] == '\'') {
-		trc.dprint("quick return: quoted string");
+		T_(trc.dprint("quick return: quoted string");)
 		rval.push_back(str);
 		return rval;
 	}
@@ -920,7 +920,7 @@ embeddedlist (string const& str) {
 	// first split into comma-separated tokens
 	vector<string> quotes;
 	vector<string> toks = string2tok(str, ",", quotes);
-	trc.dprint("comma-separated tokens: ",toks);
+	T_(trc.dprint("comma-separated tokens: ",toks);)
 
 	// split each token containing an implicit list into: head(list)tail
 	for (size_t i=0; i<toks.size(); i++) {
@@ -950,14 +950,14 @@ embeddedlist (string const& str) {
 		list = toki.substr(op, cp-op+1);
 		if (cp < toki.size())
 			tail = toki.substr(cp+1);
-		trc.dprint("head \"",head,"\", list \"",list,"\", tail \"",tail,"\"");
+		T_(trc.dprint("head \"",head,"\", list \"",list,"\", tail \"",tail,"\"");)
 		// expand the list part
 		vector<string> items = expand_list(list);
 		// create output strings from the items
 		for (auto i : items)
 			rval.push_back(head + i + tail);
 	}
-	trc.dprint("returning ",rval.size()," items: ",rval);
+	T_(trc.dprint("returning ",rval.size()," items: ",rval);)
 	return rval;
 }
 
@@ -969,12 +969,12 @@ expand_list (string const& str) {
 // or equivalently
 //   (1:2:11)
 // returns the expanded list in a vector of strings
-	Trace trc(1,"expand_list ",str);
+	T_(Trace trc(1,"expand_list ",str);)
 	vector<string> rval;
 
 	// watch out for quoted string
 	if (str[0] == '\"' || str[0] == '\'') {
-		trc.dprint("quick return: quoted string");
+		T_(trc.dprint("quick return: quoted string");)
 		rval.push_back(str);
 		return rval;
 	}
@@ -987,7 +987,7 @@ expand_list (string const& str) {
 #ifdef NEVER // do not require parentheses
 		list = str;
 #else // NEVER // do not require parentheses
-		trc.dprint("quick return: no parentheses");
+		T_(trc.dprint("quick return: no parentheses");)
 		rval.push_back(str);
 		return rval;
 #endif // NEVER // do not require parentheses
@@ -997,7 +997,7 @@ expand_list (string const& str) {
 	// sub-options enclosed in {} XXX any others?
 	vector<string> quotes{{"{}"}};
 	vector<string> toks = string2tok(list, ",", quotes);
-	trc.dprint("comma-separated tokens: ",toks);
+	T_(trc.dprint("comma-separated tokens: ",toks);)
 
 	// check each one for colons (1 or 2)
 	for (auto& tok : toks) {
@@ -1010,7 +1010,7 @@ expand_list (string const& str) {
 		}
 	}
 
-	trc.dprint("returning ",rval.size()," items: ",rval);
+	T_(trc.dprint("returning ",rval.size()," items: ",rval);)
 	return rval;
 }
 
@@ -1018,12 +1018,12 @@ static string
 get_thestring() {
 // Read preferences from cin or return previously-read preferences, so a
 // program can call this function multiple times and get the same string.
-	Trace trc(1,"get_thestring");
+	T_(Trace trc(1,"get_thestring");)
 	static string rval;
 	if (rval.empty()) {
 #ifdef NEVER // doesn't work with piped data
 		if (cin.rdbuf()->in_avail() == 0) {
-			trc.dprint("nothing to read from cin: returning empty");
+			T_(trc.dprint("nothing to read from cin: returning empty");)
 			return rval;
 		}
 #endif // NEVER // doesn't work with piped data
@@ -1035,7 +1035,7 @@ get_thestring() {
 				break;
 		}
 	}
-	trc.dprint("got \"",rval,"\"");
+	T_(trc.dprint("got \"",rval,"\"");)
 	return rval;
 }
 
@@ -1048,13 +1048,13 @@ string
 rm_comments (string const& list) {
 // Remove comments from a multi-line string:
 // the remainder of a line following a "hash" (pound_sign) character.
-	Trace trc(3,"rm_comments");
+	T_(Trace trc(3,"rm_comments");)
 	string rval;
 
-	trc.dprint("list: ",list);
+	T_(trc.dprint("list: ",list);)
 	
 	if (list.empty()) {
-		trc.dprint("returning empty string");
+		T_(trc.dprint("returning empty string");)
 		return rval;
 	}
 
@@ -1071,7 +1071,7 @@ rm_comments (string const& list) {
 		if (first == string::npos)
 			break;
 	}
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -1086,13 +1086,13 @@ find_close (string const& s, string::size_type from,
  * to be either this or point to the open char
  * Note: this function is recursive.
  */
-	Trace trc(3,"find_close ",open,close);
+	T_(Trace trc(3,"find_close ",open,close);)
 	ostringstream os;
 	string::size_type rval;
 
 	// If open and close are the same all we have to do is look for close...
 	if (open == close) {
-		trc.dprint("searching for <",close, "> in <",s.substr(from),"> starting at ",from);
+		T_(trc.dprint("searching for <",close, "> in <",s.substr(from),"> starting at ",from);)
 		rval = s.find(close, from);
 		if (rval == string::npos) {
 			throw runtime_error(vastr("no closing \'", close, "\' in \"", s, '\"'));
@@ -1114,7 +1114,7 @@ find_close (string const& s, string::size_type from,
 			throw runtime_error(vastr("no closing \'",close,"\' in \"",s,'\"'));
 		}
 	}
-	trc.dprint("found close at ",rval);
+	T_(trc.dprint("found close at ",rval);)
 	return rval;
 }
 
@@ -1125,19 +1125,19 @@ sub_opt(string& opt) {
 // the delimited string (sans braces), and the original string without the
 // options in "opt". Inner braces are allowed; double or single quotes
 // protect the curly braces.
-	Trace trc(3,"sub_opt"," <",opt,'>');
+	T_(Trace trc(3,"sub_opt"," <",opt,'>');)
 	string rval;
 
 	// skip trailing whitespace, return if last
 	// character is not close brace
 	string::size_type close = opt.find_last_not_of(" \t\n");
 	if (close == string::npos || opt[close] != close_brace) {
-		trc.dprint("returning empty: last char is not closing brace");
+		T_(trc.dprint("returning empty: last char is not closing brace");)
 		return rval;
 	}
 	string::size_type openb = find_delim(opt, close);
 	if (openb == string::npos) {
-		trc.dprint("returning empty: no opening brace");
+		T_(trc.dprint("returning empty: no opening brace");)
 		return rval;
 	}
 
@@ -1158,7 +1158,7 @@ sub_opt(string& opt) {
 			opt = "";
 		}
 	}
-	trc.dprint("returning \"",rval,"\"");
+	T_(trc.dprint("returning \"",rval,"\"");)
 	return rval;
 }
 
@@ -1181,7 +1181,7 @@ mass(const Tok& p) {
 
 void
 test_handlers() {
-	Trace trc(1,"test_handlers");
+	T_(Trace trc(1,"test_handlers");)
 	// this is how to parse a preferences string using Parsers,
 	// one with a lambda, the other a function (mass)
 	vector<Parser> hl{
@@ -1190,7 +1190,7 @@ test_handlers() {
 	};
 	string str{"abcd=junk, m2=a, m3=b, f=g"};
 	vector<Tok*> vs = flaps::lexer(str, hl);
-	trc.dprint("lexer returned ",vs.size()," unrecognized preferences:",vs);
+	T_(trc.dprint("lexer returned ",vs.size()," unrecognized preferences:",vs);)
 	// try again with the unrecognized Tok and new Parsers
 	vector<Parser> hl2{
 		{"f(req)?", abcd},
@@ -1198,7 +1198,7 @@ test_handlers() {
 	};
 	vs = flaps::lexer(vs, hl2);
 
-	trc.dprint("lexer returned ",vs.size()," unrecognized preferences:",vs);
+	T_(trc.dprint("lexer returned ",vs.size()," unrecognized preferences:",vs);)
 }
 
 void
@@ -1261,7 +1261,7 @@ main(int argc, char **argv) {
 //        otherwise the first arg is taken as a preferences string, e.g.
 //          settings "a=b, c=d"
 //   -s   test Settings
-	Trace trc(1,argv[0]);
+	T_(Trace trc(1,argv[0]);)
 
 	// test flaps::lexer and prelim
 	try {
@@ -1271,7 +1271,7 @@ main(int argc, char **argv) {
 		} else if (argc == 2 && string(argv[1]) == "-i") {
 			cout << " preferences test: type an preferences list...end with ctrl-d\n";
 			preferences = get_thestring();
-			trc.dprint("got preferences string <",preferences,">");
+			T_(trc.dprint("got preferences string <",preferences,">");)
 		} else if (argc == 2 && string(argv[1]) == "-s") {
 			test_settings();
 		} else {

@@ -7,6 +7,10 @@
 // WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+
+// Trace support is enabled in the build process by uncommenting
+// CFLAG=-DTRACE in froot/Profile
+
 // Class Trace: support for trace printing when debug turned on; debug is
 // turned on to level "n" by:
 // 1) settings{d=n} in a flaps script
@@ -14,6 +18,7 @@
 // 3) DEBUG=n in the environment
 // Printing is done mainly with Trace::dprint* functions when the trace
 // level (set with the Trace constructor) is >= debug level
+//
 #ifndef TRACE_H
 #define TRACE_H
 
@@ -32,6 +37,12 @@
 #include "text.h"
 #include "vastr.h"
 
+#ifdef TRACE
+#  define T_(x) x
+#else // NO TRACE
+#  define T_(x)
+#endif // TRACE
+
 // XXX move Offset stuff to class Trace?
 void
 incrementOffset();
@@ -48,7 +59,8 @@ namespace Dprint {
 void
 dprintm (int nr,int nc,int lda,const std::vector<Ad>& a,const std::string& title);
 void
-dprintm (int nr,int nc,int lda,const std::vector<std::complex<Ad>>& a,const std::string& title);
+dprintm (int nr,int nc,int lda,const std::vector<std::complex<Ad>>& a,
+		const std::string& title);
 void
 dprintm (int nr, int nc, int lda, const int* a, const std::string& title);
 void
@@ -153,6 +165,18 @@ public:
 
 	// dprintm: print an (nr,nc) matrix stored in an (lda,nc)
 	// column-major array
+#ifdef NEVER // duplicate
+	template<typename... Types>
+	void
+	dprintm (int nr,int nc,int lda,const std::vector<Ad>& a,const Types&... args) {
+	// vector<Ad> print: only the values, not derivatives
+		if (debug() < Level)
+			return;
+		std::string title = vastr(args...);
+		Dprint::dprintm(nr,nc,lda,a.vec(),title);
+	}
+#endif // NEVER // duplicate
+
 	template<typename... Types>
 	void
 	dprintm (int nr,int nc,int lda,const std::vector<Ad>& a,const Types&... args) {
@@ -163,10 +187,22 @@ public:
 		Dprint::dprintm(nr,nc,lda,a,title);
 	}
 
+#ifdef NEVER // duplicate
 	template<typename... Types>
 	void
 	dprintm (int nr,int nc,int lda,const std::vector<std::complex<Ad>>& a,const Types&... args) {
-	// vector<complex<Ad>> print: only the values, not derivatives
+	// CAdvector print: only the values, not derivatives
+		if (debug() < Level)
+			return;
+		std::string title = vastr(args...);
+		Dprint::dprintm(nr,nc,lda,a.vec(),title);
+	}
+#endif // NEVER // duplicate
+
+	template<typename... Types>
+	void
+	dprintm (int nr,int nc,int lda,const std::vector<std::complex<Ad>>& a,const Types&... args) {
+	// CAdvector print: only the values, not derivatives
 		if (debug() < Level)
 			return;
 		std::string title = vastr(args...);

@@ -136,7 +136,7 @@ extract_points(deque<double>& solns) {
 
 void
 add_legends(vector<Plotcurve*> curves) {
-	Trace trc(1,"add_legends");
+	T_(Trace trc(1,"add_legends");)
 
 	if (curves.size() == 1) {
 		curves[0]->legend = curves[0]->cid();
@@ -160,7 +160,7 @@ add_legends(vector<Plotcurve*> curves) {
 	string aid{curves[0]->aid()};
 	string cid{curves[0]->cid()};
 	string yname{curves[0]->yparam->name};
-	trc.dprint("model legend: ",aid,':',cid,':',yname);
+	T_(trc.dprint("model legend: ",aid,':',cid,':',yname);)
 	for (auto pc : curves) {
 		if (pc->aid() != aid)
 			use_aid = true;
@@ -169,7 +169,7 @@ add_legends(vector<Plotcurve*> curves) {
 		if (pc->yparam->name != yname)
 			use_yname = true;
 	}
-	trc.dprint("use aid? ",use_aid,", cid? ",use_cid,", yname? ",use_yname);
+	T_(trc.dprint("use aid? ",use_aid,", cid? ",use_cid,", yname? ",use_yname);)
 	for (auto pc : curves) {
 		if (use_plotfile)
 			pc->legend = pc->plotfile;
@@ -188,7 +188,7 @@ add_legends(vector<Plotcurve*> curves) {
 				pc->legend += ":";
 			pc->legend += pc->yparam->name;
 		}
-		trc.dprint("legend: ",pc->legend);
+		T_(trc.dprint("legend: ",pc->legend);)
 	}
 }
 
@@ -238,7 +238,7 @@ getcurves() {
 //   of flut
 // - plotfiles specified on the command line (interactive usage)
 //   or in the vz command in a Flaps control program.
-	Trace trc(1,"getcurves");
+	T_(Trace trc(1,"getcurves");)
 	vector<Plotcurve*> rval;
 	Specs& sp = specs();
 
@@ -302,7 +302,7 @@ getcurves() {
 	}
 	Ngc = nrev/2;
 
-	trc.dprint("returning ",rval.size()," curves");
+	T_(trc.dprint("returning ",rval.size()," curves");)
 	return rval;
 }
 
@@ -314,7 +314,7 @@ static string
 load_plotfile (string const& file) {
 // Restore a plotfile to the datadir, figure out what analysis ids
 // (aid) it contains, and add those to default policy "aids"
-	Trace trc(1,"load_plotfile ", file);
+	T_(Trace trc(1,"load_plotfile ", file);)
 	
 	// check for existence of plotfile
 	int mode = R_OK;
@@ -370,7 +370,7 @@ vector<Plotcurve*>
 getcids(string const& aid) {
 // fetch Curves with analysis id (aid) from the Flaps data dir,
 // create Plotcurve's from them and return them
-	Trace trc(1,"getcids ",aid);
+	T_(Trace trc(1,"getcids ",aid);)
 	vector<pset> ml;
 	vector<Plotcurve*> rval;
 	vector<Plotcurve*> diff;
@@ -382,7 +382,7 @@ getcids(string const& aid) {
 	curve_mids = fio::catalog(mid);
 	if (curve_mids.empty()) {
 		string exc = vastr("no curves available for ",aid);
-		trc.dprint(exc);
+		T_(trc.dprint(exc);)
 		return rval;
 	}
 
@@ -437,7 +437,7 @@ getcids(string const& aid) {
 					if (regex_match(curveid, pat)) {
 						for (auto& yname : sp.ynames) {
 							diff.push_back(new Plotcurve(curve, yname));
-							trc.dprint("added diff curve ",curveid,", y ",yname);
+							T_(trc.dprint("added diff curve ",curveid,", y ",yname);)
 						}
 					}
 				}
@@ -445,7 +445,7 @@ getcids(string const& aid) {
 				// for each requested y create a new curve
 				// watch out for regular expressions
 				for (auto& yname : sp.ynames) {
-					trc.dprintn("looking for yname<",yname,">...");
+					T_(trc.dprintn("looking for yname<",yname,">...");)
 					vector<Par*> pars;
 					Par* par = curve->params.findp(yname);
 					if (par == nullptr) {
@@ -453,7 +453,7 @@ getcids(string const& aid) {
 					} else {
 						pars.push_back(par);
 					}
-					trc.dprint("found ",pars.size());
+					T_(trc.dprint("found ",pars.size());)
 					for (auto pp : pars) {
 						Plotcurve* pc = new Plotcurve(curve, pp->name);
 						rval.push_back(pc);
@@ -476,14 +476,14 @@ getcids(string const& aid) {
 		}
 	}
 
-	trc.dprint("got ",rval.size()," curves, ",diff.size()," diffs");
+	T_(trc.dprint("got ",rval.size()," curves, ",diff.size()," diffs");)
 
 	// if there are diffids create new curves with the diff
 	if (!diff.empty()) {
 		for (size_t i=0; i<diff.size(); i+= 2) {
 			diffcurve(diff[i], diff[i+1]);
 			rval.push_back(diff[i]);
-			trc.dprint("added diff curve ",diff[i]->params.desc());
+			T_(trc.dprint("added diff curve ",diff[i]->params.desc());)
 		}
 	}
 
@@ -500,17 +500,17 @@ getcids(string const& aid) {
 		rval[i]->style = 0;
 	}
 	
-	trc.dprint("returning ",rval.size()," curves");
+	T_(trc.dprint("returning ",rval.size()," curves");)
 	return rval;
 }  // getcids
 
 static
 void
 diffcurve (Plotcurve* a, Plotcurve* b) {
-	Trace trc(1,"diffcurve");
+	T_(Trace trc(1,"diffcurve");)
 	size_t j;
 
-	trc.dprint("diffing ",a->params.desc()," and ",b->params.desc());
+	T_(trc.dprint("diffing ",a->params.desc()," and ",b->params.desc());)
 	for (auto& ami : a->params.pmap()) {
 		string name = ami.first;
 		if (name == "coord")
@@ -522,7 +522,7 @@ diffcurve (Plotcurve* a, Plotcurve* b) {
 		size_t na = ai->nsolns();
 		size_t nb = bi->nsolns();
 		size_t n = std::min(na, nb);
-		trc.dprint(name," has ",na," and ",nb," solns");
+		T_(trc.dprint(name," has ",na," and ",nb," solns");)
 		for (j=0; j<n; j++) {
 			ai->solns[j] = abs(ai->solns[j] - bi->solns[j]);
 		}
@@ -536,7 +536,7 @@ diffcurve (Plotcurve* a, Plotcurve* b) {
 static string
 load_apffile (string const& path) {
 // Read an ascii plot file (.apf), create a pset for each run
-	Trace trc(1,"load_apffile ", path);
+	T_(Trace trc(1,"load_apffile ", path);)
 	ostringstream os;
 
 	// the analysis id is the file name minus the .apf extension & directory
@@ -562,7 +562,7 @@ load_others (string const& file) {
 // blanks, tabs, or a comma. create a pset with a new parameter for
 // each column of data (x, y, z, or x1, x2, ... xn). If there is only one
 // item per line call it y and x will be the ordinal number (1,2,3..)
-	Trace trc(1,"load_others ", file);
+	T_(Trace trc(1,"load_others ", file);)
 	ostringstream os;
 	Specs& sp = specs();
 
@@ -667,7 +667,7 @@ load_others (string const& file) {
 	}
 	// ... and store it
 	cp->store();
-	trc.dprint("ps (curve) (",ps.desc(), ") has ",ps.size()," parameters");
+	T_(trc.dprint("ps (curve) (",ps.desc(), ") has ",ps.size()," parameters");)
 
 	return aid;
 }

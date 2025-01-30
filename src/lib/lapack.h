@@ -14,7 +14,7 @@
 #include <limits>
 #include <vector>
 
-#include "Ad.h"
+#include "blas.h"
 
 // C/C++ covers for LAPACK fortran subroutines:
 //   - these take int instead of int*

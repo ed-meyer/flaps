@@ -14,16 +14,16 @@
 
 #include "config.h"
 #include "cmds.h"
-#include "trace.h"
 #include "fio.h"
 #include "lexer.h"
 #include "settings.h"
+#include "trace.h"
 
 using namespace std;
 
 bool
 save (string const& options) {
-	Trace trc(1,"save");
+	T_(Trace trc(1,"save");)
 	string outfile{"savefile"};	// default: savefile
 	vector<string> tosave{".*"};	// default: save all
 
@@ -62,7 +62,7 @@ save (string const& options) {
 
 bool
 restore (string const& options) {
-	Trace trc(1,"restore");
+	T_(Trace trc(1,"restore");)
 	string infile;
 
 	vector<Tok*> unrec = flaps::lexer(options, {

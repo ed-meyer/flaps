@@ -91,9 +91,9 @@ add (vector<string> const& names) {
 //   3) paths:       relative or absolute paths of a files to be compiled
 //                   (find() returns nullptr)
 // Returns: a list of entry point names
-	Trace trc(1,"Custom::add");
+	T_(Trace trc(1,"Custom::add");)
 
-	trc.dprint("input names: ",names);
+	T_(trc.dprint("input names: ",names);)
 
 	vector<string> rval;		// entry point names to return
 	vector<string> files;	// those of "names" which need compiling
@@ -136,7 +136,7 @@ add (vector<string> const& names) {
 				vastr("custom function (",ei,") is not available"));
 	}
 			
-	trc.dprint(paths.size()," paths:",paths);
+	T_(trc.dprint(paths.size()," paths:",paths);)
 
 	// create or add to ftmp/custom.cpp
 	vector<string> entrypts = make_custom(paths);
@@ -149,7 +149,7 @@ add (vector<string> const& names) {
 	os << "g++ -std=c++17 -ggdb3 -O0 -Wall -I" << froot
 		<< "/include -I" << froot << "/share/libflaps -shared -fPIC -o custom.so "
 		<< "custom.cpp >" << out << " 2>&1";
-	trc.dprint("running \'", os.str(), "\' to include custom code");
+	T_(trc.dprint("running \'", os.str(), "\' to include custom code");)
 	int stat = system(os.str().c_str());
 
 	if (stat != 0) {
@@ -163,7 +163,7 @@ add (vector<string> const& names) {
 			while(adds.get(c))
 				os << c;
 		}
-		trc.dprint("throwing exception: ",os.str());
+		T_(trc.dprint("throwing exception: ",os.str());)
 		throw runtime_error(os.str());
 	}
 
@@ -188,7 +188,7 @@ make_custom(const vector<string>& paths) {
 // there is one on the cwd - this will contain custom code from previous
 // calls to Custom::add(); otherwise it will return the prototype code
 // as a raw string.
-	Trace trc(1,"make_custom");
+	T_(Trace trc(1,"make_custom");)
 
 	// create a vector of entry point names from the paths to return
 	vector<string> entrypts;
@@ -240,16 +240,16 @@ open() {
 // move semantics for file streams - this means the ifstream created
 // here is moved to the calling function so when that function goes
 // out of scope the file is closed
-	Trace trc(1,"Custom::open");
+	T_(Trace trc(1,"Custom::open");)
 
 	// try cwd first, then the prototype string
 	string path{"custom.cpp"};
 	if (access(path.c_str(), R_OK|W_OK) == -1) {
-		trc.dprint("returning prototype custom.cpp");
+		T_(trc.dprint("returning prototype custom.cpp");)
 		return Custom::prototype();
 	}
 
-	trc.dprint("returning existing custom.cpp");
+	T_(trc.dprint("returning existing custom.cpp");)
 
 	// rename the existing custom.cpp to "tmp", open it and return its ifstream ...
 	if (rename("custom.cpp", "tmp") == -1)
@@ -279,10 +279,10 @@ prototype() {
 bool
 Custom::
 is_defined(const string& name) {
-	Trace trc(2,"Custom::is_defined");
-	trc.dprint("searching for \"",name,"\"");
+	T_(Trace trc(2,"Custom::is_defined");)
+	T_(trc.dprint("searching for \"",name,"\"");)
 	for (auto& ei : Custom::map()) {
-		trc.dprint("entrypt: ",ei.first);
+		T_(trc.dprint("entrypt: ",ei.first);)
 		if (ei.first == name)
 			return true;
 	}
@@ -315,7 +315,7 @@ datatype(const std::string& name) {
 //!! test2(double t) { cerr << "test2: " << t << endl; return t; }
 int
 main(int argc, char **argv) {
-	Trace trc(1,argv[0]);
+	T_(Trace trc(1,argv[0]);)
 
 	//!! Custom::add("test1", test1);
 	//!! Custom::add("test2", test2);

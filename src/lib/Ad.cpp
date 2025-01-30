@@ -27,7 +27,6 @@
 #include "atmos.h"
 #include "blas.h"
 #include "conv.h"
-//!! #include "exim.h"
 #include "fptype.h"
 #include "matrix.h"
 #include "message.h"
@@ -35,72 +34,11 @@
 
 using namespace std;
 
-
-adfcn1p
-adfcn1(const std::string& fcn) {
-// Return a pointer to single-Ad-arg function "fcn"
-	Trace trc(3,"adfcn1");
-	adfcn1p rval{nullptr};
-	// XXX how can we specify *exactly* which function?
-	if (fcn == "abs")
-		rval = abs;
-	else if (fcn == "acos")
-		rval = acos;
-	else if (fcn == "asin")
-		rval = asin;
-	else if (fcn == "atan")
-		rval = atan;
-	else if (fcn == "cos")
-		rval = cos;
-	else if (fcn == "exp")
-		rval = exp;
-	else if (fcn == "log")
-		rval = log;
-	else if (fcn == "log10")
-		rval = log10;
-	else if (fcn == "sin")
-		rval = sin;
-	else if (fcn == "sqrt")
-		rval = sqrt;
-	else if (fcn == "tan")
-		rval = tan;
-	else if (fcn == "atmos::rho")
-		rval = atmos::rho;
-	else if (fcn == "atmos::press")
-		rval = atmos::press;
-	else if (fcn == "atmos::temp")
-		rval = atmos::temp;
-	else if (fcn == "atmos::vsonic")
-		rval = atmos::vsonic;
-	trc.dprint("returning ",rval);
-	return rval;
-}
-
-adfcn2p
-adfcn2(const std::string& fcn) {
-// Return a pointer to double-Ad-arg function "fcn"
-	Trace trc(3,"adfcn2");
-	adfcn2p rval{nullptr};
-	if (fcn == "atan2")
-		rval = atan2;
-	else if (fcn == "max")
-		rval = max;
-	else if (fcn == "min")
-		rval = min;
-	else if (fcn == "pow")
-		rval = pow;
-	else if (fcn == "atmos::vcas")
-		rval = atmos::vcas;
-	else if (fcn == "atmos::cdpress")
-		rval = atmos::cdpress;
-	trc.dprint("returning ",rval);
-	return rval;
-}
-
-
 // *the* list of Ad parameters, accessible only in this file
 // with the Ad::* functions, public with adnames()
 static vector<string> Adparameters;
+
+bool Ad::initialize_called{false};
 
 void
 Ad::
@@ -111,9 +49,9 @@ initialize(const vector<string>& names) {
 // After calling this function is may be necessary to call Ad::realloc()
 // for any Ad that were created prior to calling this function, e.g.
 // the global pset: gpset::get().realloc()
-	Trace trc(1,"Ad::initialize");
-	static bool visit{false};
-	if (visit) {
+	T_(Trace trc(1,"Ad::initialize");)
+
+	if (initialize_called) {
 		string exc = vastr("Ad::initialize has already been called: ",
 				Adparameters.size()," parameters set");
 		throw runtime_error(exc);
@@ -124,10 +62,12 @@ initialize(const vector<string>& names) {
 				Ad::toString());
 		throw runtime_error(exc);
 	}
-	Adparameters = names;
+	if (names.empty())
+		throw runtime_error("Ad::initialize called with no parameter names");
 
-	trc.dprint("autodiff names:",Adparameters);
-	visit = true;
+	Adparameters = names;
+	T_(trc.dprint("autodiff names:",Adparameters);)
+	initialize_called = true;
 }
 
 void
@@ -142,11 +82,11 @@ realloc() {
 	data_[0] = v;	// restore value
 }
 
-size_t
+int
 Ad::
 nder() { return Adparameters.size(); }
 
-size_t
+int
 Ad::
 ndata() {
 // Returns the number of double elements in a real variable, i.e.
@@ -201,10 +141,10 @@ live() {
 	return "";
 }
 
-size_t
+int
 Ad::
 nlive() {
-	size_t rval{0};
+	int rval{0};
 	// rval = Adarray::live() + Ad::live();
 	// rval += vector<complex<Ad>>::live() + cAd::live();
 	return rval;
@@ -213,24 +153,26 @@ nlive() {
 
 double
 Ad::
-deriv(int der) const {
-// return the value of derivative "der" (0b) 0-(nder()-1)
-	if (der < 0 || der >= (int)Adparameters.size())
-		throw runtime_error(vastr("Ad::deriv illegal der: ",der));
-	return data_[der+1]; }
+der(int d) const {
+// return the value of derivative "d" (0b) 0-(nder()-1)
+	if (d < 0 || d >= (int)Adparameters.size())
+		throw runtime_error(vastr("Ad::deriv illegal arg: ",d));
+	return data_[d+1];
+}
+
 void
 Ad::
-deriv(int der, double v) {
-// set the value of derivative "der" (0b) 0-(nder()-1) to "v"
-	if (der < 0 || der >= (int)Adparameters.size())
-		throw runtime_error(vastr("Ad::deriv illegal der: ",der));
-	data_[der+1] = v;
+der(int d, double v) {
+// set the value of derivative "d" (0b) 0-(nder()-1) to "v"
+	if (d < 0 || d >= (int)Adparameters.size())
+		throw runtime_error(vastr("Ad::deriv illegal arg: ",d));
+	data_[d+1] = v;
 }
 
 std::ostream&
 operator<< (std::ostream& s, Ad const& a) {
 	s << a.data_[0];
-	for (size_t i=1; i<=Ad::nder(); i++) {
+	for (int i=1; i<=Ad::nder(); i++) {
 		s << "[" << a.data_[i] << ']';
 	}
 	return s;
@@ -240,7 +182,7 @@ bool
 is_equal(Ad const& a, Ad const& b, int sigfig) {
 	double const* ad = a.data();
 	double const* bd = b.data();
-	for (size_t i=0; i<Ad::ndata(); i++) {
+	for (int i=0; i<Ad::ndata(); i++) {
 		if (!is_equal(ad[i], bd[i], sigfig))
 			return false;
 	}
@@ -252,7 +194,7 @@ is_equal(Ad const& a, Ad const& b, int sigfig) {
 Ad
 abs (const Ad& x) {
 	Ad rval{x};
-	for (size_t i=0; i<Ad::ndata(); i++)
+	for (int i=0; i<Ad::ndata(); i++)
 		rval.data_[i] = std::abs(rval.data_[i]);
 	return rval;
 }
@@ -263,8 +205,8 @@ acos (const Ad& x) {
 	double xv(x.value());
 	rval.value(acos(xv));
 	double d = sqrt(1.0 - xv*xv);
-	for (size_t i=0; i<Ad::nder(); i++)
-		rval.deriv(i,-x.deriv(i)/d);
+	for (int i=0; i<Ad::nder(); i++)
+		rval.der(i,-x.der(i)/d);
 	return rval;
 }
 
@@ -276,8 +218,8 @@ asin (const Ad& x) {
 	// d/du asin u = 1/sqrt(1-u^2)
 	// watch out for 1-u^2 = 0
 	double d = sqrt(double(1.0) - xv*xv);
-	for (size_t i=0; i<Ad::nder(); i++)
-		rval.deriv(i,x.deriv(i)/d);
+	for (int i=0; i<Ad::nder(); i++)
+		rval.der(i,x.der(i)/d);
 	return rval;
 }
 
@@ -287,8 +229,8 @@ atan (Ad const& x) {
 	double xv(x.value());
 	rval.value(atan(xv));
 	double d = 1.0 + xv*xv;
-	for (size_t i=0; i<Ad::nder(); i++)
-		rval.deriv(i, x.deriv(i)/d);
+	for (int i=0; i<Ad::nder(); i++)
+		rval.der(i, x.der(i)/d);
 	return rval;
 }
 
@@ -299,8 +241,8 @@ atan2 (Ad const& a, Ad const& b) {
 	Ad rval;
 	rval.value(atan2(av,bv));
 	double d(av*av + bv*bv);
-	for (size_t i=0; i<Ad::nder(); i++)
-		rval.deriv(i, (a.deriv(i)*bv - av*b.deriv(i))/d);
+	for (int i=0; i<Ad::nder(); i++)
+		rval.der(i, (a.der(i)*bv - av*b.der(i))/d);
 	return rval;
 }
 
@@ -310,8 +252,8 @@ cos (Ad const& x) {
 	double xv(x.value());
 	rval.value(cos(xv));
 	double sx{-sin(xv)};
-	for (size_t i=0; i<Ad::nder(); i++)
-		rval.deriv(i, x.deriv(i)*sx);
+	for (int i=0; i<Ad::nder(); i++)
+		rval.der(i, x.der(i)*sx);
 	return rval;
 }
 
@@ -319,8 +261,8 @@ Ad
 exp (Ad const& x) {
 	Ad rval;
 	rval.value(exp(x.value()));
-	for (size_t i=0; i<Ad::nder(); i++)
-		rval.deriv(i, x.deriv(i)*rval.value());
+	for (int i=0; i<Ad::nder(); i++)
+		rval.der(i, x.der(i)*rval.value());
 	return rval;
 }
 
@@ -328,8 +270,8 @@ Ad
 log (Ad const& x) {
 	Ad rval;
 	rval.value(log(x.value()));
-	for (size_t i=0; i<Ad::nder(); i++)
-		rval.deriv(i, x.deriv(i)/x.value());
+	for (int i=0; i<Ad::nder(); i++)
+		rval.der(i, x.der(i)/x.value());
 	return rval;
 }
 
@@ -338,8 +280,8 @@ log10 (const Ad& x) {
 	Ad rval;
 	rval.value(log10(x.value()));
 	double le = log10(exp(1.0));
-	for (size_t i=0; i<Ad::nder(); i++)
-		rval.deriv(i,le*x.deriv(i)/x.value());
+	for (int i=0; i<Ad::nder(); i++)
+		rval.der(i,le*x.der(i)/x.value());
 	return rval;
 }
 
@@ -370,8 +312,8 @@ pow (Ad const& x, Ad const& y) {
 	double lnu = 0.0;
 	if (u > 0.0)
 		lnu = log(u);
-	for (size_t i=0; i<Ad::nder(); i++)
-		rval.deriv(i, t*y.deriv(i)*lnu + dt*x.deriv(i));
+	for (int i=0; i<Ad::nder(); i++)
+		rval.der(i, t*y.der(i)*lnu + dt*x.der(i));
 	return rval;
 }
 
@@ -381,8 +323,8 @@ sin (Ad const& x) {
 	double xv(x.value());
 	rval.value(sin(xv));
 	double cx{cos(xv)};
-	for (size_t i=0; i<Ad::nder(); i++)
-		rval.deriv(i, x.deriv(i)*cx);
+	for (int i=0; i<Ad::nder(); i++)
+		rval.der(i, x.der(i)*cx);
 	return rval;
 }
 
@@ -395,11 +337,11 @@ sqrt (const Ad& x) {
 	double v(sqrt(xv));
 	rval.value(v);
 	if (v == 0.0) {
-		for (size_t i=0; i<Ad::nder(); i++)
-			rval.deriv(i, 0.0);
+		for (int i=0; i<Ad::nder(); i++)
+			rval.der(i, 0.0);
 	} else {
-		for (size_t i=0; i<Ad::nder(); i++)
-			rval.deriv(i, x.deriv(i)/(2.0*v));
+		for (int i=0; i<Ad::nder(); i++)
+			rval.der(i, x.der(i)/(2.0*v));
 	}
 	return rval;
 }
@@ -411,8 +353,8 @@ tan (Ad const& x) {
 	rval.value(tan(xv));
 	double sec = 1.0/cos(xv);
 	double t(sec*sec);
-	for (size_t i=0; i<Ad::nder(); i++)
-		rval.deriv(i, x.deriv(i)*t);
+	for (int i=0; i<Ad::nder(); i++)
+		rval.der(i, x.der(i)*t);
 	return rval;
 }
 
@@ -425,15 +367,20 @@ mag(complex<Ad> const& x) {
 
 //------------------------------------- end of Ad math fcns
 
+// 4 versions of extract:
+//    Ad, name -> double
+//    Ad, idx -> double
+//    complex Ad, name -> complex
+//    complex Ad, idx -> complex
 
 bool
 extract (const vector<Ad>& from, std::string const& name, double* val) {
 // extract from "from" the derivative "name" or the value
 // if "name" is empty or "0" (zero), put the result in "val"
-	Trace trc(2,"extract(Ad,string)");
+	T_(Trace trc(2,"extract(Ad,string)");)
 	int idx{0};	// default: value
 
-	trc.dprint("name: ",name);
+	T_(trc.dprint("name: ",name);)
 
 	if (!name.empty() && name != "0") {
 		idx = Ad::find(name);	// 0b index in data
@@ -448,9 +395,9 @@ bool
 extract (const vector<Ad>& from, int idx, double* val) {
 // extract from "from" data element "idx" (0b): the value if idx==0,
 // the 1b derivative number (1-Ad::nder()) otherwise.
-	Trace trc(2,"extract(Ad,int)");
+	T_(Trace trc(2,"extract(Ad,int)");)
 
-	trc.dprint("index ",idx);
+	T_(trc.dprint("index ",idx);)
 
 	size_t n = from.size();
 
@@ -467,10 +414,10 @@ bool
 extract (const vector<complex<Ad>>& from, std::string const& name, complex<double>* val) {
 // extract from "from" the derivative "name" or the value
 // if "name" is empty or "0" (zero), put the result in "val"
-	Trace trc(2,"extract(complex<Ad>,string)");
+	T_(Trace trc(2,"extract(complex<Ad>,string)");)
 	int idx{0};	// default: the value
 
-	trc.dprint("name: ",name);
+	T_(trc.dprint("name: ",name);)
 
 	if (!name.empty() && name != "0") {
 		idx = Ad::find(name);
@@ -486,9 +433,9 @@ bool
 extract (const vector<complex<Ad>>& from, int idx, complex<double>* val) {
 // extract from "from" data element "idx" (0b): the value if idx==0,
 // the 1b derivative number (1-Ad::nder()) otherwise.
-	Trace trc(2,"extract(complex<Ad>,int)");
+	T_(Trace trc(2,"extract(complex<Ad>,int)");)
 
-	trc.dprint("index ",idx);
+	T_(trc.dprint("index ",idx);)
 
 	if (idx < 0 || idx >= (int)Ad::ndata())
 		throw runtime_error(vastr("attempt to extract idx(0b) ", idx));
@@ -499,6 +446,147 @@ extract (const vector<complex<Ad>>& from, int idx, complex<double>* val) {
 
 	return true;
 }
+
+
+template<>
+template<>
+complex<Ad>::
+complex(const complex<Ad>& z) {
+// copy constructor with fewer Ad ctors
+   this->real(Ad::real(z));
+   this->imag(Ad::imag(z));
+}
+
+void
+Ad::
+multad (const Ad& a, const Ad& b, Ad& c) {
+// multiply c = a*b  works for a = a*b
+// This is a helper function for various overrides and blas specializations
+   double av = a.data_[0];
+   double bv = b.data_[0];
+   c.data_[0] = av*bv;
+   for (int i=1; i<Ad::ndata(); i++)
+      c.data_[i] = a.data_[i]*bv + b.data_[i]*av;
+}
+
+void
+Ad::
+multcad(const complex<Ad>& a, const complex<Ad>& b, complex<Ad>& c, Ad& wk) {
+// multiply 2 complex Ad's: c = a*b, without creating new Ad's
+// This is a helper function for various overrides and blas specializations
+   const Ad& ar = Ad::real(a);
+   const Ad& ai = Ad::imag(a);
+   const Ad& br = Ad::real(b);
+   const Ad& bi = Ad::imag(b);
+   Ad& cr = Ad::real(c);
+   Ad& ci = Ad::imag(c);
+   Ad::multad(ar, br, cr);
+   Ad::multad(ai, bi, wk);
+   cr -= wk;
+   Ad::multad(ar, bi, ci);
+   Ad::multad(ai, br, wk);
+   ci += wk;
+}
+
+template<>
+template<>
+complex<Ad>&
+complex<Ad>::
+operator*=(const complex<Ad>& rhs) {
+// override std::complex<T>::operator*= to avoid copy ctors
+   Ad& ar = Ad::real(*this);
+   Ad& ai = Ad::imag(*this);
+   const Ad& br = Ad::real(rhs);
+   const Ad& bi = Ad::imag(rhs);
+   Ad wk(0.0);
+   Ad r;          // XXX how to avoid?
+   Ad::multad(ar, br, r);
+   Ad::multad(ai, bi, wk);
+   r -= wk;
+   Ad::multad(ai, br, ai);
+   Ad::multad(ar, bi, wk);
+   ai += wk;
+   ar = r;
+   return *this;
+}
+
+template<>
+template<>
+complex<Ad>&
+complex<Ad>::
+operator+=(const complex<Ad>& rhs) {
+// override std::complex<T>::operator+= to avoid copy constructors
+   Ad& ar = Ad::real(*this);
+   Ad& ai = Ad::imag(*this);
+   const Ad& br = Ad::real(rhs);
+   const Ad& bi = Ad::imag(rhs);
+   ar += br;
+   ai += bi;
+   return *this;
+}
+
+
+adfcn1p
+adfcn1(const std::string& fcn) {
+// Return a pointer to single-Ad-arg function "fcn"
+	T_(Trace trc(3,"adfcn1");)
+	adfcn1p rval{nullptr};
+	// XXX how can we specify *exactly* which function?
+	if (fcn == "abs")
+		rval = abs;
+	else if (fcn == "acos")
+		rval = acos;
+	else if (fcn == "asin")
+		rval = asin;
+	else if (fcn == "atan")
+		rval = atan;
+	else if (fcn == "cos")
+		rval = cos;
+	else if (fcn == "exp")
+		rval = exp;
+	else if (fcn == "log")
+		rval = log;
+	else if (fcn == "log10")
+		rval = log10;
+	else if (fcn == "sin")
+		rval = sin;
+	else if (fcn == "sqrt")
+		rval = sqrt;
+	else if (fcn == "tan")
+		rval = tan;
+	else if (fcn == "atmos::rho")
+		rval = atmos::rho;
+	else if (fcn == "atmos::press")
+		rval = atmos::press;
+	else if (fcn == "atmos::temp")
+		rval = atmos::temp;
+	else if (fcn == "atmos::vsonic")
+		rval = atmos::vsonic;
+	T_(trc.dprint("returning ",rval);)
+	return rval;
+}
+
+adfcn2p
+adfcn2(const std::string& fcn) {
+// Return a pointer to double-Ad-arg function "fcn"
+	T_(Trace trc(3,"adfcn2");)
+	adfcn2p rval{nullptr};
+	if (fcn == "atan2")
+		rval = atan2;
+	else if (fcn == "max")
+		rval = max;
+	else if (fcn == "min")
+		rval = min;
+	else if (fcn == "pow")
+		rval = pow;
+	else if (fcn == "atmos::vcas")
+		rval = atmos::vcas;
+	else if (fcn == "atmos::cdpress")
+		rval = atmos::cdpress;
+	T_(trc.dprint("returning ",rval);)
+	return rval;
+}
+
 
 #ifdef MAIN
 #undef MAIN
@@ -518,7 +606,7 @@ relerrAd(const Ad& a, const Ad& b) {
 	double ei = t/max(max(am, bm), 0.1);
 	double rval = ei;
 
-	for (size_t i=0; i<Ad::nder(); i++) {
+	for (int i=0; i<Ad::nder(); i++) {
 		double t = abs(a.deriv(i) - b.deriv(i));
 		double am = abs(a.deriv(i));
 		double bm = abs(b.deriv(i));
@@ -549,7 +637,7 @@ ad_fcn (const string& title, Ad (*fcn)(const Ad& a),
 	double amax = pi/2.0;
 	double del = (amax - amin)/(double)(nstep-1);
 	double norm, maxnorm = 0.0;
-	size_t nd = Ad::nder();
+	int nd = Ad::nder();
 	vector<double> der(nd, 1.0);
 
 	cerr << "------------------- check " << title << endl;
@@ -603,7 +691,7 @@ ad_fcn2(const string& title, Ad (*fcn)(const Ad& a, const Ad& b),
 	double amax = pi/2.0;
 	double norm, maxnorm = 0.0;
 	double del = (amax - amin)/(double)(nstep-1);
-	size_t nd = Ad::nder();
+	int nd = Ad::nder();
 	vector<double> der(nd, double(0.5));
 
 	cerr << "------------------- check " << title << endl;
@@ -647,9 +735,9 @@ xrand() {
 Ad
 random_Ad() {
 // return an Ad with random value and derivatives
-	size_t nd = Ad::nder();
+	int nd = Ad::nder();
 	Ad rval{xrand()};
-	for (size_t i=0; i<nd; i++)
+	for (int i=0; i<nd; i++)
 		rval.deriv(i, xrand());
 	return rval;
 }
@@ -675,7 +763,7 @@ ad_mixed_mode() {
 	
 double
 test_arith() {
-	Trace trc(1,"test_arith");
+	T_(Trace trc(1,"test_arith");)
 	double rval{0.0};
 	cerr << "--------------------------------------------------------\n";
 	cerr << " Testing Ad arithmetic operations\n";
@@ -706,7 +794,7 @@ square(const Ad& a) {
 
 double
 sgemv_test() {
-	Trace trc(1,"sgemv_test");
+	T_(Trace trc(1,"sgemv_test");)
 	int n = 3;
 	vector<Ad> a(n*n);
 	vector<Ad> x(n);
@@ -718,10 +806,10 @@ sgemv_test() {
 	}
 	vector<Ad> y(n);
 
-	trc.dprint("test_sgemv a:\n",a);
-	trc.dprint("test_sgemv x:\n",x);
+	T_(trc.dprint("test_sgemv a:\n",a);)
+	T_(trc.dprint("test_sgemv x:\n",x);)
 	blas_sgemv("n", n, n, Ad(1.0), &a[0], n, &x[0], 1, Ad(0.0), &y[0], 1);
-	trc.dprint("test_sgemv y:\n",y);
+	T_(trc.dprint("test_sgemv y:\n",y);)
 	Ad t{0.0};
 	for (int i=0; i<n; i++) {
 		Ad ti = x[i] - y[i];
@@ -733,7 +821,7 @@ sgemv_test() {
 
 double
 cgemv_test() {
-	Trace trc(1,"cgemv_test");
+	T_(Trace trc(1,"cgemv_test");)
 	int n = 3;
 	vector<complex<Ad>> a(n*n);
 	vector<complex<Ad>> x(n);
@@ -750,11 +838,11 @@ cgemv_test() {
 	}
 	vector<complex<Ad>> y(n);
 
-	trc.dprint("cgemv_test a:\n",a);
-	trc.dprint("cgemv_test x:\n",x);
+	T_(trc.dprint("cgemv_test a:\n",a);)
+	T_(trc.dprint("cgemv_test x:\n",x);)
 	blas_cgemv("n", n, n, complex<Ad>(1.0), &a[0], n, &x[0], 1,
 		complex<Ad>(0.0), &y[0], 1);
-	trc.dprint("cgemv_test y:\n",y);
+	T_(trc.dprint("cgemv_test y:\n",y);)
 	// return err
 	complex<Ad> t{0.0};
 	for (int i=0; i<n; i++) {
@@ -791,7 +879,7 @@ expression_test() {
 
 int
 main(int argc, char** argv) {
-	Trace trc(1,"Ad testing");
+	T_(Trace trc(1,"Ad testing");)
 	int nder = 2;  // test with 2 derivative parameters
 	ostringstream os;
 	bool check_arith = false;

@@ -39,10 +39,10 @@ run_octlab(Specs& sp);
 static void
 invert(vector<double> P) {
 // invert an (n,n) matrix, return it in the input P
-	Trace trc(1,"invert");
+	T_(Trace trc(1,"invert");)
 
 	int n = sqrt(P.size());
-	trc.dprintm(n,n,n,P,"inverting");
+	T_(trc.dprintm(n,n,n,P,"inverting");)
 	vector<double> I(n*n, 0.0);
 	for (int i=0; i<n; i++)
 		I[i*(n+1)] = 1.0;
@@ -63,12 +63,12 @@ invert(vector<double> P) {
 		&rcond, ferr.data(), berr.data());
 	if (info != 0)
 		throw runtime_error(vastr("failed to invert M+rho/2*R2: dgesv info ",info));
-	trc.dprint("rcond ",rcond);
-	trc.dprintm(n,n,n,x,"inverted");
+	T_(trc.dprint("rcond ",rcond);)
+	T_(trc.dprintm(n,n,n,x,"inverted");)
 	// check by multiplying x*P
 	blas_sgemm("n", "n", n, n, n, 1.0, psave.data(), n,
 			x.data(), n, 0.0, pf.data(), n);
-	trc.dprintm(n,n,n,pf,"P*x");
+	T_(trc.dprintm(n,n,n,pf,"P*x");)
 	//!! P = I;
 	P = x;
 }
@@ -105,7 +105,7 @@ categorize(vector<double> const& vr, vector<double> const& wr, vector<double> co
 // 1) wi[j] = 0:  the eigenvector is real, vr[:j]
 // 2) wi[j] = -wi[j+1]:  the eigenvector is complex, v[j] = vr[j] + i*vr[j+1]
 //                       only return wi[j], ignore wi[j+1]
-	Trace trc(1,"categorize");
+	T_(Trace trc(1,"categorize");)
 
 	v.clear();
 	w.clear();
@@ -117,7 +117,7 @@ categorize(vector<double> const& vr, vector<double> const& wr, vector<double> co
 			for (int i=0; i<n; i++)
 				vj.push_back(complex<double>(vr[i+j*n]));
 			normalize_inf(n, vj.data(), 1, true);
-			trc.dprint("real: ",wr[j],", v = ",flaps::summarize(n,vj.data()));
+			T_(trc.dprint("real: ",wr[j],", v = ",flaps::summarize(n,vj.data()));)
 		} else if (is_equal(wr[j],wr[j+1],8) && is_equal(wi[j],-wi[j+1],8)) {
 			complex<double> wj(wr[j],wi[j]);
 			w.push_back(complex<double>(wr[j],wi[j]));
@@ -126,7 +126,7 @@ categorize(vector<double> const& vr, vector<double> const& wr, vector<double> co
 			normalize_inf(n, vj.data(), 1, true);
 			v.push_back(vj);
 			j++;		// skip the conjugate
-			trc.dprint(w.size(),") ",wj,", v = ",flaps::summarize(n,vj.data()));
+			T_(trc.dprint(w.size(),") ",wj,", v = ",flaps::summarize(n,vj.data()));)
 		} else {
 			complex<double> wj(wr[j],wi[j]);
 			w.push_back(complex<double>(wr[j],wi[j]));
@@ -134,15 +134,15 @@ categorize(vector<double> const& vr, vector<double> const& wr, vector<double> co
 				vj.push_back(vr[i+j*n]);
 			normalize_inf(n, vj.data(), 1, true);
 			v.push_back(vj);
-			trc.dprint("no conjugate: ",w.size(),") ",wj,", v = ",flaps::summarize(n,vj.data()));
+			T_(trc.dprint("no conjugate: ",w.size(),") ",wj,", v = ",flaps::summarize(n,vj.data()));)
 		}
 			
 	}
-	trc.dprint("returning ",w.size()," eigenvalues/vectors");
+	T_(trc.dprint("returning ",w.size()," eigenvalues/vectors");)
 }
 int
 hopf(Specs& sp) {
-	Trace trc(1,"hopf");
+	T_(Trace trc(1,"hopf");)
 	int n = sp.stif->rsize();
 	int nbeta = sp.beta.size();
 	int nt = n*(2 + nbeta);
@@ -209,7 +209,7 @@ hopf(Specs& sp) {
 		// create w and v: only pos wi
 		categorize(vr,wr,wi,w,v);
 
-		trc.dprint("real(w)",wr);
+		T_(trc.dprint("real(w)",wr);)
 		// search for wr >= 0
 		cout << "v " << vtas << " max real: " <<
 			*std::max_element(wr.cbegin(),wr.cend()) << endl;
@@ -254,7 +254,7 @@ hopf(Specs& sp) {
 void
 Fmatrix(vector<Ad>& F) {
 // compute F as an (nt,nt) Ad matrix
-	Trace trc(1,"Fmatrix");
+	T_(Trace trc(1,"Fmatrix");)
 	Specs& sp = specs();
 
 	Ad dpress = gpset::find("dpress")->advalue();
@@ -316,7 +316,7 @@ Fmatrix(vector<Ad>& F) {
 				GR.data(), n, 0.0, PGR.data(), n);
 	block_insert(PGR, 1, 1, -1.0, F);
 
-	trc.dprintm(nt,nt,nt,F,"F matrix");
+	T_(trc.dprintm(nt,nt,nt,F,"F matrix");)
 }
 
 void
@@ -324,7 +324,7 @@ Jmatrix(vector<Ad> const& yad, vector<double>& f, vector<double>& F, vector<doub
 // compute J(y) = df/dy = F + dF/dy*y
 // where y' = F(y)y
 // Compute Fy in Ad, then extract f, F, and J
-	Trace trc(1,"Jmatrix");
+	T_(Trace trc(1,"Jmatrix");)
 	Specs& sp = specs();
 	int n = sp.stif->rsize();
 	int nbeta = sp.beta.size();
@@ -359,7 +359,7 @@ Jmatrix(vector<Ad> const& yad, vector<double>& f, vector<double>& F, vector<doub
 int
 bif(complex<double> w, vector<complex<double>> v, double vtas) {
 // trace a bifurcation from gcnorm=0 to gmax
-	Trace trc(1,"bif");
+	T_(Trace trc(1,"bif");)
 	Specs& sp = specs();
 
 	int n = sp.stif->rsize();
@@ -389,9 +389,9 @@ bif(complex<double> w, vector<complex<double>> v, double vtas) {
 	vector<double> f(nf);
 	vector<double> jac(nf*nx);
 	fjac(x, f, jac);
-	trc.dprintm(nx,1,nx,x.data(), "bif x");
-	trc.dprintm(nf,1,nf,f.data(), "bif f");
-	trc.dprintm(nf,nx,nf,jac.data(), "bif jac");
+	T_(trc.dprintm(nx,1,nx,x.data(), "bif x");)
+	T_(trc.dprintm(nf,1,nf,f.data(), "bif f");)
+	T_(trc.dprintm(nf,nx,nf,jac.data(), "bif jac");)
 	return 0;
 }
 

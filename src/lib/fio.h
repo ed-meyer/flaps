@@ -79,7 +79,6 @@ class Fio;
 
 #include "csignals.h"
 #include "message.h"
-#include "trace.h"
 
 class Fpipe;
 
@@ -170,12 +169,9 @@ void
 Sender::
 serialize(size_t n, const Type* t) {
 // An array of Types
-	Trace trc(2,"Sender::serialize(n,t) n ",n);
-	trc.dprint("n = ",n," type: ",typeid(Type).name());
 	this->serialize(n);
-	for (size_t i=0; i<n; i++) {
+	for (size_t i=0; i<n; i++)
 		this->serialize(t[i]);
-	}
 }
 
 template<typename Type>
@@ -183,7 +179,6 @@ void
 Sender::
 serialize(const std::vector<Type>& t) {
 // A vector of Types
-	Trace trc(2,"Sender::serialize(vector)");
 	this->serialize(t.size(), &t[0]);
 }
 
@@ -214,9 +209,7 @@ Receiver::
 serialize(size_t& n, Type*& t) {
 // An array of Types: deserialize n, then
 // "t" is allocated and deserialized
-	Trace trc(2,"Receiver::serialize(n,t)");
 	this->serialize(n);
-	trc.dprint("n = ",n," type: ",typeid(Type).name());
 	t = new Type[n];
 	for (size_t i=0; i<n; i++)
 		this->serialize(t[i]);
@@ -228,10 +221,8 @@ Receiver::
 serialize(std::vector<Type>& t) {
 // A vector of Types: deserialize n (t.size()), push_back
 // each element of "t" (assumes "t" is empty)
-	Trace trc(2,"serialize(vector)");
 	size_t n;
 	this->serialize(n);
-	trc.dprint("n = ",n," type: ",typeid(Type).name());
 	Type ti;
 	for (size_t i=0; i<n; i++) {
 		this->serialize(ti);
@@ -315,18 +306,14 @@ void
 fetch(const std::string& mid, std::vector<Type>& rval) {
 	// the expected object name
 	std::string exn{vastr("vector<",typeid(Type).name(),'>')};
-	Trace trc(2,"fetch(",exn,")");
 
 	// open the file
 	Receiver s(mid);
 	// get the type name
 	std::string name;
 	s.serialize(name);
-	if (name != exn) {
-		std::string exc{vastr("fetch(",mid,"): excpecting ",exn,", got ",name)};
-		trc.dprint("throwing exception: ",exc);
-		throw std::runtime_error(exc);
-	}
+	if (name != exn)
+		throw std::runtime_error(vastr("fetch(",mid,") expecting ",exn,", got ",name));
 	// and serialize rval
 	s.serialize(rval);
 }
@@ -336,9 +323,7 @@ void
 store(const std::string& mid, const std::vector<Type>& a) {
 	// the object name
 	std::string name{std::string("vector<")+typeid(Type).name()+std::string(">")};
-	Trace trc(2,"store(",name,")");
 
-	trc.dprint("writing to ",mid);
 	// open the file
 	Sender s(mid);
 	// put the type name

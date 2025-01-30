@@ -118,7 +118,7 @@ Matrix(std::string const& mid) {
 // fetch constructor
 // Throws runtime_error exception if the matrix is not available -
 // use Matrix::fetch() if you want a nullptr instead of exception
-	Trace trc(2,"Matrix fetch constructor");
+	T_(Trace trc(2,"Matrix fetch constructor");)
 
 	if (mid.empty()) {
 		string exc{vastr("attempt to fetch a matrix with a blank name")};
@@ -138,13 +138,13 @@ Matrix(std::string const& mid) {
 	if (rval == nullptr) {
 		string exc = vastr("reading \"",mid,
 			"\", expecting a Matrix, got a ",op->vid());
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 	// XXX need move assignment
 	*this = *rval;
 	delete rval;
-	trc.dprint("returning ",*this);
+	T_(trc.dprint("returning ",*this);)
 }
 
 vector<Matrix*>
@@ -155,11 +155,11 @@ fetch(const string& re) {
 // a regular expression) and it is not available, otherwise if
 // more than one match and any one is not available a runtime_error
 // exception is thrown.
-	Trace trc(2,"Matrix::fetch ",re);
+	T_(Trace trc(2,"Matrix::fetch ",re);)
 	vector<Matrix*> rval;
 	// get a list of the matrices to fetch
 	vector<string> mids = fio::catalog(re);
-	trc.dprint("catalog returned ",mids);
+	T_(trc.dprint("catalog returned ",mids);)
 	for (auto& mid : mids) {
 		// mid may not be a Matrix (e.g. Fma) so catch exceptions
 		try {
@@ -171,7 +171,7 @@ fetch(const string& re) {
 			else
 				throw s;
 #else // NEVER // new behavior
-			trc.dprint("not adding ",mid," to rval: ",s.what());
+			T_(trc.dprint("not adding ",mid," to rval: ",s.what());)
 #endif // NEVER // new behavior
 		}
 	}
@@ -184,14 +184,14 @@ Matrix (Receiver& s) {
 // Matrix deserialize constructor (receiver)
 // _data holds the matrix values, which are modified by the
 // parameterizations (Pz).
-	Trace trc(2,"Matrix::receiver constructor");
+	T_(Trace trc(2,"Matrix::receiver constructor");)
 	s.serialize (_mid);
 	s.serialize (_desc);
 	s.serialize (nr);
 	s.serialize (nc);
 	_data.clear();
 	s.serialize(_data);
-	trc.dprintv(_data,_mid+" deserialized");
+	T_(trc.dprintv(_data,_mid+" deserialized");)
 	// check for complex
 	// compare with size of data (d) read
 	size_t nn = nr*nc;
@@ -210,7 +210,7 @@ Matrix (Receiver& s) {
 			throw runtime_error(vastr("expecting a Pz, got a \"",tmp[i]->vid(),'\"'));
 		}
 	}
-	trc.dprint("returning ",*this);
+	T_(trc.dprint("returning ",*this);)
 }
 
 Matrix::
@@ -226,7 +226,7 @@ put (Sender& s) const {
 // Matrix serializer (sender)
 // _data holds the matrix values, which are modified by the
 // parameterizations (Pz).
-	Trace trc(2,"Matrix::put ", *this);
+	T_(Trace trc(2,"Matrix::put ", *this);)
 
 	s.serialize (_mid);
 	s.serialize(_desc);
@@ -251,7 +251,7 @@ store() {
 Matrix&
 Matrix::
 operator=(Matrix const& rhs) {
-	Trace trc(2,"Matrix::operator=(&)");
+	T_(Trace trc(2,"Matrix::operator=(&)");)
 	if (this != &rhs) {
 		nr = rhs.nr;
 		nc = rhs.nc;
@@ -270,7 +270,7 @@ Matrix::
 eval(pset& plt, vector<complex<Ad>>& result) const {
 // Evalutate this matrix and put the result into "result" which
 // may be larger than "this" and is complex where "this" may be real
-	Trace trc(2,"Matrix::eval ",this->mid());
+	T_(Trace trc(2,"Matrix::eval ",this->mid());)
 	bool rval(true);
 	//!! size_t nr = result.nr;
 	//!! size_t nc = result.nc;
@@ -279,7 +279,7 @@ eval(pset& plt, vector<complex<Ad>>& result) const {
 	//!! bool samesize = ((nr == m) && (nc == n));
 	bool samesize = (m*n == result.size());
 
-	trc.dprint(this->pz.size()," pzs, samesize? ",samesize?"y":"n");
+	T_(trc.dprint(this->pz.size()," pzs, samesize? ",samesize?"y":"n");)
 
 	// zero the result array
 	size_t nt = 2*result.size()*Ad::ndata();
@@ -344,7 +344,7 @@ eval(pset& plt, vector<complex<Ad>>& result) const {
 
 	// evaluate all Pz
 	if (this->pz.empty()) {
-		trc.dprint("no pzs: copied data to result");
+		T_(trc.dprint("no pzs: copied data to result");)
 		return rval;
 	}
 
@@ -363,7 +363,7 @@ eval(pset& plt, vector<complex<Ad>>& result) const {
 				this->pz[i]->eval(plt, work, m, n);
 			}
 			// ...then copy work to result a column at a time
-			trc.dprint("copying ",n," columns, ",nt," doubles/column");
+			T_(trc.dprint("copying ",n," columns, ",nt," doubles/column");)
 			for (size_t j=0; j<n; j++)
 				for (size_t i=0; i<m; i++)
 					result[IJ(i,j,nr)] = work[IJ(i,j,m)];
@@ -376,7 +376,7 @@ eval(pset& plt, vector<complex<Ad>>& result) const {
 
 	static int visit{0};
 	if (visit++ == 0)
-		trc.dprintm(nr,nc,nr,result,this->mid());
+		T_(trc.dprintm(nr,nc,nr,result,this->mid());)
 	return rval;
 }
 
@@ -385,7 +385,7 @@ Matrix::
 values (std::string wrt, pset& ps) {
 // Returns matrix values (wrt=="0" or empty), or the derivative
 // of the matrix with respect to parameter "wrt"
-	Trace trc(2,"Matrix::values");
+	T_(Trace trc(2,"Matrix::values");)
 
 	size_t m = rsize();
 	size_t n = csize();
@@ -396,7 +396,7 @@ values (std::string wrt, pset& ps) {
 	// if the matrix is constant just return the _data array or
 	// zero if wrt != "0"
 	if (this->pz.empty()) {
-		trc.dprint("quick return: constant");
+		T_(trc.dprint("quick return: constant");)
 		if (wrt.empty() || wrt == "0")
 			return _data;
 		else
@@ -414,7 +414,7 @@ values (std::string wrt, pset& ps) {
 	} else {
 		std::vector<double> tmp(2*m*n);
 		extract (work, wrt, (complex<double>*)&tmp[0]);
-		blas_copy (m*n, &tmp[0], 2, &rval[0], 1);
+		blas::copy (m*n, &tmp[0], 2, &rval[0], 1);
 	}
 	return rval;
 }
@@ -427,7 +427,7 @@ cvalues (std::string wrt, pset& ps) {
 	vector<double> vals = this->values(wrt, ps);
 	if (!this->is_complex()) {
 		vector<double> rval(2*vals.size(), 0.0);
-		blas_copy(vals.size(), &vals[0], 1, &rval[0], 2);
+		blas::copy(vals.size(), &vals[0], 1, &rval[0], 2);
 		return rval;
 	}
 	return vals;
@@ -482,7 +482,7 @@ Matrix::
 dependson(pset& plt) const {
 // returns a list of the names of all parameters this matrix is
 // a function of
-	Trace trc(1,"Matrix::dependson");
+	T_(Trace trc(1,"Matrix::dependson");)
 	vector<string> rval;
 	for (auto& pzi : this->pz) {
 		vector<string> di = pzi->dependson(plt);
@@ -503,11 +503,11 @@ transpose() {
 	if (this->is_complex()) {
 		vector<complex<double> > cdata(m*n);
 		flaps::transpose(m, n, this->celem(), &cdata[0]);
-		blas_copy(m*n, &cdata[0], 1, this->celem(), 1);
+		blas::copy(m*n, &cdata[0], 1, this->celem(), 1);
 	} else {
 		vector<double> rdata(m*n);
 		flaps::transpose(m, n, this->elem(), &rdata[0]);
-		blas_copy(m*n, &rdata[0], 1, this->elem(), 1);
+		blas::copy(m*n, &rdata[0], 1, this->elem(), 1);
 	}
 	this->nr = n;
 	this->nc = m;
@@ -519,14 +519,14 @@ plot_apf (pset& pl, string const& filename, vector<Elem> const& ele,
 		size_t nstep, string& plotpar) {
 // Create an Apf file of specified elements of a matrix that
 // is a function of parameter "plotpar"
-	Trace trc(1,"Matrix::plot_apf");
+	T_(Trace trc(1,"Matrix::plot_apf");)
 	size_t i, j;
 	size_t nr = this->rsize();
 	size_t nc = this->csize();
 	vector<Ad> work(2*nr*nc);
 	std::ostringstream os;
 
-	trc.dprint("plotting ",ele.size()," of ",*this," against ",plotpar);
+	T_(trc.dprint("plotting ",ele.size()," of ",*this," against ",plotpar);)
 
 	//!! Par* fpsplotpar = gpset::find(plotpar);
 	Par* fpsplotpar = pl.findp(plotpar);
@@ -584,10 +584,10 @@ plot (pset& pl, std::vector<Elem> const& ele, vector<string>& params,
 // and holding "fixedparam" parameters constant
 // If there is only one parameter name in "params" the data is
 // written in ASCII plot-file format (.apf)
-	Trace trc(1,"Matrix::plot");
+	T_(Trace trc(1,"Matrix::plot");)
 	std::ostringstream os;
 
-	trc.dprint("fixed par: ",fixedparam.empty() ? "none" :fixedparam);
+	T_(trc.dprint("fixed par: ",fixedparam.empty() ? "none" :fixedparam);)
 
 	vector<string> toplot{params};
 
@@ -601,7 +601,7 @@ plot (pset& pl, std::vector<Elem> const& ele, vector<string>& params,
 		}
 	}
 	if (toplot.empty()) {
-		trc.dprint("quick return: no dependent parameters and none given");
+		T_(trc.dprint("quick return: no dependent parameters and none given");)
 		return;
 	}
 
@@ -709,15 +709,15 @@ matvij (pset& plt, std::string const& desc, int row, int col) {
  *    row    1b row number
  *    col    1b column number
  *------------------------------------------------------------------*/
-	Trace trc(2,"matvij");
+	T_(Trace trc(2,"matvij");)
 	complex<Ad> rval;
 
-	trc.dprint("desc ",desc,", row ",row,", col ",col);
+	T_(trc.dprint("desc ",desc,", row ",row,", col ",col);)
 
 	Matrix* mp = Matrix::find_desc(desc);
 	if (mp == nullptr) {
 		if (plt.monitoring()) {
-			trc.dprint("not throwing exception: monitoring");
+			T_(trc.dprint("not throwing exception: monitoring");)
 			return rval;
 		} else {
 			throw runtime_error(vastr("matrix \"", desc,
@@ -744,7 +744,7 @@ matvij (pset& plt, std::string const& desc, int row, int col) {
 	// ...then extract the return value
 	rval = work[row-1 + nr*(col-1)];
 
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -810,7 +810,7 @@ Matrix::
 fetch_mids (string const& id) {
 // Fetch a list of the mids of all matrices in Matrix::collection()
 // Return pairs of (desc,mid), e.g. (mass,MHH)
-	Trace trc(1,"Matrix::fetch_mids");
+	T_(Trace trc(1,"Matrix::fetch_mids");)
 	vector<string> pairs;
 	fio::fetch(vastr("mids,",id), pairs);
 	vector<pair<string,string> > rval;
@@ -820,7 +820,7 @@ fetch_mids (string const& id) {
 		if (toks.size() != 2)
 			throw runtime_error(vastr("fetch_mids: bad pair <",s,">"));
 		rval.push_back(make_pair(stripwhitespace(toks[0]),stripwhitespace(toks[1])));
-		trc.dprint("got ",toks[0]," = ",toks[1]);
+		T_(trc.dprint("got ",toks[0]," = ",toks[1]);)
 	}
 	return rval;
 }
@@ -846,7 +846,7 @@ vzmatrices(const string& vzid, Matrix*& nodes,
          Matrix*& coords, Matrix*& conn, Matrix*& gct) {
 // Fetch the 4 matrices necessary for amviz, throws runtime_error
 // if any of the 4 are missing
-	Trace trc(1,"vzmatrices");
+	T_(Trace trc(1,"vzmatrices");)
 
 	nodes = coords = conn = gct = nullptr;
 	// vzid may be empty - just fetch without extension
@@ -934,14 +934,14 @@ midcmp (string const& a, string const& b) {
  * pk(1|2|3).*
  * stab,id=(pk1,pk2,pk3),...
  *------------------------------------------------------------------*/
-	Trace trc(3,"midcmp ",a," =? ",b);
+	T_(Trace trc(3,"midcmp ",a," =? ",b);)
 	size_t i, j;
 	ostringstream os;
 	int rval = 0;
 
 	// entire strings match?
 	if (a == b) {
-		trc.dprint("quick return: match");
+		T_(trc.dprint("quick return: match");)
 		return 0;
 	}
 
@@ -962,18 +962,18 @@ midcmp (string const& a, string const& b) {
 		bool bmeta = bname.find_first_of("|*[]?") != string::npos;
 		if (ameta) {
 			if (bmeta) {
-				trc.dprint("both names have metachar");
+				T_(trc.dprint("both names have metachar");)
 				rval = 0;
 			}
 			regex are(aname, regex_constants::icase);
 			if (!regex_match(bname, are)) {
-				trc.dprint(bname," does not match re ",aname);
+				T_(trc.dprint(bname," does not match re ",aname);)
 				rval = 1;
 			}
 		} else if (bmeta) {
 			regex bre(bname, regex_constants::icase);
 			if (!regex_match(aname, bre)) {
-				trc.dprint(aname," does not match re ",bname);
+				T_(trc.dprint(aname," does not match re ",bname);)
 				rval = 1;
 			}
 		} else {
@@ -983,7 +983,7 @@ midcmp (string const& a, string const& b) {
 	}
 	// return if the names don't match
 	if (rval != 0 || (aAtt.empty() && bAtt.empty())) {
-		trc.dprint("returning ",rval," names differ or no attributes");
+		T_(trc.dprint("returning ",rval," names differ or no attributes");)
 		return rval;
 	}
 
@@ -995,7 +995,7 @@ midcmp (string const& a, string const& b) {
 	// attributes if one has ellipses (...)
 	rval = aAtt.compare(bAtt);
 	if (rval == 0) {
-		trc.dprint("returning 0: attributes match exactly");
+		T_(trc.dprint("returning 0: attributes match exactly");)
 		return rval;
 	}
 
@@ -1029,7 +1029,7 @@ midcmp (string const& a, string const& b) {
 	// If both have ellipses we can return 0 (true) since any
 	// combination of attributes will match...
 	if (aellipses && bellipses) {
-		trc.dprint("returning 0: both have ellipses");
+		T_(trc.dprint("returning 0: both have ellipses");)
 		return 0;
 	}
 	// ... on the other hand if neither have ellipses the number
@@ -1038,7 +1038,7 @@ midcmp (string const& a, string const& b) {
 	if (!aellipses && !bellipses) {
 		if (!aname.empty() && !bname.empty()) {
 			if (alist.size() != blist.size()) {
-				trc.dprint("returning ",rval,": different number of attributes");
+				T_(trc.dprint("returning ",rval,": different number of attributes");)
 				return (alist.size() > blist.size() ? 1 : -1);
 			}
 		}
@@ -1069,11 +1069,11 @@ midcmp (string const& a, string const& b) {
 			string brhs;
 			if (!blist[i]->svec.empty())
 				brhs = blist[i]->svec[0];
-			trc.dprintn(alist[i]," =? ",blist[j]);
+			T_(trc.dprintn(alist[i]," =? ",blist[j]);)
 			if (alist[i]->lhs == blist[j]->lhs) {
 				if (compare(arhs, brhs)) {
 					// found a match - quit this loop
-					trc.dprint(" yes");
+					T_(trc.dprint(" yes");)
 					break;
 				}
 			}
@@ -1081,13 +1081,13 @@ midcmp (string const& a, string const& b) {
 		// did the inner loop finish (ie not found)?
 		// but it is ok if stage was in a but not b
 		if (j == blist.size()) {
-			trc.dprint(alist[i]->lhs," is an attribute in a but not b");
+			T_(trc.dprint(alist[i]->lhs," is an attribute in a but not b");)
 			rval = 1;
 			break;
 		}
 	}
 
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 

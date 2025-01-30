@@ -33,6 +33,7 @@
 #include "settings.h"
 #include "specs.h"
 #include "target.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -59,8 +60,8 @@ double
 Flutcurve::
 constraintfcn(Target* t, const vector<double> & x, vector<double>& c) {
 	// constraint function for holding "par" to "value"
-	Trace trc(2,"constraintfcn");
-	trc.dprint("target ",*t);
+	T_(Trace trc(2,"constraintfcn");)
+	T_(trc.dprint("target ",*t);)
 	// XXX update from x?
 	std::fill(c.begin(), c.end(), 0.0);
 	Par* par = findp(t->parname);
@@ -72,8 +73,8 @@ constraintfcn(Target* t, const vector<double> & x, vector<double>& c) {
 	}
 	// return p - \hat{p} = f[nf]
 	double rval = par->value() - t->value;
-	trc.dprint("returning ",rval," = ",par->value()," - ",t->value);
-	trc.dprint("returning c = ",c);
+	T_(trc.dprint("returning ",rval," = ",par->value()," - ",t->value);)
+	T_(trc.dprint("returning c = ",c);)
 	return rval;
 }
 
@@ -85,10 +86,10 @@ class TanConstraintfcn {
 		TanConstraintfcn(vector<double> const& t) : tan(t) {};
 		double operator()(vector<double> const& x, vector<double>& c) {
 			// constraint function for forcing interates to be orthogonal to tan
-			Trace trc(2,"TanConstraintfcn");
+			T_(Trace trc(2,"TanConstraintfcn");)
 			c = tan;
 			double rval = 0.0;
-			trc.dprint("returning ",rval);
+			T_(trc.dprint("returning ",rval);)
 			return rval;
 		}
 };
@@ -97,16 +98,16 @@ Target*
 find_target(vector<Target*> targets, Par* par) {
 // given a set of Targets and a parameter, search the
 // targets for a limit parameter at the current par value
-	Trace trc(2, "find_target");
+	T_(Trace trc(2, "find_target");)
 	double val = par->value();
-	trc.dprint("searching for a target for ",par->name," at ",val);
+	T_(trc.dprint("searching for a target for ",par->name," at ",val);)
 	for (auto t : targets) {
 		if (t->parname == par->name && is_equal(val, t->value, 6)) {
-			trc.dprint("returning target: ",*t);
+			T_(trc.dprint("returning target: ",*t);)
 			return t;
 		}
 	}
-	trc.dprint("no target found");
+	T_(trc.dprint("no target found");)
 	return nullptr;
 }
 
@@ -114,9 +115,9 @@ Flutcurve::
 Flutcurve(const string& aid, const string& cid, const string& vzid) : Curve(aid,cid,vzid) {
 // Flutcurve constructor: the Curve constructor copies gpset to "params",
 // we create the origin from that after creating ivar_
-	Trace trc(2,"Flutcurve constructor");
+	T_(Trace trc(2,"Flutcurve constructor");)
 
-	trc.dprint("aid <",aid,"> cid<",cid,"> vzid<",vzid,">");
+	T_(trc.dprint("aid <",aid,"> cid<",cid,"> vzid<",vzid,">");)
 
 	// clear the solns arrays
 	this->clear_solns();
@@ -136,7 +137,7 @@ Flutcurve(const string& aid, const string& cid, const string& vzid) : Curve(aid,
 	vector<Par*> indep = params.get_indep();
 	for (auto pp : indep)
 		ivar.push_back({pp,cu2eu(pp)});
-	trc.dprint("ivar: ",ivar);
+	T_(trc.dprint("ivar: ",ivar);)
 
 	// create workspace for use in pac_fjac
 	adev = vector<complex<Ad>>(ncev);
@@ -195,11 +196,11 @@ Flutcurve(const string& aid, const string& cid, const string& vzid) : Curve(aid,
 	}
 	// if no independents are an obvious choice for tan, set
 	// it to a random vector
-	if (blas_snrm2(nx, tan.data(), 1) == 0.0) {
+	if (blas::snrm2(nx, tan.data(), 1) == 0.0) {
 		for (int i=0; i<nx; i++)
 			tan[i] = flaps::xrand();
 		blas::normalize2(nx, tan.data(), 1, true);
-		trc.dprint("random start tan: ",tan);
+		T_(trc.dprint("random start tan: ",tan);)
 	}
 
 	// create the origin with a lambda fjac which calls
@@ -226,14 +227,14 @@ Flutcurve(const string& aid, const string& cid, const string& vzid) : Curve(aid,
 			int i = index(sp.project[j]);
 			sp.projectee[i] = sp.projdir[j];
 		}
-		trc.dprint("projectee: ",sp.projectee);
+		T_(trc.dprint("projectee: ",sp.projectee);)
 	}
 
 	// create vector ad2ivar: adnames[i] -> x[ad2ivar[i]]
 	ad2ivar.clear();
 	for (auto& nm : Ad::adnames())
 		ad2ivar.push_back(index(nm));
-	trc.dprint("ad2ivar: ",ad2ivar);
+	T_(trc.dprint("ad2ivar: ",ad2ivar);)
 
 	this->vzid(this->specs.vzid);	// set Curve::vzid for viz
 
@@ -244,9 +245,9 @@ Flutcurve(const string& aid, const string& cid, const string& vzid, Pac& orig) :
 	Curve(aid,cid,vzid), origin(orig) {
 // Flutcurve origin constructor: the Curve constructor copies gpset to
 // "params", "orig" is the origin 
-	Trace trc(2,"Flutcurve origin constructor");
+	T_(Trace trc(2,"Flutcurve origin constructor");)
 
-	trc.dprint("aid <",aid,"> cid<",cid,"> vzid<",vzid,">");
+	T_(trc.dprint("aid <",aid,"> cid<",cid,"> vzid<",vzid,">");)
 
 	// clear the solns arrays
 	this->clear_solns();
@@ -266,7 +267,7 @@ Flutcurve(const string& aid, const string& cid, const string& vzid, Pac& orig) :
 	vector<Par*> indep = params.get_indep();
 	for (auto pp : indep)
 		ivar.push_back({pp,cu2eu(pp)});
-	trc.dprint("ivar: ",ivar);
+	T_(trc.dprint("ivar: ",ivar);)
 
 	if (ivar.size() != origin.x.size())
 		throw runtime_error(vastr("attempt to construct a Flutcurve with nx(origin) ",
@@ -289,7 +290,7 @@ Flutcurve(const string& aid, const string& cid, const string& vzid, Pac& orig) :
 	ad2ivar.clear();
 	for (auto& nm : Ad::adnames())
 		ad2ivar.push_back(index(nm));
-	trc.dprint("ad2ivar: ",ad2ivar);
+	T_(trc.dprint("ad2ivar: ",ad2ivar);)
 
 	this->vzid(this->specs.vzid);
 
@@ -299,7 +300,7 @@ void
 Flutcurve::
 update(const Pac& v) {
 // update this->params, from v.x, and e9n data from v.step if requested
-	Trace trc(2,"update Pac");
+	T_(Trace trc(2,"update Pac");)
 
 	if (v.x.size() != ivar.size())
 		throw runtime_error(vastr("attempt to update with ",v.x.size()," variables"));
@@ -339,14 +340,14 @@ void
 Flutcurve::
 e9n_update(Pac const& pac) {
 // Update my exploration (e9n) parameters
-	Trace trc(2,"Flutcurve::e9n_update");
+	T_(Trace trc(2,"Flutcurve::e9n_update");)
 	const vector<pair<string,string>>& par = pac.step.parnames;
 	double const* data = pac.step.cbegin();
 	for (auto pi : par) {
 		Par* pp = this->params.findp(std::get<0>(pi));
 		if (pp != nullptr) {
 			pp->value(*data++);
-			trc.dprint(pp->name," = ",pp->value());
+			T_(trc.dprint(pp->name," = ",pp->value());)
 		}
 	}
 	// also update from Pac::stepsize...
@@ -377,7 +378,7 @@ int
 Flutcurve::
 processfcn(Pac& from, Pac& to, bool& looped, Issue* issue) {
 // function to process results from Pac::trace
-	Trace trc(1,"processfcn coord ",to.coord);
+	T_(Trace trc(1,"processfcn coord ",to.coord);)
 	Specs& sp = this->specs;
 	int rval{1};		// default: continue
 
@@ -385,7 +386,7 @@ processfcn(Pac& from, Pac& to, bool& looped, Issue* issue) {
 	if (to.confcn != nullptr) {
 		was_constrained = true;
 		Target* tp = cfo.target;
-		trc.dprint("solution was constrained: ",*tp);
+		T_(trc.dprint("solution was constrained: ",*tp);)
 		if (from.coord != 0) {
 			if (tp->is_lowerlimit || tp->is_upperlimit) {
 				Par* pp = this->findp(tp->parname);
@@ -394,19 +395,19 @@ processfcn(Pac& from, Pac& to, bool& looped, Issue* issue) {
 					string msg{vastr(tp->parname," reached ",tp->value)};
 					this->atlimit = msg;
 					add2msg(this->finished, msg);
-					trc.dprint("returning 0: ",this->atlimit);
+					T_(trc.dprint("returning 0: ",this->atlimit);)
 					rval = 0;	// quit
 				}
 			}
 		} else {
-			trc.dprint("ignoring constraint: coord 0");
+			T_(trc.dprint("ignoring constraint: coord 0");)
 		}
 		to.confcn = nullptr;
 	}
 
 	// deal with issues from pac - most issues are dealt with in pac
 	if (issue != nullptr) {
-		trc.dprint("got issue \"",issue,"\"");
+		T_(trc.dprint("got issue \"",issue,"\"");)
 		if (issue->is_angle()) {
 #ifdef NEVER // repeat step
 			flaps::warning("possible discontinuity in ",cid(),
@@ -454,7 +455,7 @@ processfcn(Pac& from, Pac& to, bool& looped, Issue* issue) {
 	// check for bifurcation...
 	if (sp.bifurcation) {
 		if (checkdsc(from, to) < 0) {
-			trc.dprint("retry step: bif near");
+			T_(trc.dprint("retry step: bif near");)
 			return -1;
 		}
 	}
@@ -470,11 +471,11 @@ processfcn(Pac& from, Pac& to, bool& looped, Issue* issue) {
 		back_solns();
 	else
 		front_solns();
-	trc.dprint("now have ",nsolns()," solutions");
+	T_(trc.dprint("now have ",nsolns()," solutions");)
 
 	// if this is coord 0 skip the rest & return 1 (sucess)
 	if (to.coord == 0.0) {
-		trc.dprint("return 1: coord 0");
+		T_(trc.dprint("return 1: coord 0");)
 		return 1;
 	}
 	// check that *all* parameters (except rf) are in range
@@ -487,7 +488,7 @@ processfcn(Pac& from, Pac& to, bool& looped, Issue* issue) {
 			add2msg(this->finished, this->atlimit);
 		}
 		if (!this->atlimit.empty()) {
-			trc.dprint("returning: ",this->atlimit,", error<",this->error);
+			T_(trc.dprint("returning: ",this->atlimit,", error<",this->error);)
 			return 0;	// atlimit
 		}
 	}
@@ -499,7 +500,7 @@ processfcn(Pac& from, Pac& to, bool& looped, Issue* issue) {
 		if (this->cfo.fcv != nullptr)
 			to.confcn = this->cfo;
 		if (!atlim.empty()) {
-			trc.dprint("returning 0: ",atlim);
+			T_(trc.dprint("returning 0: ",atlim);)
 			this->atlimit = atlim;
 			add2msg(this->finished, atlim);
 			return 0;
@@ -519,7 +520,7 @@ processfcn(Pac& from, Pac& to, bool& looped, Issue* issue) {
 				back_solns();
 			else
 				front_solns();
-			trc.dprint("closed the loop: now have ",nsolns()," solutions");
+			T_(trc.dprint("closed the loop: now have ",nsolns()," solutions");)
 			return 0;
 		}
 	}
@@ -541,7 +542,7 @@ trace_curves (Fstack* curves, int threadno) {
 // Given a stack of Flutcurves, get the next available Flutcurve by
 // calling curves->pop(), then extend the curve starting from the
 // Curve's origin
-	Trace trc(1,"trace_curves ",threadno);
+	T_(Trace trc(1,"trace_curves ",threadno);)
 	int ntrace{0};
 
 	try {
@@ -553,7 +554,7 @@ trace_curves (Fstack* curves, int threadno) {
 			Specs& sp = curve->specs;
 			ntrace++;
 
-			trc.dprint("thread ",threadno," tracing ",curveid);
+			T_(trc.dprint("thread ",threadno," tracing ",curveid);)
 			curve->thread = threadno;
 
 			// if the origin is at a limit (as evidenced by a constraint)
@@ -581,7 +582,7 @@ trace_curves (Fstack* curves, int threadno) {
 				return curve->processfcn(from, to, looped, issue);}, projectee);
 
 			if (looped) {
-				trc.dprint(curve->cid(),": not tracking in reverse: first direction looped");
+				T_(trc.dprint(curve->cid(),": not tracking in reverse: first direction looped");)
 				reverse = false;
 			}
 
@@ -591,9 +592,9 @@ trace_curves (Fstack* curves, int threadno) {
 					flaps::warning(vastr(curveid,": first tracking direction yielded ",
 						"no results: check limits"));
 			} else {
-				blas_scal(curve->origin.tan.size(), -1.0, &curve->origin.tan[0], 1);
+				blas::scal(curve->origin.tan.size(), -1.0, &curve->origin.tan[0], 1);
 				if (!curve->specs.projectee.empty())
-					blas_scal(curve->specs.projectee.size(), -1.0,
+					blas::scal(curve->specs.projectee.size(), -1.0,
 						&curve->specs.projectee[0], 1);
 				curve->origin.step.hk = curve->origin.specs.initial_stepsize;
 				//!! curve->finished = "";	// XXX no: accumulate both directions
@@ -614,8 +615,8 @@ trace_curves (Fstack* curves, int threadno) {
 		flaps::error(s.what());
 	}
 
-	// trc.dprint("thread ",this_thread::get_id()," traced ",ntrace," curves");
-	trc.dprint("thread ",threadno," traced ",ntrace," curves");
+	// T_(trc.dprint("thread ",this_thread::get_id()," traced ",ntrace," curves");)
+	T_(trc.dprint("thread ",threadno," traced ",ntrace," curves");)
 	return;
 }  // trace_curves
 
@@ -631,28 +632,28 @@ vuelta (const vector<double>& a, const vector<double>& b,
 //   df/dt = 0 = -2x'dc/dt + 2(dc/dt)'c = -2x'S + 2(a+tS)'S
 // so
 //   t = (x - a)'S/S'S
-	Trace trc(2,"vuelta");
+	T_(Trace trc(2,"vuelta");)
 
 	int nx = x.size();
 	vector<double> S{b};
-	blas_axpy(nx, -1.0, a.data(), 1, S.data(), 1);
+	blas::axpy(nx, -1.0, a.data(), 1, S.data(), 1);
 	vector<double> xma{x};
-	blas_axpy(nx, -1.0, a.data(), 1, xma.data(), 1);
+	blas::axpy(nx, -1.0, a.data(), 1, xma.data(), 1);
 	double SS;
-	blas_dot(nx, S.data(), 1, S.data(), 1, SS);
+	blas::dot(nx, S.data(), 1, S.data(), 1, SS);
 	double xmaS;
-	blas_dot(nx, xma.data(), 1, S.data(), 1, xmaS);
+	blas::dot(nx, xma.data(), 1, S.data(), 1, xmaS);
 	double t = xmaS/SS;
 	// if the minimizing point (t) is on the secant check for small f(t)
 	if (0.0 < t && t <= 1.0) {
 		vector<double> xmc{x};
-		blas_axpy(nx, -1.0, a.data(), 1, xmc.data(), 1);
-		blas_axpy(nx, -t, S.data(), 1, xmc.data(), 1);
-		double fnorm = blas_snrm2(nx, xmc.data(), 1);
-		double xnorm = blas_snrm2(nx, x.data(), 1);
+		blas::axpy(nx, -1.0, a.data(), 1, xmc.data(), 1);
+		blas::axpy(nx, -t, S.data(), 1, xmc.data(), 1);
+		double fnorm = blas::snrm2(nx, xmc.data(), 1);
+		double xnorm = blas::snrm2(nx, x.data(), 1);
 		ratio = fnorm/xnorm;
 	}
-	trc.dprint("returning t ",t,", ratio ",ratio);
+	T_(trc.dprint("returning t ",t,", ratio ",ratio);)
 	return t;
 }
 
@@ -674,15 +675,15 @@ normalize (int n, complex<double>* cv, int& indexReal) {
  *            and cv(indexReal) is real.
  *  indexReal   index (0-based) of the largest element in the vector
  *----------------------------------------------------------------*/
-	Trace trc(2,"normalize");
+	T_(Trace trc(2,"normalize");)
 	double eps = std::numeric_limits<double>::epsilon();
 
-	indexReal = blas_isamax (n, cv, 1) - 1;  // 0b
+	indexReal = blas::icamax (n, cv, 1) - 1;  // 0b
 
 	// Compute the 2-norm of the vector
-	double norm = blas_scnrm2 (n, cv, 1);
+	double norm = blas::scnrm2 (n, cv, 1);
 
-	trc.dprint("norm ",norm,", indexReal ",indexReal);
+	T_(trc.dprint("norm ",norm,", indexReal ",indexReal);)
 
 	// with cmax = cv[indexReal],
 	// scale factor = abs(cmax)/(norm*cmax)
@@ -698,21 +699,21 @@ normalize (int n, complex<double>* cv, int& indexReal) {
 
 	complex<double> scale = conj(cmax)/t;
 
-	trc.dprint("scale ",scale,", cmax ",cmax);
+	T_(trc.dprint("scale ",scale,", cmax ",cmax);)
 
-	blas_scal (n, scale, cv, 1);
+	blas::scal (n, scale, cv, 1);
 }
 
 void
 equalize_det(double& d1,double& exp1,double& d2,double& exp2) {
 // check for different exponents on d1, d2
 // replace d2 <- d2*10^(exp2-exp1) so det2 = d2*10^exp1
-	Trace trc(1,"equalize_det");
-	trc.dprint("d1 = ",d1,"*10^",exp1,", d2 = ",d2,"*10^",exp2);
+	T_(Trace trc(1,"equalize_det");)
+	T_(trc.dprint("d1 = ",d1,"*10^",exp1,", d2 = ",d2,"*10^",exp2);)
 	if (exp1 != exp2) {
 		d2 *= pow(10.0, exp2-exp1);
 		exp2 = exp1;
-		trc.dprint("adjusted d1 = ",d1,"*10^",exp1,", d2 = ",d2,"*10^",exp2);
+		T_(trc.dprint("adjusted d1 = ",d1,"*10^",exp1,", d2 = ",d2,"*10^",exp2);)
 	}
 }
 
@@ -726,14 +727,14 @@ cu2eu (Par* pp) {
 // solution. If limits have not been specified for this parameter the
 // scale factor will be 1.0, otherwise the scale factor will be the
 // closest value of 2^n. The factor may also be specified in flutspecs.cu2eu.
-	Trace trc(2,"cu2eu");
+	T_(Trace trc(2,"cu2eu");)
 	double scale{1.0};
 	Specs& sp = flutspecs();
 
 	// check if the cu2eu is set as a spec
 	for (auto& ci : sp.cu2eu) {
 		if (ci.name == pp->name) {
-			trc.dprint("returning spec: ",pp->name," = ",ci.value);
+			T_(trc.dprint("returning spec: ",pp->name," = ",ci.value);)
 			return ci.value;
 		}
 	}
@@ -754,7 +755,7 @@ cu2eu (Par* pp) {
 	double s = std::frexp(scale, &exp);
 	scale = pow(2.0, exp);
 #endif // NEVER // no frexp
-	trc.dprint("scale factor for ",pp->name," based on min,max: ",scale);
+	T_(trc.dprint("scale factor for ",pp->name," based on min,max: ",scale);)
 	return scale;
 }
 
@@ -763,7 +764,7 @@ Flutcurve::
 index(const string& parname) const {
 // Returns the index (zero-based) in an Ivar of the
 // parameter with the name "parname" or -1 if it is not present
-	Trace trc(2,"Flutcurve::index ",parname);
+	T_(Trace trc(2,"Flutcurve::index ",parname);)
 	int rval{-1};
 
 	int i{0};
@@ -774,7 +775,7 @@ index(const string& parname) const {
 		}
 		i++;
 	}
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -833,7 +834,7 @@ plot(const string& aid,const string& pf, const vector<Flutcurve*>& fcurves) {
 // create 2 flaps plotfiles:
 // 1) a compressed tarfile of "fcurves" plus data needed for amviz
 // 2) an ASCII file with just "fcurves"
-	Trace trc(1,"Flutcurve::plot");
+	T_(Trace trc(1,"Flutcurve::plot");)
 	Specs& sp = fcurves[0]->specs;
 
 	vector<string> toplot = sp.toplot;
@@ -845,7 +846,7 @@ plot(const string& aid,const string& pf, const vector<Flutcurve*>& fcurves) {
 		if (ext == ".pf" || ext == ".apf")
 			basename = pf.substr(0,dot);
 	}
-	trc.dprint("plotting aid<",aid,">, base plotfile ",basename);
+	T_(trc.dprint("plotting aid<",aid,">, base plotfile ",basename);)
 
 	// 1) the ASCII plotfile is basename+.apf
 	//    It will not have amviz data
@@ -900,7 +901,7 @@ plot(const string& aid,const string& pf, const vector<Flutcurve*>& fcurves) {
 	// the plotfile is just basename with a .pf extension
 	string file = basename+".pf";
 	vector<string> saved = fio::save(tosave, file);
-	trc.dprint("created ",file," with:",saved);
+	T_(trc.dprint("created ",file," with:",saved);)
 }
 
 Fstack::
@@ -932,7 +933,7 @@ pac_constraint(Pac& to, string& atlim) {
  * decrease stepsize to hit the target and addd a Constraintfcn
  * to "to" for the corrector to ensure the target is hit.
  *------------------------------------------------------------------*/
-	Trace trc(2,"pac_constraint");
+	T_(Trace trc(2,"pac_constraint");)
 	double meps(std::numeric_limits<double>::epsilon());
 	int nx = to.x.size();
 	Cfo rval{};	// default: no constraint
@@ -948,7 +949,7 @@ pac_constraint(Pac& to, string& atlim) {
 #endif // NEVER // convert TanCon... to Cfo
 
 	if (this->specs.targets.empty()) {
-		trc.dprint("quick return: no targets");
+		T_(trc.dprint("quick return: no targets");)
 		return rval;
 	}
 
@@ -972,13 +973,13 @@ pac_constraint(Pac& to, string& atlim) {
 			}
 		}
 		if (oor) {
-			trc.dprint("skip target ",*t,", out of window");
+			T_(trc.dprint("skip target ",*t,", out of window");)
 			continue;
 		}
 		vector<double> c(nx,0.0);
 		double cfval = constraintfcn(t, to.x, c);
 		double dcf;
-		blas_dot(nx, c.data(), 1, to.tan.data(), 1, dcf);
+		blas::dot(nx, c.data(), 1, to.tan.data(), 1, dcf);
 		// cfval approx 0? (i.e. at limit) check which direction tan points
 		if (is_equal(cfval, 0.0, 5)) {
 			if ((t->is_lowerlimit && dcf <= meps) ||
@@ -988,15 +989,15 @@ pac_constraint(Pac& to, string& atlim) {
 			}
 		}
 		if (abs(dcf) < meps) {
-			trc.dprint("skip target ",*t,", dcf = ",dcf);
+			T_(trc.dprint("skip target ",*t,", dcf = ",dcf);)
 			continue;
 		}
 		// note: cfval is p - \hat{p} but the stepsize is (\hat{p}-p)/dcf
 		// see sect. 2.2.4 in the manual
 		double stepj = -cfval/dcf;
-		trc.dprint("stepj = ",stepj," = -(",cfval,")/",dcf);
+		T_(trc.dprint("stepj = ",stepj," = -(",cfval,")/",dcf);)
 		// is this a smaller stepsize?
-		trc.dprint("stepj ",stepj," < newstep? ",newstep);
+		T_(trc.dprint("stepj ",stepj," < newstep? ",newstep);)
 		if (stepj > 0.0 && stepj < newstep) {
 			newstep = stepj;
    		the_target = t;
@@ -1005,13 +1006,13 @@ pac_constraint(Pac& to, string& atlim) {
 		if (stepj > newstep && stepj-newstep < 0.1*newstep) {
 			newstep /= 2.0;
 			to.step.hk = newstep;
-			trc.dprint("approaching target ",*t," decreasing stepsize to ",newstep);
+			T_(trc.dprint("approaching target ",*t," decreasing stepsize to ",newstep);)
 		}
 	}
 
 	if (the_target == nullptr) {
 		to.confcn = nullptr;
-		trc.dprint("no target found");
+		T_(trc.dprint("no target found");)
 		return rval;
 	}
 
@@ -1020,13 +1021,13 @@ pac_constraint(Pac& to, string& atlim) {
 	// XXX if it is < 1.5 just scale h by 1/2
 	double tol{to.specs.minstepsize};
 	if (newstep > tol) {
-		trc.dprint("decreased stepsize from ",to.step.hk," to ",newstep," to hit ",*the_target);
+		T_(trc.dprint("decreased stepsize from ",to.step.hk," to ",newstep," to hit ",*the_target);)
 		to.step.hk = newstep;
 		//!! to.confcn = Cfo(the_target, this);
 		return Cfo(the_target, this);
 	} else {
 		// newstep small => we are at the target
-		trc.dprint("newstep ",newstep," too small");
+		T_(trc.dprint("newstep ",newstep," too small");)
 	}
 	return rval;
 } // pac_constraint
@@ -1037,7 +1038,7 @@ pac_fjac (vector<double> const& x, vector<double>& f, vector<double>& jac) {
 // compute the function and associated Jacobian
 // This is a non-static member function so it cannot be used as an Fjacfcn (pac.h)
 // so instead we call this function from a lambda in calls to pac::trace
-	Trace trc(2,"pac_fjac ");
+	T_(Trace trc(2,"pac_fjac ");)
 	int rval{0};
 	int nx = x.size();
 	int nf = f.size();
@@ -1061,7 +1062,7 @@ pac_fjac (vector<double> const& x, vector<double>& f, vector<double>& jac) {
 	// ncev is the length of the complex eigenvector and the size of the
 	// dynamic matrix; nrev is the length of the equivalent real vector (2*ncgc)
 	int nrev = ncev*2;
-	trc.dprint("AD eigenvector:\n", adev);
+	T_(trc.dprint("AD eigenvector:\n", adev);)
 
 	// f should be nrev+2
 	if (nf != nrev+2) {
@@ -1079,7 +1080,7 @@ pac_fjac (vector<double> const& x, vector<double>& f, vector<double>& jac) {
 	blas::gemv("n", ncev, ncev, 1.0, &dynmat[0], ncev, &adev[0], 1,
 		0.0, &Dy[0], 1);
 
-	trc.dprint("Dy",Dy);
+	T_(trc.dprint("Dy",Dy);)
 
 	// function f(x): copy the "value" part of each ad
 	for (size_t i=0; i<Dy.size(); i++) {
@@ -1122,8 +1123,8 @@ pac_fjac (vector<double> const& x, vector<double>& f, vector<double>& jac) {
 				df[2*i] = Ad::real(Dy[i]).data()[j+1];
 				df[2*i+1] = Ad::imag(Dy[i]).data()[j+1];
 			}
-			blas_copy (nrev, &df[0], 1, &jac[IJ(0,idx,nf)], 1);
-			trc.dprint("copied partial Dy wrt ",adpar[j]," to column ",idx," 0b");
+			blas::copy (nrev, &df[0], 1, &jac[IJ(0,idx,nf)], 1);
+			T_(trc.dprint("copied partial Dy wrt ",adpar[j]," to column ",idx," 0b");)
 		}
 	}
 	// The first nrev rows are now in equation units (EU); multiply them
@@ -1134,7 +1135,7 @@ pac_fjac (vector<double> const& x, vector<double>& f, vector<double>& jac) {
 	for (int j=0; j<nx; j++) {
 		double sf = this->ivar[j].cu2eu();
 		if (sf != 1.0)
-			blas_scal(nrev, sf, &jac[IJ(0,j,nf)], 1);
+			blas::scal(nrev, sf, &jac[IJ(0,j,nf)], 1);
 	}
 
 	// next row (0b) of f and jac to insert stuff
@@ -1147,7 +1148,7 @@ pac_fjac (vector<double> const& x, vector<double>& f, vector<double>& jac) {
 	int start = this->evstart();
 	const double* y = &x[start];
 	int k = this->phase_index();  // index of the component of x to be zero
-	trc.dprint("phase normalization: f[",nextrow,"] = x[",k,"] = ",x[k]);
+	T_(trc.dprint("phase normalization: f[",nextrow,"] = x[",k,"] = ",x[k]);)
 	f[nextrow] = x[k];
 	jac[IJ(nextrow,k,nf)] = 1.0;
 	nextrow++;
@@ -1157,15 +1158,15 @@ pac_fjac (vector<double> const& x, vector<double>& f, vector<double>& jac) {
 	//      df/dy = 2y^t
 	double evnorm(1.0);	// eigenvector norm is always 1.0 in CU
 	double evcurrent;
-	blas_dot(nrev, y, 1, y, 1, evcurrent);
+	blas::dot(nrev, y, 1, y, 1, evcurrent);
 	if (evcurrent == double(0.0))
 		throw runtime_error("zero eigenvector encountered");
 	f[nextrow] = evcurrent - evnorm;     // 2-norm squared
-	trc.dprint("normalization: f[",nextrow,"] = ",f[nextrow], " = ", evcurrent," - ",evnorm);
+	T_(trc.dprint("normalization: f[",nextrow,"] = ",f[nextrow], " = ", evcurrent," - ",evnorm);)
 	// the eigenvector starts in column "start"
 	double* jacev = &jac[IJ(nextrow,start,nf)];
-	blas_copy(nrev, y, 1, jacev, nf);
-	blas_scal(nrev, 2.0, jacev, nf);
+	blas::copy(nrev, y, 1, jacev, nf);
+	blas::scal(nrev, 2.0, jacev, nf);
 	nextrow++;
 
 	static int visit{0};
@@ -1188,7 +1189,7 @@ dmatrix (pset& plt, vector<complex<Ad>>& result,
  *   result   (n,n) complex Ad matrix
  *   work     (n,n) complex Ad matrix
  *------------------------------------------------------------------*/
-	Trace trc(1,"dmatrix");
+	T_(Trace trc(1,"dmatrix");)
 	complex<Ad> ctmp;
 	size_t n = sqrt(result.size());
 	int nsq = n*n;
@@ -1273,7 +1274,7 @@ dmatrix (pset& plt, vector<complex<Ad>>& result,
 		MM::exporter("dynamic_matrix.mm",comment,&values[0], n, n);
 		visit = true;
 	}
-	trc.dprintm(n,n,n,result,"dynamic matrix");
+	T_(trc.dprintm(n,n,n,result,"dynamic matrix");)
 }
 
 vector<string>
@@ -1281,7 +1282,7 @@ Flutcurve::
 dependson(pset& plt) {
 // get a list of *all* parameters the dmatrix depends on
 // and mark them active
-	Trace trc(1,"Flutcurve::dependson");
+	T_(Trace trc(1,"Flutcurve::dependson");)
 	Specs& sp = flutspecs();
 	int n = get_order();
 	// set independents to their midpoints
@@ -1321,7 +1322,7 @@ dependson(pset& plt) {
 				rval.push_back(nj);
       }
    }
-	trc.dprint("dmatrix(",plt.desc(),") deps:",rval);
+	T_(trc.dprint("dmatrix(",plt.desc(),") deps:",rval);)
 	return rval;
 }
 
@@ -1337,11 +1338,11 @@ precession(pset& plt, Matrix* gyro) {
 	assert(n == gyro->rsize());
 	vector<double> yr(n, 0.0);
 	vector<double> yi(n, 0.0);
-	blas_copy(n, &y[0], 2, &yr[0], 1);
-	blas_copy(n, &y[1], 2, &yi[0], 1);
+	blas::copy(n, &y[0], 2, &yr[0], 1);
+	blas::copy(n, &y[1], 2, &yi[0], 1);
 	vector<double> gy(n, 0.0);
-	blas_sgemv("n", n, n, 1.0, gyro->elem(), n, &yr[0], 1, 0.0, &gy[0], 1);
-	blas_dot(n, &yi[0], 1, &gy[0], 1, rval);
+	blas::gemv("n", n, n, 1.0, gyro->elem(), n, &yr[0], 1, 0.0, &gy[0], 1);
+	blas::dot(n, &yi[0], 1, &gy[0], 1, rval);
 	return rval;
 }
 
@@ -1352,14 +1353,14 @@ lcosvd(int nf, int nx, vector<double>& jac, int jeta, vector<double> dfdsigma) {
 // compute lco stability by replacing a column (preferably vtas)
 // of the Jacobian, SVD'ing it and computing dsigma/deta from the
 // null vector
-	Trace trc(2,"lcosvd");
+	T_(Trace trc(2,"lcosvd");)
 
-	trc.dprint("nx = ",nx,", nf = ",nf,", jeta = ",jeta, ", size(dfdsigma) = ",dfdsigma.size());
+	T_(trc.dprint("nx = ",nx,", nf = ",nf,", jeta = ",jeta, ", size(dfdsigma) = ",dfdsigma.size());)
 	vector<double> jacobian(nf*(nx+1), 0.0);
 	for (int j=0; j<nx; j++) {
-		blas_copy(nf, &jac[IJ(0,j,nf)], 1, &jacobian[IJ(0,j,nf)], 1);
+		blas::copy(nf, &jac[IJ(0,j,nf)], 1, &jacobian[IJ(0,j,nf)], 1);
 	}
-	blas_copy (dfdsigma.size(), &dfdsigma[0], 1, &jacobian[IJ(0,nx,nf)], 1);
+	blas::copy (dfdsigma.size(), &dfdsigma[0], 1, &jacobian[IJ(0,nx,nf)], 1);
 
 	SVD jf(nf,nx+1,&jacobian[0]);
 	// the last 2 rows of (nx+1,nx+1) vt are the null vectors
@@ -1367,15 +1368,15 @@ lcosvd(int nf, int nx, vector<double>& jac, int jeta, vector<double> dfdsigma) {
 	double deta1 = jf.vt[IJ(nx-1,jeta,nx+1)];
 	double deta2 = jf.vt[IJ(nx,jeta,nx+1)];
 	vector<double> tan(nx+1, 0.0);
-	blas_axpy(nx+1, deta1, &jf.vt[nx-1], nx+1, &tan[0], 1);
-	blas_axpy(nx+1, deta2, &jf.vt[nx], nx+1, &tan[0], 1);
+	blas::axpy(nx+1, deta1, &jf.vt[nx-1], nx+1, &tan[0], 1);
+	blas::axpy(nx+1, deta2, &jf.vt[nx], nx+1, &tan[0], 1);
 	
 	double dsigma = tan[nx];
 	double deta = tan[jeta];
 	double rval{0.0};
 	if (abs(deta) > numeric_limits<double>::epsilon())
 		rval = dsigma/deta;
-	trc.dprint("returning ",dsigma,"/",deta," = ",rval);
+	T_(trc.dprint("returning ",dsigma,"/",deta," = ",rval);)
 	return rval;
 }
 
@@ -1387,7 +1388,7 @@ lcostability(Pac& p) {
 // where tau is the arclength along a tangent to the curve
 // Using an expensive technique for now: evaluate the Jacobian, add
 // a column (dsigma), svd it, and project onto the nullspace
-	Trace trc(2,"lcostability");
+	T_(Trace trc(2,"lcostability");)
 
 	// parameter "lcostab" must be in my params
 	Par* lcopar = params.findp("lcostab");

@@ -61,7 +61,7 @@ resetDOffset () {
 string
 DOffset() {
 	//!! return Offset;
-	return string(Offlvl, ' ');
+	return string(3*Offlvl, ' ');
 }
 
 // Trace implementation
@@ -207,27 +207,27 @@ ostream& operator<<(ostream& s, const B& t) {
 string
 fcn() {
 	Debug dbg("fcn");
-	Trace trc(2,"fcn", "1st arg", string("2nd arg"));
+	T_(Trace trc(2,"fcn", "1st arg", string("2nd arg"));)
 	B b(33);
 	B c(34);
 	A d(35);  // no operator<<
 	// this line won't compile: d has no operator<<:
-	// trc.dprintn("b = ",b, ", c = ",c, "obj with no operator<<:",d);
-	trc.dprintn("b = ",b, ", c = ",c);
+	// T_(trc.dprintn("b = ",b, ", c = ",c, "obj with no operator<<:",d);)
+	T_(trc.dprintn("b = ",b, ", c = ",c);)
 	return "fcn called";
 }
 
 int
 main(int argc, char* argv[]) {
-	Trace trc(1,__FILE__," argc ",argc);
+	T_(Trace trc(1,__FILE__," argc ",argc);)
 	// test dprintv
 	vector<uint64_t> ia = {
    70346511260311519, 70346545890586559, 70350978565267423, 70918291110453181, 70918291110485981, 
    70918291114913727, 70918291664396255, 70918360924942271, 71481275694161727, 71481275694182207, 
    71481275696521183, 71481275979657151, 71481311146794975, 71485743821483967, 72053126181150687 };
-	trc.dprintv(ia, "a vector of uint64_t, length ",ia.size());
+	T_(trc.dprintv(ia, "a vector of uint64_t, length ",ia.size());)
 	vector<int> ib(4, 4);
-	trc.dprintv(ib, "a vector of ints, length ",ib.size());
+	T_(trc.dprintv(ib, "a vector of ints, length ",ib.size());)
 
 	// cout << "test of sprint: " << sprint("an int ",ia[0]," and float ",1.2)
 	// 	<< endl;
@@ -235,6 +235,6 @@ main(int argc, char* argv[]) {
 	vector<double> d = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
 	int m{3};
 	int n{2};
-	trc.dprintm(3,2,3,d, m," by ",n," double matrix");
+	T_(trc.dprintm(3,2,3,d, m," by ",n," double matrix");)
 }
 #endif

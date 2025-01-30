@@ -37,11 +37,11 @@ rcondeps() {
 bool
 QR::
 usesvd(int act) {
-	Trace trc(1,"usesvd");
+	T_(Trace trc(1,"usesvd");)
 	static bool svd{false};
 	bool rval = svd;
 
-	trc.dprint("act ",act);
+	T_(trc.dprint("act ",act);)
 	if (act > 0) {
 		svd = true;
 	} else if (act == 0) {
@@ -68,7 +68,7 @@ QR (size_t nrow, size_t ncol, double const* A) {
  *  af       an (ncol,nrow) double array of QR factors
  *  rcond    reciprocal condition number estimate
  *------------------------------------------------------------------*/
-	Trace trc(1,"QR constructor (",nrow,",",ncol,")");
+	T_(Trace trc(1,"QR constructor (",nrow,",",ncol,")");)
 	int info;
 	double eps = rcondeps();
 
@@ -108,14 +108,14 @@ QR (size_t nrow, size_t ncol, double const* A) {
 	// triangular factor (the R in QR) - this is the rcond of
 	// the original matrix since the condition of Q is 1
 	rcond = lapack::dtrcon("I", "U", "N", n, &af[0], lda);
-	trc.dprint("rcond ",rcond);
+	T_(trc.dprint("rcond ",rcond);)
 
 	// if the matrix is rank deficient do an SVD
 	rankdef = 0;
 	if (rcond < eps) {
 		svd = new SVD(nr, nc, A);
 		rankdef = svd->rankdef;
-		trc.dprint("rcond by qr, svd: ",rcond,", ",svd->rcond);
+		T_(trc.dprint("rcond by qr, svd: ",rcond,", ",svd->rcond);)
 		MM::exporter("rank-def_A.mm","rank def",A,nr,nc);
 	} else {
 		svd = nullptr;
@@ -137,7 +137,7 @@ solve (vector<double> const& b, vector<double>& x) {
  * Returns an nc-vector x which is the solution to Ax = b,
  * throws runtime_error if an error occured.
  *------------------------------------------------------------------*/
-	Trace trc(3,"QR::solve");
+	T_(Trace trc(3,"QR::solve");)
 	int n = nr;
 	size_t i;
 
@@ -194,7 +194,7 @@ performanceIndex(const double* A, const double* x, const double* b) {
 vector<double>
 QR::
 nullProj (vector<double> const& proj, double scale) {
-	Trace trc(2,"QR::nullProj");
+	T_(Trace trc(2,"QR::nullProj");)
 	// The orig matrix is (nr,nc), the transposed matrix is (m,n)
 	int m = nc;
 	size_t i;
@@ -235,7 +235,7 @@ nullProj (vector<double> const& proj, double scale) {
 		assert (nc > nr);
 		assert (!af.empty());
 		assert (!tau.empty());
-		trc.dprint("projecting: ",rval);
+		T_(trc.dprint("projecting: ",rval);)
 
 		int rank = nr - rankdef;
 
@@ -259,12 +259,12 @@ nullProj (vector<double> const& proj, double scale) {
 
 	// check that the projection is in the same direction as the
 	// projected vector
-	blas_dot (m, &rval[0], 1, &proj[0], 1, scale);
+	blas::dot (m, &rval[0], 1, &proj[0], 1, scale);
 	if (scale < 0.0) {
 		scale = -1.0;
-		blas_scal (m, scale, &rval[0], 1);
+		blas::scal (m, scale, &rval[0], 1);
 	}
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -301,17 +301,17 @@ determinant (double& expon) const {
 // All this to say that you should scan TAU from 1 to n (m > n ) or 1 to n-1
 // (m <= n) and count the nonzero elements. Say you get k nonzeros in TAU. Then (-1)^k.
 // 
-	Trace trc(2,"QR::determinant");
+	T_(Trace trc(2,"QR::determinant");)
 	double rval = 1.0;
 	double exp = 0.0;
 
 	// if an svd was used return 1
 	if (svd != nullptr) {
-		trc.dprint("quick return: svd");
+		T_(trc.dprint("quick return: svd");)
 		return rval;
 	}
 
-	trc.dprint("tau: ",tau);
+	T_(trc.dprint("tau: ",tau);)
 
 	int nref = 0;
 	for (size_t i=0; i<nr; i++) {
@@ -332,14 +332,14 @@ determinant (double& expon) const {
 		}
 	}
 
-	trc.dprint(nref," Householder reflections");
+	T_(trc.dprint(nref," Householder reflections");)
 
 	if (nref%2) {
 		rval = -rval;
-		trc.dprint("odd-number of nonzero taus: changed to ",rval);
+		T_(trc.dprint("odd-number of nonzero taus: changed to ",rval);)
 	}
 
-	trc.dprint("unscaled determinant: ",rval," 10^",exp);
+	T_(trc.dprint("unscaled determinant: ",rval," 10^",exp);)
 
 	expon = exp;
 	return rval;
@@ -356,7 +356,7 @@ augJacDet(vector<double> const& jac, vector<double> const& tan,
 // augmented with "tan", iff:
 // 1) nc == nr+1
 // 2) tan is not empty
-	Trace trc(2,"augJacDet");
+	T_(Trace trc(2,"augJacDet");)
 	double rval = 0.0;
 
 	expon = 0.0;
@@ -370,12 +370,12 @@ augJacDet(vector<double> const& jac, vector<double> const& tan,
 
 	// quick return if nc != nr+1...
 	if (nc != nr+1) {
-		trc.dprint("returning 0: nc ",nc," != nr+1 ",nr+1);
+		T_(trc.dprint("returning 0: nc ",nc," != nr+1 ",nr+1);)
 		return 0.0;
 	}
 	// ... or if a tangent wasn't provided
 	if (tan.empty()) {
-		trc.dprint("returning 0: no previous tangent");
+		T_(trc.dprint("returning 0: no previous tangent");)
 		return 0.0;
 	}
 	assert(tan.size() == nc);
@@ -396,10 +396,10 @@ augJacDet(vector<double> const& jac, vector<double> const& tan,
 	int info = lapack::dormqr("Left", "Transpose", m, 1, n,
 			&af[0], m, &tau[0], &c[0], m);
 	assert(info == 0);
-	trc.dprint("c[nc-1] = ",c[nc-1]);
+	T_(trc.dprint("c[nc-1] = ",c[nc-1]);)
 	if (c[nc-1] < 0.0) {
 		rval = -rval;
-		trc.dprint("Q^t*tan < 0 so changing sign: ",rval);
+		T_(trc.dprint("Q^t*tan < 0 so changing sign: ",rval);)
 	}
 
 	// if there was pivoting in the factorization change
@@ -408,7 +408,7 @@ augJacDet(vector<double> const& jac, vector<double> const& tan,
 		if (pivots[i] != (int)(i+1))
 			rval = -rval;
 	
-	trc.dprint("returning ",rval," * 10^",expon);
+	T_(trc.dprint("returning ",rval," * 10^",expon);)
 	return rval;
 }
 
@@ -416,7 +416,7 @@ double
 eigdeterm(int n, vector<double> const& A, double& expon) {
 // compute the determinant of a real (n,n) matrix in
 // the form d*10^expon
-	Trace trc(3,"eigdeterm");
+	T_(Trace trc(3,"eigdeterm");)
 
 	vector<double> as = A;
 	vector<double> wr(n);
@@ -427,7 +427,7 @@ eigdeterm(int n, vector<double> const& A, double& expon) {
 	if (info != 0)
 		throw runtime_error(vastr("eigdeterm: dgeev returned ",info));
 
-	trc.dprintvv(wr,wi,"eigenvalues");
+	T_(trc.dprintvv(wr,wi,"eigenvalues");)
 
 	// the determinant is the product of the eigenvalues
 	// adjust det and expon to keep 1 < abs(det) < 10
@@ -435,22 +435,22 @@ eigdeterm(int n, vector<double> const& A, double& expon) {
 	expon = 0.0;
 	for (int i=0; i<n; i++) {
 		complex<double> ei(wr[i],wi[i]);
-		trc.dprint("eig ",i," = ",ei);
+		T_(trc.dprint("eig ",i," = ",ei);)
 		det *= ei;
 		if (abs(det) == 0.0)
 			break;
 		while(abs(det) < 1.0) {
-			trc.dprint("det ",det," < 1: mult by 10, expon ",expon);
+			T_(trc.dprint("det ",det," < 1: mult by 10, expon ",expon);)
 			det *= 10.0;
 			expon -= 1.0;
 		}
 		while(abs(det) > 10.0) {
-			trc.dprint("det ",det," > 10: divide by 10, expon ",expon);
+			T_(trc.dprint("det ",det," > 10: divide by 10, expon ",expon);)
 			det /= 10.0;
 			expon += 1.0;
 		}
 	}
-	trc.dprint("returning ",det,"*10^",expon);
+	T_(trc.dprint("returning ",det,"*10^",expon);)
 	double rval = det.real();
 	return rval;
 }
@@ -462,11 +462,11 @@ augeigdet(size_t nr, size_t nc, vector<double> const& J,
 // by placing "tan" in the last (m+1st) row and computing
 // the eigenvalues of the square matrix. The determinant
 // is the product of the eigenvalues.
-	Trace trc(2,"augeigdet");
+	T_(Trace trc(2,"augeigdet");)
 	size_t i, j;
 	expon = 0.0;
 	if (nc != nr+1) {
-		trc.dprint("quick return: nc (",nc,") != nr (",nr,")+1");
+		T_(trc.dprint("quick return: nc (",nc,") != nr (",nr,")+1");)
 		return 0.0;
 	}
 	// copy the input (nr,nc) matrix into ja and the
@@ -480,7 +480,7 @@ augeigdet(size_t nr, size_t nc, vector<double> const& J,
 		ja[IJ(nr,j,nc)] = tan[j];
 	}
 
-	trc.dprintm(nc,nc,nc,ja,"augmented Jacobian");
+	T_(trc.dprintm(nc,nc,nc,ja,"augmented Jacobian");)
 
 	// compute the determinant at the product of the eigenvalues
 	double rval = eigdeterm(nc, ja, expon);
@@ -519,17 +519,17 @@ initRand() {
 
 static double
 randReal (double range) {
-	Trace trc(3,"randReal");
+	T_(Trace trc(3,"randReal");)
 	double rval;
 
-	trc.dprint("randReal range<",range,"> RAND_MAX<",RAND_MAX,">");
+	T_(trc.dprint("randReal range<",range,"> RAND_MAX<",RAND_MAX,">");)
 
 	initRand();
 
 	rval = (double)rand()/(double)RAND_MAX;
-	trc.dprint("rand/RAND_MAX <",rval,">");
+	T_(trc.dprint("rand/RAND_MAX <",rval,">");)
 	rval = range*(2.0*rval - 1.0);
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -546,21 +546,21 @@ xrand() {
 static int
 irand(int range) {
 // Random integer in the range 1 to range
-	Trace trc(1,"irand");
+	T_(Trace trc(1,"irand");)
 	int rval;
 	double x;
 
-	trc.dprint("range 1-",range);
+	T_(trc.dprint("range 1-",range);)
 
 	initRand();
 
 	x = (double)rand()/(double)RAND_MAX;
-	trc.dprint("rand/RAND_MAX: ",x);
+	T_(trc.dprint("rand/RAND_MAX: ",x);)
 	x = ((double)range)*x;
 	rval = (int)x;
 	if (rval <= 0)
 		rval = 1;
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -569,10 +569,10 @@ static void
 norm (int n, double *x) {
 	double t;
 
-	t = blas_snrm2 (n, x, 1);
+	t = blas::snrm2 (n, x, 1);
 	if (t != 0.0)
 		t = 1.0/t;
-	blas_scal (n, t, x, 1);
+	blas::scal (n, t, x, 1);
 }
 
 static void
@@ -604,13 +604,13 @@ newA (int nr, int nc, double rcond, double maxelem) {
  *   3) form the return matrix as A = U \Sigma V^t where
  *      \Sigma is the new set of singular values.
  */
-	Trace trc(2,"newA");
+	T_(Trace trc(2,"newA");)
 	vector<double> rval(nr*nc, 0.0);
 	double smin, smax, sk, dels;
 	int lwork, info;
 	int i, j, k, mn;
 
-	trc.dprint("nr, nc: ",nr,", ",nc,", rcond ",rcond);
+	T_(trc.dprint("nr, nc: ",nr,", ",nc,", rcond ",rcond);)
 
 	mn = std::min(nr, nc);
 
@@ -618,7 +618,7 @@ newA (int nr, int nc, double rcond, double maxelem) {
 	for (i=0; i<nr*nc; i++) {
 		rval[i] = xrand();
 	}
-	trc.dprintm(nr,nc,nr,rval,"random A");
+	T_(trc.dprintm(nr,nc,nr,rval,"random A");)
 
 	// Do an SVD
 	vector<double> s(mn);
@@ -635,16 +635,16 @@ newA (int nr, int nc, double rcond, double maxelem) {
 
 	if (info != 0) {
 		string exc = vastr("error in dgesvd: info = ",info);
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 
-	trc.dprintm(nr,nr,nr,u,"U");
-	trc.dprintm(nc,nc,nc,vt,"Vt");
+	T_(trc.dprintm(nr,nr,nr,u,"U");)
+	T_(trc.dprintm(nc,nc,nc,vt,"Vt");)
 
 	vector<double> utu(nr*nr);
-	blas_sgemm("t","n",nr,nr,nr,1.0,&u[0],nr,&u[0],nr,0.0,&utu[0],nr);
-	trc.dprintm(nr,nr,nr,utu,"U(t)*U");
+	blas::sgemm("t","n",nr,nr,nr,1.0,&u[0],nr,&u[0],nr,0.0,&utu[0],nr);
+	T_(trc.dprintm(nr,nr,nr,utu,"U(t)*U");)
 
 	for (i=0; i<nr; i++)
 		for (j=0; j<nc; j++)
@@ -666,7 +666,7 @@ newA (int nr, int nc, double rcond, double maxelem) {
 		sk = smin + k*dels;
 		if (k < Rankdef)
 			sk = 0.0;
-		trc.dprint("setting singular value ",k," 0b to ",sk);
+		T_(trc.dprint("setting singular value ",k," 0b to ",sk);)
 		for (i=0; i<nr; i++) {
 			for (j=0; j<nc; j++) {
 				rval[IJ(i,j,nr)] = rval[IJ(i,j,nr)] + u[IJ(i,k,nr)]*sk*vt[IJ(k,j,nc)];
@@ -677,17 +677,17 @@ newA (int nr, int nc, double rcond, double maxelem) {
 	// do an SVD on the return matrix to ensure the singular-value
 	// distribution is correct
 	vector<double> as = rval;
-	trc.dprintm(nr,nc,nr,as,"new A");
+	T_(trc.dprintm(nr,nc,nr,as,"new A");)
 	// info = ftn_dgesvd ("N", "N", nr, nc, &as[0], nr,
 	// 	&s[0], &u[0], nr, &vt[0], nc);
 	dgesvd_("N", "N", &nr, &nc, &as[0], &nr,
 	 	&s[0], &u[0], &nr, &vt[0], &nc, &work[0], &lwork, &info);
 	if (info != 0) {
 		string exc = vastr("error in dgesvd on new A: info = ",info);
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
-	trc.dprint("singular values of return A",s);
+	T_(trc.dprint("singular values of return A",s);)
 	double newrcond = s[mn-1]/s[0];
 	if (Rankdef == 0 && !is_equal(newrcond,rcond,2)) {
 		cout << "rcond(new A) (" << newrcond << " != input rcond (" << rcond << ")\n";
@@ -701,12 +701,12 @@ newA (int nr, int nc, double rcond, double maxelem) {
 			rscale[i] = pow(10.0, (double)irand(Scalingrange));
 		for (i=0; i<nc; i++)
 			cscale[i] = pow(10.0, (double)irand(Scalingrange));
-		trc.dprint("row scale factors: ",rscale);
-		trc.dprint("col scale factors: ",cscale);
+		T_(trc.dprint("row scale factors: ",rscale);)
+		T_(trc.dprint("col scale factors: ",cscale);)
 		for (i=0; i<nr; i++)
-			blas_scal (nc, rscale[i], &rval[IJ(i,0,nr)], nr);
+			blas::scal (nc, rscale[i], &rval[IJ(i,0,nr)], nr);
 		for (j=0; j<nc; j++)
-			blas_scal (nr, cscale[j], &rval[IJ(0,j,nr)], 1);
+			blas::scal (nr, cscale[j], &rval[IJ(0,j,nr)], 1);
 	}
 	return rval;
 }
@@ -723,14 +723,14 @@ newb (int nr, int nc, vector<double>& a) {
 		vector<double> x(nc, 0.0);
 		for (i=0; i<nc; i++)
 			x[i] = (double)randReal(1.0);
-		blas_sgemv("n",nr,nc,1.0,&a[0],nr,&x[0],1,0.0,&rval[0],1);
+		blas::gemv("n",nr,nc,1.0,&a[0],nr,&x[0],1,0.0,&rval[0],1);
 	}
 	return rval;
 }
 
 void
 testFile (char const* file) {
-	Trace trc(2,"testFile");
+	T_(Trace trc(2,"testFile");)
 	int pi;
 	Matrix* ap = MM::importer(file);
 	double* a = ap->elem();
@@ -740,7 +740,7 @@ testFile (char const* file) {
 	// only use the real part of complex matrices
 	if (ap->is_complex()) {
 		double* ra = new double[nr*nc];
-		blas_copy(nr*nc, a, 2, ra, 1);
+		blas::copy(nr*nc, a, 2, ra, 1);
 		delete ap;
 		a = ra;
 	}
@@ -754,10 +754,10 @@ testFile (char const* file) {
 		vector<double> tan = af.nullProj (dir);
 		double expon;
 		double det = af.augJacDet(af.af, tan, expon);
-		trc.dprint("determiant: ",det,"*10^",expon);
+		T_(trc.dprint("determiant: ",det,"*10^",expon);)
 	}
 
-	trc.dprint("rcond: ",af.rcond);
+	T_(trc.dprint("rcond: ",af.rcond);)
 	vector<double> b(nr, 0.0);
 	for (size_t i=0; i<nr; i++)
 		b[i] = xrand();
@@ -766,14 +766,14 @@ testFile (char const* file) {
 	// af.solve(1, &b[0], &x[0], pi);
 	af.solve(b, x);
 	pi = af.performanceIndex(&a[0], &x[0], &b[0]);
-	trc.dprint("before refine: pi = ",pi);
+	T_(trc.dprint("before refine: pi = ",pi);)
 	// pi = af.refine(&x[0],&b[0]);
 	// T("after refine: pi = %d\n", pi);
 }
 
 int
 main(int argc, char** argv) {
-	Trace trc(1,argv[0]);
+	T_(Trace trc(1,argv[0]);)
 	int nr, nc;
 	int k;
 	int pi, nullpi;
@@ -803,7 +803,7 @@ main(int argc, char** argv) {
 	for (k=0; k<Nsol; k++) {
 		nr = irand(Maxsize);
 		nr = std::max(nr, Minsize);
-		trc.dprint("solution ",k+1,": nr = ",nr);
+		T_(trc.dprint("solution ",k+1,": nr = ",nr);)
 		if (Square) {
 			nc = nr;
 		} else if (Usennull) {
@@ -826,8 +826,8 @@ main(int argc, char** argv) {
 		//... and a random rhs "b"
 		vector<double> b = newb(nr,nc,a);
 
-		trc.dprintm(nr,nc,nr,a,"a = ");
-		trc.dprint("b = ",b);
+		T_(trc.dprintm(nr,nc,nr,a,"a = ");)
+		T_(trc.dprint("b = ",b);)
 		string shape("ls");
 		if (nr < nc)
 			shape = "ud";
@@ -835,19 +835,19 @@ main(int argc, char** argv) {
 		// Factor the matrix...
 		QR af(nr, nc, &a[0]);
 
-		trc.dprint("rcond ",af.rcond,", pivots",af.pivots);
+		T_(trc.dprint("rcond ",af.rcond,", pivots",af.pivots);)
 		// ... and solve Ax = b
 		af.solve(b, x);
 		pi = af.performanceIndex(&a[0], &x[0], &b[0]);
-		trc.dprint("solution",x);
+		T_(trc.dprint("solution",x);)
 
 		// pi = af->refine(x, b);
 		// T("pi = %d\n",pi);
 
 		multMv (nr, nc, &a[0], &x[0], &b[0], &res[0]);
 
-		resNorm = blas_snrm2 (nr, &res[0], 1);
-		trc.dprint("residual",res);
+		resNorm = blas::snrm2 (nr, &res[0], 1);
+		T_(trc.dprint("residual",res);)
 		// If we have a rectangular matrix compute the nullspace
 		if (nc > nr) {
 			vector<double> dir(nc, 0.0);
@@ -855,9 +855,9 @@ main(int argc, char** argv) {
 			vector<double> xv = af.nullProj (dir);
 			norm(nc, &xv[0]);						/* normalize the null vector */
 			multMv (nr, nc, &a[0], &xv[0], nullptr, &res[0]);
-			nullResNorm = blas_snrm2 (nr, &res[0], 1);
-			trc.dprint("null vector",xv);
-			trc.dprint("residual of null vector",res);
+			nullResNorm = blas::snrm2 (nr, &res[0], 1);
+			T_(trc.dprint("null vector",xv);)
+			T_(trc.dprint("residual of null vector",res);)
 			dir[0] = 0.0;
 			nullpi = af.performanceIndex(&a[0], &xv[0], &dir[0]);
 		} else {
@@ -869,8 +869,8 @@ main(int argc, char** argv) {
 			vector<double> dir(nc, 0.0);
 			dir[0] = -1.0;
 			vector<double> tan = af.nullProj (dir);
-			double tn = blas_snrm2(nc, &tan[0], 1);
-			blas_scal(nc, 1.0/tn, &tan[0], 1);
+			double tn = blas::snrm2(nc, &tan[0], 1);
+			blas::scal(nc, 1.0/tn, &tan[0], 1);
 			det = af.augJacDet(af.af, tan, expon);
 			double eigexp;
 			double eigdet = augeigdet(nr, nc, a, tan, eigexp);

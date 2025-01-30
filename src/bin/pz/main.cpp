@@ -12,13 +12,14 @@
 #include "main.h"
 #include "settings.h"
 #include "specs.h"
+#include "trace.h"
 #include "version.cpp"
 
 using namespace std;
 
 int
 main (int argc, char** argv) {
-	Trace trc(1,argv[0]);
+	T_(Trace trc(1,argv[0]);)
 	string progname{argv[0]};
 
 	// if there is an argument it is the output matrix name

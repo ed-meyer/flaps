@@ -14,6 +14,7 @@
 #include <string>
 #include <iostream>
 #include <stdexcept>
+#include <vector>
 
 #include "text.h"
 #include "vastr.h"
@@ -76,6 +77,6 @@ operator<<(std::ostream& s, const std::runtime_error& t) {
 }
 
 // backtrace attempt to print a stack trace on cerr
-std::string backtrace();
+std::vector<std::string> backtrace();
 
 #endif // MESSAGE_H

@@ -34,6 +34,7 @@
 #include "fio.h"
 #include "matrix.h"
 #include "text.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -51,7 +52,7 @@ string
 get_path(const string& name, const string& ext) {
 // Check name for read access on the working directory (FWD) and
 // on the temporary directory (FTMP), possibly with the extension (.ext)
-	Trace trc(2,"get_path");
+	T_(Trace trc(2,"get_path");)
 
 	// if "name" is already a full path just check it
 	if (access(name.c_str(), R_OK) != -1)
@@ -95,16 +96,16 @@ static
 vector<string>
 tokenize(const string& line, size_t width) {
 // split a string into tokens, each of length "width"
-	Trace trc(1,"tokenize");
+	T_(Trace trc(1,"tokenize");)
 	size_t len{line.size()};
 	size_t start{0};
 	vector<string> rval;
-	trc.dprint("line ",line,", len ",len,", width ",width);
+	T_(trc.dprint("line ",line,", len ",len,", width ",width);)
 	while (start < len) {
 		rval.push_back(line.substr(start, width));
 		start += width;
 	}
-	trc.dprint("returning ",rval.size()," tokens");
+	T_(trc.dprint("returning ",rval.size()," tokens");)
 	return rval;
 }
 
@@ -131,7 +132,7 @@ static vector<Matrix*>
 splitQ(Matrix* ap) {
 // Nastran stores QHH matrices as (n,nk*n) where each block of n
 // columns represents one gaf matrix at a particular k-value
-	Trace trc(1,"splitQ ",ap->summary());
+	T_(Trace trc(1,"splitQ ",ap->summary());)
 	size_t nr = ap->rsize();
 	size_t nc = ap->csize();
 	vector<Matrix*> rval;
@@ -148,7 +149,7 @@ splitQ(Matrix* ap) {
 	// quick return if only one matrix
 	if (nq == 1) {
 		rval.push_back(ap);
-		trc.dprint("quick return: only one matrix");
+		T_(trc.dprint("quick return: only one matrix");)
 		return rval;
 	}
 
@@ -157,9 +158,9 @@ splitQ(Matrix* ap) {
 		os.str("");
 		os << ap->mid() << j+1;
 		Matrix* newq = new Matrix(os.str(), "Gaf", nr, nr, true);
-		blas_copy (nr*nr, &matval[IJ(0,j,nr*nr)], 1,
+		blas::copy (nr*nr, &matval[IJ(0,j,nr*nr)], 1,
 				(complex<double>*)&newq->data()[0], 1);
-		trc.dprint("new Matrix <", newq->summary());
+		T_(trc.dprint("new Matrix <", newq->summary());)
 		rval.push_back(newq);
 	}
 	return rval;
@@ -173,7 +174,7 @@ importer(const string& path, const string& output) {
 // Aero matrices come as one big matrix stacked columnwise -
 // it will be split into square matrices
 //------------------------------------------------------------------
-	Trace trc(1,"Output4:importer");
+	T_(Trace trc(1,"Output4:importer");)
 	vector<Matrix*> rval;
 	int wordsPerElement;
 	int formatwidth;
@@ -198,12 +199,12 @@ importer(const string& path, const string& output) {
 					rval.push_back(ap);
 			} else {
 				rval.push_back(ap);
-				trc.dprintm(nr,nc,nr,ap->elem(),vastr("read:",ap->mid()));
+				T_(trc.dprintm(nr,nc,nr,ap->elem(),vastr("read:",ap->mid()));)
 			}
 		}
 	// only catch EOF, let others go upstream
 	} catch (EOF_exc& s) {
-		trc.dprint("caught EOF exception\n");
+		T_(trc.dprint("caught EOF exception\n");)
 	}
 	return rval;
 }
@@ -216,14 +217,14 @@ header (Ascii& in, string& mid, int& nr, int& nc,
 // Read the first record for a NASTRAN matrix:
 // ncol nr form type dmapname
 //------------------------------------------------------------------
-	Trace trc(1,"header");
+	T_(Trace trc(1,"header");)
 	string formatbuf;
 	int form;
 	string line;
 
 	// Ascii returns false on EOF
 	if (!in(line)) {
-		trc.dprint("returning false: EOF");
+		T_(trc.dprint("returning false: EOF");)
 		return false;
 	}
 
@@ -241,7 +242,7 @@ header (Ascii& in, string& mid, int& nr, int& nc,
 	formatbuf = toks[5];
 	if (toks.size() > 6)
 		formatbuf += toks[6];
-	trc.dprint("got nc ",nc," nr ",nr," form ",form, " dtype ",dtype," mid ",mid," format ",formatbuf);
+	T_(trc.dprint("got nc ",nc," nr ",nr," form ",form, " dtype ",dtype," mid ",mid," format ",formatbuf);)
 
 	// Negative nc means BIGMAT=TRUE; we don't worry about
 	// handling this here - just change signs on nc
@@ -251,7 +252,7 @@ header (Ascii& in, string& mid, int& nr, int& nc,
 	if (nr <= 0 || nc <= 0) {
 		string exc{vastr("bad matrix header on line ",in.line_number(),": nr = ",
 			nr, ", nc = ", nc)};
-		trc.dprint("throwing exception ",exc);
+		T_(trc.dprint("throwing exception ",exc);)
 		throw runtime_error(exc);
 	}
 
@@ -264,11 +265,11 @@ header (Ascii& in, string& mid, int& nr, int& nc,
 	smatch mch;
 	if (regex_search(format, mch, re) && mch.size() > 1) {
 		str2int(mch[1], formatwidth);
-		trc.dprint("got format width = ",formatwidth);
+		T_(trc.dprint("got format width = ",formatwidth);)
 	} else {
 		string exc{vastr("no format found on header line ", in.line_number(),
 			": \"", format, "\"")};
-		trc.dprint("throwing exception ",exc);
+		T_(trc.dprint("throwing exception ",exc);)
 		throw runtime_error(exc);
 	}
 
@@ -294,7 +295,7 @@ header (Ascii& in, string& mid, int& nr, int& nc,
 		default:
 			string exc{vastr("unrecognized datatype on line ",
 				in.line_number(), " (", dtype, ')')};
-			trc.dprint("throwing exception: ",exc);
+			T_(trc.dprint("throwing exception: ",exc);)
 			throw runtime_error(exc);
 	}
 	return true;
@@ -341,7 +342,7 @@ data (Ascii& in, string& mid, int nr, int nc,
 /*------------------------------------------------------------------
  * Reads the data portion of a NASTRAN matrix in an output4 file
  *------------------------------------------------------------------*/
-	Trace trc(1,"Output4::data");
+	T_(Trace trc(1,"Output4::data");)
 	Matrix *rval;
 	char *endp;
 	int colno, irow, nw, nws, nwr, nel;
@@ -357,7 +358,7 @@ data (Ascii& in, string& mid, int nr, int nc,
 	vector<string> quotes;
 	bool iscomplex = (dtype > 2);
 
-	trc.dprint("mid ",mid," nr ",nr," nc ",nc," words/element ",wordsPerElement);
+	T_(trc.dprint("mid ",mid," nr ",nr," nc ",nc," words/element ",wordsPerElement);)
 
 	// cs: column-start indices into ri, nz
 	vector<int> cs(nc+1, 1);
@@ -386,12 +387,12 @@ data (Ascii& in, string& mid, int nr, int nc,
 			colno = stoi(toks[0]);
 			irow = stoi(toks[1]);
 			nw = stoi(toks[2]);
-			trc.dprint("got colno ",colno," irow ",irow," nw ",nw);
+			T_(trc.dprint("got colno ",colno," irow ",irow," nw ",nw);)
 			if (irow-1+nw > nRealCol) {
 				string exc{vastr("column ", colno, " of ", mid, " has ",
 					nw, " elements, but the matrix was declared to have ",
 					nr, " rows")};
-				trc.dprint("throwing exception: ",exc);
+				T_(trc.dprint("throwing exception: ",exc);)
 				throw runtime_error(exc);
 			}
 			nel = nw;
@@ -410,13 +411,13 @@ data (Ascii& in, string& mid, int nr, int nc,
 			if (colno <= 0) {
 				string exc{vastr("bad column number on line ",in.line_number(),
 						": ", colno)};
-				trc.dprint("throwing exception: ",exc);
+				T_(trc.dprint("throwing exception: ",exc);)
 				throw runtime_error(exc);
 			}
 			if (irow < 0 || irow > nr) {
 				string exc{vastr("bad row number on line ", in.line_number(),
 						": ", irow, " (matrix has ", nr, " rows)")};
-				trc.dprint("throwing exception: ",exc);
+				T_(trc.dprint("throwing exception: ",exc);)
 				throw runtime_error(exc);
 			}
 			// Read the floats: non-sparse. Question: is it possible
@@ -453,7 +454,7 @@ data (Ascii& in, string& mid, int nr, int nc,
 				nextcolstart = ri.size() + 1;	// one past current number of nz
 				for (i=colno; i<=nc; i++)  // set next and all subsequent cs
 					cs[i] = nextcolstart;
-				trc.dprint("nnz ",nnz,", cs[",colno,"] = ",cs[colno]);
+				T_(trc.dprint("nnz ",nnz,", cs[",colno,"] = ",cs[colno]);)
 
 			// Read the data values for sparse: nw *words* comprising
 			// "strings" of words, which if BIGMAT=false are
@@ -487,14 +488,14 @@ data (Ascii& in, string& mid, int nr, int nc,
 					if (nel < 0 || nel > nr) {
 						string exc{vastr("bad string header (",line,") on line ",
 							in.line_number(), ": nw=", nel)};
-						trc.dprint("throwing exception: ",exc);
+						T_(trc.dprint("throwing exception: ",exc);)
 						throw runtime_error(exc);
 					}
-					trc.dprint("strhdr ",strhdr," nws ",nws," nel ",nel," irow ",irow);
+					T_(trc.dprint("strhdr ",strhdr," nws ",nws," nel ",nel," irow ",irow);)
 					if (irow < 0 || irow > nr) {
 						string exc{vastr("bad row number on line ", in.line_number(),
 							": ", irow, " (should be < ", nr,')')};
-						trc.dprint("throwing exception: ",exc);
+						T_(trc.dprint("throwing exception: ",exc);)
 						throw runtime_error(exc);
 					}
 
@@ -530,13 +531,13 @@ data (Ascii& in, string& mid, int nr, int nc,
 		}
 	} catch (runtime_error& s) {
 		string exc{vastr("premature end-of-file reading \"", mid, "\"")};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 
-	trc.dprint("row indices",ri);
-	trc.dprint("col starts",cs);
-	trc.dprint("non-zeros",nz);
+	T_(trc.dprint("row indices",ri);)
+	T_(trc.dprint("col starts",cs);)
+	T_(trc.dprint("non-zeros",nz);)
 	/*
 	 * Check that the lower-right element is present
 	 */
@@ -565,7 +566,7 @@ data (Ascii& in, string& mid, int nr, int nc,
 		rval = mp;
 	}
 
-	trc.dprint("returning ",*rval);
+	T_(trc.dprint("returning ",*rval);)
 	return rval;
 }
 
@@ -575,12 +576,12 @@ exporter (const string& path, const vector<Matrix*>& ml, bool append) {
 //------------------------------------------------------------------
 // Write a set of matrices to an output4-formatted file
 //------------------------------------------------------------------
-	Trace trc(1,"Output4::exporter");
+	T_(Trace trc(1,"Output4::exporter");)
 	bool rval = true;
 	string format;
 	string exc;
 
-	trc.dprint("matrix: ",ml[0]->summary()," to ",path);
+	T_(trc.dprint("matrix: ",ml[0]->summary()," to ",path);)
 
 	// open the file
 	std::ios_base::openmode om{std::ios::trunc};
@@ -618,7 +619,7 @@ exporter (const string& path, const vector<Matrix*>& ml, bool append) {
 
 static void
 writeRealFull (ostream& file, size_t nr, size_t nc, double* data) {
-	Trace trc(1,"writeRealFull");
+	T_(Trace trc(1,"writeRealFull");)
 	size_t first, last;
 	size_t floatsPerLine = 4;
 	Form sci(16);
@@ -662,7 +663,7 @@ writeRealFull (ostream& file, size_t nr, size_t nc, double* data) {
 
 static void
 writeComplexFull (ostream& file, size_t nr, size_t nc, complex<double>* data) {
-	Trace trc(1,"writeComplexFull");
+	T_(Trace trc(1,"writeComplexFull");)
 	size_t first, last;
 	Form sci(16);
 	size_t elemPerLine = 2;
@@ -718,7 +719,7 @@ penlift2segments(const vector<int>& penlift) {
 // convert connectivities in penlift format to segment format:
 // pairs of ints defining 2 nodes where a line is to be drawn
 // XXX deprecated: use penlift2segidx()
-	Trace trc(2,"penlift2segments");
+	T_(Trace trc(2,"penlift2segments");)
 	vector<int> rval;
 	int prev{0};
    for (size_t i=0; i<penlift.size(); i++) {
@@ -736,7 +737,7 @@ penlift2segments(const vector<int>& penlift) {
 			prev = penlift[i];
 		}
 	}
-	trc.dprint("connectivities in segment format",rval);
+	T_(trc.dprint("connectivities in segment format",rval);)
 	return rval;
 }
 
@@ -751,7 +752,7 @@ penlift2segidx(const vector<int>& penlift, const vector<int>& nodes) {
 // and
 //   coords[3*segidx[2*j+1]],coords[3*segidx[2*j+1]+1],coords[3*segidx[2*j+1]+2]
 // seems complicated but a more efficient way of visualizing with OpenGL
-	Trace trc(2,"UF::penlift2segidx");
+	T_(Trace trc(2,"UF::penlift2segidx");)
 
 	// first convert penlift to segments: pairs of node numbers
 	vector<int> segments = UF::penlift2segments(penlift);
@@ -765,7 +766,7 @@ penlift2segidx(const vector<int>& penlift, const vector<int>& nodes) {
             " has not been defined"));
       segidx.push_back((int)(idx - nodes.begin()));	// zero-based index
    }
-   trc.dprint("segment indices (segidx)",segidx);
+   T_(trc.dprint("segment indices (segidx)",segidx);)
 	return segidx;
 }
 
@@ -793,7 +794,7 @@ importer (const string& path, const string& vzid) {
 //            arrays are in the same order, the start of the coordinates
 //            for the jth node is 3*j. Each pair of nodes define a line
 //            segment used to draw a picture in amvz.
-	Trace trc(1,"UF::importer ",path);
+	T_(Trace trc(1,"UF::importer ",path);)
 	vector<Matrix*> rval;
 	vector<int> nodenumbers;
 	vector<int> connectivity;
@@ -842,7 +843,7 @@ importer (const string& path, const string& vzid) {
 		cp[i] = gctransform[i];
 	rval.push_back(gct);
 
-	trc.dprint("returning ",rval.size()," matrices");
+	T_(trc.dprint("returning ",rval.size()," matrices");)
 	return rval;
 }
 
@@ -858,7 +859,7 @@ importer (const string& path, vector<int>& nodenumbers, vector<double>& coords,
 //       in the same order as "coords"
 //   82  tracelines in penlift format - sets of one or more node numbers
 //          separated by zeros (penlift)
-	Trace trc(1,"UF::importer(vectors) ",path);
+	T_(Trace trc(1,"UF::importer(vectors) ",path);)
 	vector<string> toks;
 	vector<string> attributes;
 
@@ -904,7 +905,7 @@ importer (const string& path, vector<int>& nodenumbers, vector<double>& coords,
 			}
 		}
 	} catch (EOF_exc& s) {
-		trc.dprint("caught eof exception, line ",in.line_number(),": ",s);
+		T_(trc.dprint("caught eof exception, line ",in.line_number(),": ",s);)
 	} catch (std::exception& s) {
 		flaps::warning("caught exception: ",s.what());
 		throw runtime_error(vastr("caught unknown exception: ",s.what()));
@@ -921,7 +922,7 @@ importer (const string& path, vector<int>& nodenumbers, vector<double>& coords,
 			if (modes[j].size() != nr)
 				throw runtime_error(vastr("dataset 55 ",j+1," has ",modes[j].size(),
 					" elements, others have ",nr));
-			blas_copy(nr, &modes[j][0], 1, cp, 1);
+			blas::copy(nr, &modes[j][0], 1, cp, 1);
 			cp += nr;
 		}
 		// re-order the rows to match nodenumbers from DS 15
@@ -940,9 +941,9 @@ importer (const string& path, vector<int>& nodenumbers, vector<double>& coords,
 				size_t k;
 				for (k=0; k<gct_node_numbers.size(); k++) {
 					if (gct_node_numbers[k] == nodenumbers[i]) {
-						blas_copy(nc, &cp[3*k], nr, &reordered[3*i], nr);
-						blas_copy(nc, &cp[3*k+1], nr, &reordered[3*i+1], nr);
-						blas_copy(nc, &cp[3*k+2], nr, &reordered[3*i+2], nr);
+						blas::copy(nc, &cp[3*k], nr, &reordered[3*i], nr);
+						blas::copy(nc, &cp[3*k+1], nr, &reordered[3*i+1], nr);
+						blas::copy(nc, &cp[3*k+2], nr, &reordered[3*i+2], nr);
 						break;
 					}
 				}
@@ -964,7 +965,7 @@ coord(Ascii& in, vector<int>& node_numbers) {
 // "coordinates" that is dimensioned (3,nnode) where nnode is the
 // number of nodes and the 3 rows are the x, y, and z coordinates.
 // Also returns the node numbers as an nnode-vector of integers.
-	Trace trc(1,"UF::coord");
+	T_(Trace trc(1,"UF::coord");)
 	string s;
 	vector<string> toks;
 	vector<double> coords;
@@ -1008,7 +1009,7 @@ coord(Ascii& in, vector<int>& node_numbers) {
 	string mid{"coordinates"};
 	Matrix* rval = new Matrix(mid,"(x,y,z)", 3*nnodes, 1, false);
 	rval->data() = coords;
-	trc.dprint("returning coordinates",*rval);
+	T_(trc.dprint("returning coordinates",*rval);)
 	return rval;
 }
 
@@ -1016,7 +1017,7 @@ vector<double>
 coordinates(Ascii& in, vector<int>& nodenumbers) {
 // Read Universal Dataset 15 (nodal data). Returns a (3,nnode) vector
 // of doubles where nnode = nodenumbers.size().
-	Trace trc(1,"UF::coord");
+	T_(Trace trc(1,"UF::coord");)
 	string s;
 	vector<string> toks;
 	vector<double> coords;
@@ -1057,14 +1058,14 @@ coordinates(Ascii& in, vector<int>& nodenumbers) {
 	if (nnodes == 0) {
 		throw runtime_error(vastr("line ",in.line_number(),": no nodal data found"));
 	}
-	trc.dprint("returning coordinates",coords);
+	T_(trc.dprint("returning coordinates",coords);)
 	return coords;
 }
 
 vector<complex<double>>
 disp(Ascii& in, vector<int>& gct_node_numbers) {
 // import displacements (modes) from a Universal Dataset 55
-	Trace trc(1,"UF::disp");
+	T_(Trace trc(1,"UF::disp");)
 	string line;
 	vector<string> toks;
 	bool need_node_numbers = gct_node_numbers.empty();
@@ -1099,7 +1100,7 @@ disp(Ascii& in, vector<int>& gct_node_numbers) {
 	if (toks.size() != 6) {
 		string exc{vastr("line ", in.line_number(),
 			": expecting 6 values, got ", toks.size())};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 	// int model_type = string2Int(toks[0]);
@@ -1117,13 +1118,13 @@ disp(Ascii& in, vector<int>& gct_node_numbers) {
 	if (data_type != 5) {
 		string exc{vastr("can only treat complex modes (line ",
 			in.line_number(), ')')};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 	if (ndv != 3 && ndv != 6) {
 		string exc{vastr("the number of data values per node must be",
 			" either 3 or 6, not ", ndv," (line ",in.line_number(), ')')};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 
@@ -1133,7 +1134,7 @@ disp(Ascii& in, vector<int>& gct_node_numbers) {
 	if (toks.size() != 4) {
 		string exc{vastr("line ", in.line_number(),
 			": expecting 4 values, got ", toks.size())};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 
@@ -1143,7 +1144,7 @@ disp(Ascii& in, vector<int>& gct_node_numbers) {
 	if (toks.size() != 6) {
 		string exc{vastr("line ", in.line_number(),
 			": expecting 6 values, got ", toks.size())};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 	
@@ -1165,7 +1166,7 @@ disp(Ascii& in, vector<int>& gct_node_numbers) {
 		if (toks.size() != 1) {
 			string exc{vastr("line ", in.line_number(),
 				": expected 1 items, got ", toks.size())};
-			trc.dprint("throwing exception: ",exc);
+			T_(trc.dprint("throwing exception: ",exc);)
 			throw runtime_error(exc);
 		}
 		int nodenumber;
@@ -1176,7 +1177,7 @@ disp(Ascii& in, vector<int>& gct_node_numbers) {
 		} else if (nodenumber != gct_node_numbers[rval.size()/3]) {
 			string exc{vastr("line ", in.line_number(), ": node ",nodenumber,
 					" is out of order - should be ", gct_node_numbers[rval.size()/3])};
-			trc.dprint("throwing exception: ",exc);
+			T_(trc.dprint("throwing exception: ",exc);)
 			throw runtime_error(exc);
 		}
 
@@ -1187,7 +1188,7 @@ disp(Ascii& in, vector<int>& gct_node_numbers) {
 			string exc{vastr("line ", in.line_number(),
 				": expected ", nfloats,
 				" items, got ", toks.size())};
-			trc.dprint("throwing exception: ",exc);
+			T_(trc.dprint("throwing exception: ",exc);)
 			throw runtime_error(exc);
 		}
 		// only take the first 3 displacements, ignore rotations
@@ -1215,18 +1216,18 @@ disp(Ascii& in, vector<int>& gct_node_numbers) {
 	}
 	if (rval.empty()) {
 		string exc{vastr("line ", in.line_number(), ": no modal data found")};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 
-	trc.dprint("returning ",rval.size()," displacements");
+	T_(trc.dprint("returning ",rval.size()," displacements");)
 	return rval;
 }
 
 vector<int>
 connectivity(Ascii& in) {
 // Read a Universal file dataset 82: trace lines in pen-lift format
-	Trace trc(1,"UF::connectivity");
+	T_(Trace trc(1,"UF::connectivity");)
 	string line;
 	vector<string> toks;
 
@@ -1262,7 +1263,7 @@ connectivity(Ascii& in) {
 		flaps::warning("reading ", id, " line ", in.line_number(),
 			": expected ", nnodes, " values, got ", nnew);
 	}
-	trc.dprint("returning penlift conn:",penlift);
+	T_(trc.dprint("returning penlift conn:",penlift);)
 
 	return penlift;
 }
@@ -1296,7 +1297,7 @@ exporter (const string& path, const vector<Matrix*>& ml, bool append) {
 // These matrices are written to "path" with UF data types 15, 55, and
 // 82, respectively.
 // This version just calls the vector version
-	Trace trc(1,"UF::exporter(Matrix)");
+	T_(Trace trc(1,"UF::exporter(Matrix)");)
 
 	// get pointers to each of the 4 matrices
 	Matrix* nodes_m{nullptr};
@@ -1356,10 +1357,10 @@ exporter (const string& path, const vector<Matrix*>& ml, bool append) {
 	int ncgct = gct_m->csize();
 	vector<complex<double>> gct(nrgct*ncgct);
 	if (!gct_m->is_complex())
-		blas_copy(nrgct*ncgct, gct_m->elem(), 1,
+		blas::copy(nrgct*ncgct, gct_m->elem(), 1,
 			reinterpret_cast<double*>(&gct[0]), 2);
 	else
-		blas_copy(nrgct*ncgct, gct_m->celem(), 1, &gct[0], 1);
+		blas::copy(nrgct*ncgct, gct_m->celem(), 1, &gct[0], 1);
 
 	const vector<double>& coords = coords_m->data();
 
@@ -1393,7 +1394,7 @@ exporter (const string& path, const vector<int> nodes,
 //             in the same order as "coords"
 // These are written to "path" with UF data types 15, 82, and
 // 55, respectively.
-	Trace trc(1,"UF::exporter");
+	T_(Trace trc(1,"UF::exporter");)
 
 	// open the .uf file
 	string actualpath{expenv(path)};
@@ -1684,7 +1685,7 @@ read_tag(int fd, int32_t& data_type, int32_t& nbytes, int32_t& data) {
 // If this is a small-data tag, returns true and "data" is set to
 // the 4 bytes of data; otherwise true is returned and "data" is unchanged.
 // If eof is encountered an EOF_exc exception is thrown.
-	Trace trc(1,"read_tag");
+	T_(Trace trc(1,"read_tag");)
 	unsigned char buf[8];
 
 	// watch for EOF
@@ -1717,7 +1718,7 @@ read_tag(int fd, int32_t& data_type, int32_t& nbytes, int32_t& data) {
 			memcpy(&nb, &buf[2], 2);
 			memcpy(&dt, &buf[0], 2);
 		}
-		trc.dprint("small data format: data type ",dt,", nbytes ",nb,", data ", buf[4],buf[5],buf[6],buf[7]);
+		T_(trc.dprint("small data format: data type ",dt,", nbytes ",nb,", data ", buf[4],buf[5],buf[6],buf[7]);)
 		data_type = dt;
 		nbytes = nb;
 		// small data is the 2nd 4 bytes
@@ -1736,7 +1737,7 @@ read_tag(int fd, int32_t& data_type, int32_t& nbytes, int32_t& data) {
 			os << std::hex << " " << buf[i];
 		throw runtime_error(os.str());
 	}
-	trc.dprint("returning ",small_data,", data type ",data_type,", nbytes ",nbytes);
+	T_(trc.dprint("returning ",small_data,", data type ",data_type,", nbytes ",nbytes);)
 	return small_data;
 }
 
@@ -1745,32 +1746,32 @@ static Matrix* read_Matrix(int fd);
 bool
 period2underscore(string& str) {
 // replace ALL periods in str with double underscore
-	Trace trc(2,"period2underscore");
+	T_(Trace trc(2,"period2underscore");)
 	bool rval{false};
-	trc.dprint("str: ",str);
+	T_(trc.dprint("str: ",str);)
 	string::size_type idx = str.find(".");
 	while(idx != string::npos) {
 		str.replace(idx,1,"__");
 		idx = str.find(".");
 		rval = true;
 	}
-	trc.dprint("output str: ",str);
+	T_(trc.dprint("output str: ",str);)
 	return rval;
 }
 
 bool
 underscore2period(string& str) {
 // replace ALL double-underscore in str with periods
-	Trace trc(2,"underscore2period");
+	T_(Trace trc(2,"underscore2period");)
 	bool rval{false};
-	trc.dprint("str: ",str);
+	T_(trc.dprint("str: ",str);)
 	string::size_type idx = str.find("__");
 	while(idx != string::npos) {
 		str.replace(idx,2,".");
 		idx = str.find("__");
 		rval = true;
 	}
-	trc.dprint("output str: ",str);
+	T_(trc.dprint("output str: ",str);)
 	return rval;
 }
 
@@ -1780,7 +1781,7 @@ importer(const string& path, const string& output) {
 // read matrices from Matlab file "path"
 // If a matrix name contains double underscore (__) change it to .
 // output is unused
-	Trace trc(1,"Matlab::importer ",path);
+	T_(Trace trc(1,"Matlab::importer ",path);)
 	vector<Matrix*> rval;
 
 	// first check that the file exists, is a matlab file, and
@@ -1801,14 +1802,14 @@ importer(const string& path, const string& output) {
 	Matrix* mp;
 	while((mp = read_Matrix(fd)) != nullptr)
 		rval.push_back(mp);
-	trc.dprint("returning ",rval.size()," matrices");
+	T_(trc.dprint("returning ",rval.size()," matrices");)
 	return rval;
 }	// Matlab::importer
 
 static Matrix*
 read_Matrix(int fd) {
 // read a Matlab array of a numeric data type (1-13)
-	Trace trc(1,"Matlab::read_Matrix ");
+	T_(Trace trc(1,"Matlab::read_Matrix ");)
 	size_t nr, nc;
 	int32_t small_data; // for small data tags
 	Matrix* rval{nullptr};
@@ -1818,7 +1819,7 @@ read_Matrix(int fd) {
 	int32_t nbytes;
 	try {
 		read_tag(fd, data_type, nbytes, small_data);
-		trc.dprint("data type ",data_type,", nbytes ",nbytes);
+		T_(trc.dprint("data type ",data_type,", nbytes ",nbytes);)
 		if (data_type != miMATRIX) {
 			if (data_type == miCOMPRESSED) {
 				throw runtime_error("cannot treat MATLAB compressed MAT files: "
@@ -1828,13 +1829,13 @@ read_Matrix(int fd) {
 			}
 		}
 	} catch (EOF_exc& s) {
-		trc.dprint("caught eof exception");
+		T_(trc.dprint("caught eof exception");)
 		return nullptr;
 	}
 
 	// Array Flags subelement tag
 	read_tag(fd, data_type, nbytes, small_data);
-	trc.dprint("Array flags data type ",data_type,", nbytes ",nbytes);
+	T_(trc.dprint("Array flags data type ",data_type,", nbytes ",nbytes);)
 	// ... and the Array Flags data: 2 uint32_t:
 	// 1) flags, class in the 2 low-order bytes
 	// 2) unused
@@ -1850,17 +1851,17 @@ read_Matrix(int fd) {
 		af_class = flags[0];
 		af_flags = flags[1];
 	}
-	trc.dprint("af class ",(int)af_class,", af flags ",(int)af_flags);
+	T_(trc.dprint("af class ",(int)af_class,", af flags ",(int)af_flags);)
 	bool is_complex{false};
 	if (af_flags >> 3 == 1)
 		is_complex = true;
 
 	// Dimensions Array subelement tag: n int32 (n dimensions)
 	read_tag(fd, data_type, nbytes, small_data);
-	trc.dprint("Dimensions array data type ",data_type,", nbytes ",nbytes);
+	T_(trc.dprint("Dimensions array data type ",data_type,", nbytes ",nbytes);)
 	// the number of dimensions is nbytes/sizeof(int32)
 	int ndim = nbytes/4;
-	trc.dprint("ndim ",ndim,", complex? ",is_complex);
+	T_(trc.dprint("ndim ",ndim,", complex? ",is_complex);)
 	// read each dimension
 	vector<int32_t> dim(ndim);
 	readdtype (fd, miINT32, nbytes, dim);
@@ -1885,7 +1886,7 @@ read_Matrix(int fd) {
 	}
 	// replace double-underscores with periods
 	underscore2period(name);
-	trc.dprint("name: ",name);
+	T_(trc.dprint("name: ",name);)
 
 	// check to see if this matrix exists - if so read it and
 	// take its parameterizations
@@ -1904,7 +1905,7 @@ read_Matrix(int fd) {
 	if (read_tag(fd, data_type, nbytes, small_data)) {
 		*real_part->elem() = small_data;
 	} else {
-		trc.dprint("real part data type ",data_type,", nbytes ",nbytes);
+		T_(trc.dprint("real part data type ",data_type,", nbytes ",nbytes);)
 		readdtype (fd, data_type, nbytes, real_part->data());
 	}
 
@@ -1921,13 +1922,13 @@ read_Matrix(int fd) {
 			double* rp = real_part->elem();
 			cp[0] = complex<double>(rp[0], ci);
 		} else {
-			trc.dprint("imag part data type ",data_type,", nbytes ",nbytes);
+			T_(trc.dprint("imag part data type ",data_type,", nbytes ",nbytes);)
 			// copy the real_part into cmat...
-			blas_copy (nr*nc, real_part->elem(), 1, cmat->elem(), 2);
+			blas::copy (nr*nc, real_part->elem(), 1, cmat->elem(), 2);
 			// ... so we can re-use real_part to read the imaginary part...
 			readdtype (fd, data_type, nbytes, real_part->data());
 			// ... then copy it into cmat
-			blas_copy (nr*nc, real_part->elem(), 1, cmat->elem()+1, 2);
+			blas::copy (nr*nc, real_part->elem(), 1, cmat->elem()+1, 2);
 		}
 		rval = cmat;
 		delete real_part;
@@ -1946,7 +1947,7 @@ int32_t
 matrix_nbytes(Matrix* mp) {
 // compute the number of bytes a Matrix will take in a MAT file.
 // This includes all subelements and their tags
-	Trace trc(1,"matrix_nbytes");
+	T_(Trace trc(1,"matrix_nbytes");)
 	int32_t rval{0};
 	int32_t name_size = mp->mid().size();
 	int32_t nr = mp->rsize();
@@ -1968,7 +1969,7 @@ matrix_nbytes(Matrix* mp) {
 		rval += 8; // tag
 		rval += 8*nr*nc;
 	}
-	trc.dprint("returning ",rval," bytes");
+	T_(trc.dprint("returning ",rval," bytes");)
 	return rval;
 }
 
@@ -2076,10 +2077,10 @@ write_header(int fd) {
 bool
 Matlab::
 exporter (const string& path, const vector<Matrix*>& ml, bool append) {
-	Trace trc(1,"Matlab::exporter");
+	T_(Trace trc(1,"Matlab::exporter");)
 	bool rval{true};
 
-	trc.dprint("path<",path,">, ",ml.size()," matrices");
+	T_(trc.dprint("path<",path,">, ",ml.size()," matrices");)
 
 	// open the file write-only, truncate if !append
 	mode_t mode{S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH};
@@ -2178,11 +2179,11 @@ exporter (const string& path, const vector<Matrix*>& ml, bool append) {
 		vector<double> real_data(nr*nc);
 		vector<double> imag_data;
 		if (mp->is_complex()) {
-			blas_copy(nr*nc, mp->elem(), 2, &real_data[0], 1);
+			blas::copy(nr*nc, mp->elem(), 2, &real_data[0], 1);
 			imag_data = vector<double>(nr*nc);
-			blas_copy(nr*nc, mp->elem()+1, 2, &imag_data[0], 1);
+			blas::copy(nr*nc, mp->elem()+1, 2, &imag_data[0], 1);
 		} else {
-			blas_copy(nr*nc, mp->elem(), 1, &real_data[0], 1);
+			blas::copy(nr*nc, mp->elem(), 1, &real_data[0], 1);
 		}
 
 		// write the real data
@@ -2209,7 +2210,7 @@ Matrix*
 MM::
 importer (const string& path, const string& output) {
 // import a single matrix from a Matrix Market formatted file
-	Trace trc(1,"MM::importer ",path);
+	T_(Trace trc(1,"MM::importer ",path);)
 	Matrix* rval{nullptr};
 
 	// the default output matrix name is the path stripped of
@@ -2226,7 +2227,7 @@ importer (const string& path, const string& output) {
 	// create the return Matrix
 	rval = new Matrix(mid, "MatrixMarket",nr,nc,is_complex);
 	rval->data() = mat;
-	trc.dprint("returning (",nr,",",nc,") ",is_complex?"complex":"real");
+	T_(trc.dprint("returning (",nr,",",nc,") ",is_complex?"complex":"real");)
 	return rval;
 }
 
@@ -2234,7 +2235,7 @@ vector<double>
 MM::
 importer (const string& name, int& nr, int& nc, bool& is_complex) {
 // import a single matrix from a Matrix Market formatted file
-	Trace trc(1,"MM::importer(vector) ",name);
+	T_(Trace trc(1,"MM::importer(vector) ",name);)
 	int entries;
 	int i, j;
 	string line;
@@ -2256,11 +2257,11 @@ importer (const string& name, int& nr, int& nc, bool& is_complex) {
 	if (regex_match(line, mch, infore)) {
 		string formatstr = mch[1];
 		string dtypestr = mch[2];
-		trc.dprint("got format <",formatstr,"> datatype <",dtypestr,">");
+		T_(trc.dprint("got format <",formatstr,"> datatype <",dtypestr,">");)
 		if (formatstr.substr(0,5) != "coord") {
 			string exc = vastr("cannot read ", formatstr,
 					"-formatted Matrix Market files");
-			trc.dprint("throwing exception: ",exc);
+			T_(trc.dprint("throwing exception: ",exc);)
 			throw runtime_error(exc);
 		}
 		// real or complex?
@@ -2270,7 +2271,7 @@ importer (const string& name, int& nr, int& nc, bool& is_complex) {
 			is_complex = false;
 		else {
 			string exc = vastr("cannot read datatype \"", dtypestr,"\"");
-			trc.dprint("throwing exception: ",exc);
+			T_(trc.dprint("throwing exception: ",exc);)
 			throw runtime_error(exc);
 		}
 	}
@@ -2281,25 +2282,25 @@ importer (const string& name, int& nr, int& nc, bool& is_complex) {
 	if (toks.size() != 3) {
 		string exc = vastr("expecting 3 integers (number of rows, ",
 				"columns, elements), got: ", line);
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 	str2int(toks[0], nr);
 	str2int(toks[1], nc);
 	str2int(toks[2], entries);
-	trc.dprint("matrix is ",nr," by ",nc,", ",entries," entries");
+	T_(trc.dprint("matrix is ",nr," by ",nc,", ",entries," entries");)
 
 	// Sanity check
 	if (nr <= 0 || nr > 10000) {
 		string exc = vastr("line ", in.line_number(), " of ", actualpath,
 			": bad number of rows (", nr, ')');
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 	if (nc <= 0 || nc > 10000) {
 		string exc = vastr("line ", in.line_number(), " of ", actualpath,
 			": bad number of columns (", nc, ')');
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 
@@ -2318,7 +2319,7 @@ importer (const string& name, int& nr, int& nc, bool& is_complex) {
 			if (toks.size() != 4) {
 				string exc = vastr("expecting 4 items on line ", in.line_number(),
 					", got: ", line);
-				trc.dprint("throwing exception: ",exc);
+				T_(trc.dprint("throwing exception: ",exc);)
 				throw runtime_error(exc);
 			}
 			str2int(toks[0], i);
@@ -2326,14 +2327,14 @@ importer (const string& name, int& nr, int& nc, bool& is_complex) {
 			if (i < 1 || i > nr || j < 1 || j > nc) {
 				string exc = vastr("bad indices on line ", in.line_number(),
 					": (", i, ',', j, ")");
-				trc.dprint("throwing exception: ",exc);
+				T_(trc.dprint("throwing exception: ",exc);)
 				throw runtime_error(exc);
 			}
 			str2double(toks[2], xr);
 			str2double(toks[3], xi);
 			cp[(i-1)+((j-1)*nr)] = complex<double>(xr, xi);
 		}
-		trc.dprintm(2*nr,nc,2*nr,cp,"read Complex Matrix Market");
+		T_(trc.dprintm(2*nr,nc,2*nr,cp,"read Complex Matrix Market");)
 	} else {
 		// real data: i j x
 		double* rp = &rval[0];
@@ -2344,7 +2345,7 @@ importer (const string& name, int& nr, int& nc, bool& is_complex) {
 			if (toks.size() != 3) {
 				string exc = vastr("expecting 3 items on line ", in.line_number(),
 					", got: ", line);
-				trc.dprint("throwing exception: ",exc);
+				T_(trc.dprint("throwing exception: ",exc);)
 				throw runtime_error(exc);
 			}
 			str2int(toks[0], i);
@@ -2352,14 +2353,14 @@ importer (const string& name, int& nr, int& nc, bool& is_complex) {
 			if (i < 1 || i > nr || j < 1 || j > nc) {
 				string exc = vastr("bad indices on line ", in.line_number(),
 					": (", i, ',', j, ")");
-				trc.dprint("throwing exception: ",exc);
+				T_(trc.dprint("throwing exception: ",exc);)
 				throw runtime_error(exc);
 			}
 			str2double(toks[2], rp[(i-1)+((j-1)*nr)]);
 		}
-		trc.dprintm(nr,nc,nr,rp,"read real Matrix Market");
+		T_(trc.dprintm(nr,nc,nr,rp,"read real Matrix Market");)
 	}
-	trc.dprint("returning (",nr,",",nc,") ",is_complex?"complex":"real");
+	T_(trc.dprint("returning (",nr,",",nc,") ",is_complex?"complex":"real");)
 	return rval;
 }
 
@@ -2371,11 +2372,11 @@ bool
 MM::
 exporter (const string& path, const string& title,
 		const double* rp, int nr, int nc) {
-	Trace trc(1,"MM::exporter(double)");
+	T_(Trace trc(1,"MM::exporter(double)");)
 	std::ofstream file;
 	bool rval{true};
 
-	trc.dprint("path <",path,"> nr ",nr,", nc ",nc);
+	T_(trc.dprint("path <",path,"> nr ",nr,", nc ",nc);)
 
 	string mmpath = fullpath(path, title);
 	if (rsubstr(mmpath,3) != ".mm")
@@ -2410,12 +2411,12 @@ bool
 MM::
 exporter (const string& path, const string& title,
 		const complex<double>* cp, int nr, int nc) {
-	Trace trc(1,"MM::exporter(complex)");
+	T_(Trace trc(1,"MM::exporter(complex)");)
 	std::ofstream file;
 	std::string mmpath;
 	bool rval{true};
 
-	trc.dprint("path <",path,"> nr ",nr,", nc ",nc);
+	T_(trc.dprint("path <",path,"> nr ",nr,", nc ",nc);)
 
 	mmpath = fullpath(path, title);
 	if (rsubstr(mmpath,3) != ".mm")
@@ -2467,9 +2468,9 @@ exporter (const string& path, const Matrix* mat) {
  *               within the page width as given by page_width(), or
  *    title.mm   if not
  *------------------------------------------------------------------*/
-	Trace trc(1,"MM::exporter(Matrix)");
+	T_(Trace trc(1,"MM::exporter(Matrix)");)
 
-	trc.dprint("path <",path,"> mat ",mat->summary());
+	T_(trc.dprint("path <",path,"> mat ",mat->summary());)
 
 	string title = stringBasename(path);
 	int nr = mat->rsize();
@@ -2489,10 +2490,10 @@ fullpath (string const& path, string const& title) {
 // underscores, and .mm appended if there is not one already
 // If debug() is > 0 the path will be on the Flaps temporary
 // directory if it is not a full path
-	Trace trc(2,"MM::fullpath");
+	T_(Trace trc(2,"MM::fullpath");)
 	string rval;
 
-	trc.dprint("path ",path,", title ",title);
+	T_(trc.dprint("path ",path,", title ",title);)
 
 	if (path.empty() || path == "cout" || path == "cerr") {
 		if (title.empty())
@@ -2514,7 +2515,7 @@ fullpath (string const& path, string const& title) {
 //	if (debug() > 0 && rval[0] != '/') {
 //		rval = vastr(getftmp(), '/', rval);
 //	}
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -2595,7 +2596,7 @@ exporter (string const& cid, vector<pair<string,string>> const& params,
 		vector<double> const& data, const string& path, bool append) {
 // write a single curve to a file (path) with data in a (nr,nc) array "data",
 // each row corresponding to a parameter with name and description in "params"
-	Trace trc(1,"Apf::exporter(vector)");
+	T_(Trace trc(1,"Apf::exporter(vector)");)
 
 	size_t nr = params.size();
 	size_t nc = data.size()/nr;
@@ -2615,7 +2616,7 @@ exporter (string const& cid, vector<pair<string,string>> const& params,
 		throw runtime_error(vastr("cannot open ", filename));
 
 	ofs << "$ " << cid << endl;
-	trc.dprint("curve ",cid," has ",nr," parameters, ",nc," values");
+	T_(trc.dprint("curve ",cid," has ",nr," parameters, ",nc," values");)
 	// write descriptions, e.g. +1 Velocity (m/s)
 	int pno{1};
 	for (auto& pj : params)
@@ -2651,7 +2652,7 @@ Apf::
 exporter (vector<Curve*> const& curves, vector<string> const& toplot,
 	const string& path, bool append) {
 // write some Curves to a file (path)
-	Trace trc(1,"Apf::exporter(curves)");
+	T_(Trace trc(1,"Apf::exporter(curves)");)
 
 	// lambda to determine if a name is in toplot; always true if toplot is empty
 	auto plot = [&](string const& name) {
@@ -2678,7 +2679,7 @@ exporter (vector<Curve*> const& curves, vector<string> const& toplot,
 		// title
 		//!! ofs << "$ " << cp->params.desc() << endl;
 		ofs << "$ " << cp->cid() << endl;
-		trc.dprint("curve ",cp->cid()," has ",cp->params.size()," parameters, ",nval," values");
+		T_(trc.dprint("curve ",cp->cid()," has ",cp->params.size()," parameters, ",nval," values");)
 		int pno{1};
 		// parameter descriptions
 		for (auto pj : cp->params.pmap()) {
@@ -2722,7 +2723,7 @@ vector<Curve*>
 Apf::
 importer (const string& path, const string& output) {
 // Read an ascii plot file (.apf)
-	Trace trc(1,"Apf::importer ",path);
+	T_(Trace trc(1,"Apf::importer ",path);)
 
 	// Attempt to open the apf file; if the path does not end in
 	// ".apf" try first with that extension to avoid taking a file
@@ -2756,7 +2757,7 @@ importer (const string& path, const string& output) {
 	Curve* cp{nullptr};
 	while((cp = read_curve(in, aid)) != nullptr)
 		rval.push_back(cp);
-	trc.dprint("returning ",rval.size()," curves");
+	T_(trc.dprint("returning ",rval.size()," curves");)
 	return rval;
 }
 
@@ -2771,7 +2772,7 @@ read_curve(Ascii& in, string aid) {
 	//   +02 second parameter title...
 	//   curve_id
 	//   parname1 parname2 ...
-	Trace trc(2,"read_curve");
+	T_(Trace trc(2,"read_curve");)
 	string line;
 	string title;
 	vector<string> parnames;
@@ -2838,7 +2839,7 @@ read_curve(Ascii& in, string aid) {
 		rval->params.add(pp);
 
 	rval->params.desc(title);
-	trc.dprint("curve ",title," has ",rval->params.size()," parameter, ",rval->params.nsolns()," values");
+	T_(trc.dprint("curve ",title," has ",rval->params.size()," parameter, ",rval->params.nsolns()," values");)
 
 	return rval;
 }
@@ -2847,9 +2848,9 @@ bool
 Apf::
 plot(const string& path, const string& cid, const vector<vector<double>>& xs,
 		const vector<string>& names, bool append) {
-	Trace trc(1,"Apf::plot");
+	T_(Trace trc(1,"Apf::plot");)
 
-	trc.dprint("path ",path,", cid ",cid,", ",xs.size()," parameters");
+	T_(trc.dprint("path ",path,", cid ",cid,", ",xs.size()," parameters");)
 	if (names.size() != xs.size()) {
 		string exc{vastr("Apf::plot(",path,"): ",xs.size()," par in xs but ",
 				names.size()," names: ",names)};
@@ -2920,7 +2921,7 @@ LTI::
 importer (string const& path, Matrix& A, Matrix& B, Matrix& C, Matrix& D,
 	vector<Itd>& Atd, vector<double>& itd, vector<double>& otd,
 	vector<int>& Sidx, double rho) {
-	Trace trc(1,"LTI::importer");
+	T_(Trace trc(1,"LTI::importer");)
 
 	// open the input file: throw exception if not available
 	Ascii in(path);
@@ -2959,7 +2960,7 @@ importer (string const& path, Matrix& A, Matrix& B, Matrix& C, Matrix& D,
 	int nb = stoi(tok[3]);	// number of A breakpoints
 	int nix = stoi(tok[4]);
 	int nin = stoi(tok[5]);
-	trc.dprint("ns ",ns,", ni ",ni,", no ",no,", nb ",nb,", nix ",nix,", nin ",nin);
+	T_(trc.dprint("ns ",ns,", ni ",ni,", no ",no,", nb ",nb,", nix ",nix,", nin ",nin);)
 
 	// Second (non-comment) line: interpolation variable name
 	in(line, "#",false);
@@ -2993,7 +2994,7 @@ importer (string const& path, Matrix& A, Matrix& B, Matrix& C, Matrix& D,
 		in(line, "#",false);
 		xb.push_back(Stod(line));	// output
 	}
-	trc.dprint("interp A wrt ",paramA," breakpoints:");
+	T_(trc.dprint("interp A wrt ",paramA," breakpoints:");)
 	for (auto& xi : xb)
 		cerr << setprecision(16) << xi << endl;
 	

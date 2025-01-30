@@ -25,7 +25,7 @@ Signal::
 desc (int sig) {
 // Returns a string description of a signal, given a
 // signal number
-	Trace trc(1,"Signal::desc(",sig,")");
+	T_(Trace trc(1,"Signal::desc(",sig,")");)
 	string rval;
 	
 	switch (sig) {
@@ -98,7 +98,7 @@ desc (int sig) {
 			if (rval.empty())
 				rval = vastr("signal number ",sig);
 	}
-	trc.dprint("returning ", rval);
+	T_(trc.dprint("returning ", rval);)
 	return rval;
 }
 
@@ -424,8 +424,8 @@ catchall (void(*handler)(int)) {
 
 void
 handler (int sig) {
-	Trace trc(1,"handler");
-	trc.dprint("handler got ",sig," (",Signal::desc(sig),")");
+	T_(Trace trc(1,"handler");)
+	T_(trc.dprint("handler got ",sig," (",Signal::desc(sig),")");)
 	Signal::def(sig);
 	raise(sig);
 }

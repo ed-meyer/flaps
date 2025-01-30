@@ -18,13 +18,13 @@ make_regex(const string& pat) {
 // convenience function for std::regex, catches exceptions
 // from bad patterns and throws an exception with a better
 // error message
-	Trace trc(1,"make_regex ",pat);
+	T_(Trace trc(1,"make_regex ",pat);)
 	regex rval;
 	try {
 		rval = regex(pat);
 	} catch (const regex_error& e) {
 		string exc{vastr("bad regular expression (",pat,"): ",regex_msg(e.code()))};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 	return rval;
@@ -36,13 +36,13 @@ make_regex_ic(const string& pat) {
 // convenience function for std::regex, catches exceptions
 // from bad patterns and throws an exception with a better
 // error message
-	Trace trc(1,"make_regex_ic ",pat);
+	T_(Trace trc(1,"make_regex_ic ",pat);)
 	regex rval;
 	try {
 		rval = regex(pat, regex_constants::icase);
 	} catch (const regex_error& e) {
 		string exc{vastr("bad regular expression (",pat,"): ",regex_msg(e.code()))};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 	return rval;
@@ -54,7 +54,7 @@ make_regex_ic(const string& pat) {
 
 int
 main (int argc, char **argv) {
-	Trace trc(1,argv[0]);
+	T_(Trace trc(1,argv[0]);)
 	string rx;
 	string test;
 
@@ -74,7 +74,7 @@ main (int argc, char **argv) {
 			ostringstream os;
 			while(std::cin >> test)
 				cout << test;
-			trc.dprint("got <",test,"> from cin");
+			T_(trc.dprint("got <",test,"> from cin");)
 		}
 	}
 

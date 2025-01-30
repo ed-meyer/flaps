@@ -1296,7 +1296,7 @@ circumsphere (vector<vector<double> > const& x, vector<double>& center) {
 // Returns:
 //   radius
 //   center  n-vector
-	Trace trc(1,"circumsphere");
+	T_(Trace trc(1,"circumsphere");)
 	size_t n = center.size();
 	vector<double> A(n*n);
 	vector<double> AF(n*n);
@@ -1318,24 +1318,24 @@ circumsphere (vector<vector<double> > const& x, vector<double>& center) {
 	for (i=0; i<n+1; i++)
 		assert(x[i].size() == n);
 
-	trc.dprintv(x[0], "x[0]");
+	T_(trc.dprintv(x[0], "x[0]");)
 
 	// Compute the center by solving
 	//    Ac = b
 	// where c is the center, A_i: = x_{i+1} - x_0 (i=0,n-1)
 	// and b_i = (x_{i+1}^t x_{i+1} - x_0^t x_0)/2 (i=0,n-1)
-	blas_dot(n, &x[0][0], 1, &x[0][0], 1, xx0);
+	blas::dot(n, &x[0][0], 1, &x[0][0], 1, xx0);
 	for (i=0; i<n; i++) {
 		for (j=0; j<n; j++) {
 			A[IJ(i,j,n)] = x[i+1][j] - x[0][j];
 		}
 		double xx;
-		blas_dot(n, &x[i+1][0], 1, &x[i+1][0], 1, xx);
+		blas::dot(n, &x[i+1][0], 1, &x[i+1][0], 1, xx);
 		b[i] = 0.5*(xx - xx0);
-		trc.dprintv(x[i+1], "x[",i+1,"]");
+		T_(trc.dprintv(x[i+1], "x[",i+1,"]");)
 	}
-	trc.dprintm(n,n,n,A,"A");
-	trc.dprintv(b, "b");
+	T_(trc.dprintm(n,n,n,A,"A");)
+	T_(trc.dprintv(b, "b");)
 
 	// solve Ac = b for the center c
 	int info;
@@ -1349,13 +1349,13 @@ circumsphere (vector<vector<double> > const& x, vector<double>& center) {
 		throw runtime_error(vastr("singular matrix (dgesvx returned ", info,
 			") rcond = ", rcond));
 	}
-	trc.dprint("sgesvx: rcond ", rcond);
-	trc.dprintv(center, "center");
+	T_(trc.dprint("sgesvx: rcond ", rcond);)
+	T_(trc.dprintv(center, "center");)
 	// compute the radius squared - recycle "r"
-	blas_copy (n, &x[0][0], 1, &r[0], 1);
-	blas_axpy (n, -1.0, &center[0], 1, &r[0], 1);
-	blas_dot(n, &r[0], 1, &r[0], 1, rval);
-	trc.dprint("returning radius squared ",rval);
+	blas::copy (n, &x[0][0], 1, &r[0], 1);
+	blas::axpy (n, -1.0, &center[0], 1, &r[0], 1);
+	blas::dot(n, &r[0], 1, &r[0], 1, rval);
+	T_(trc.dprint("returning radius squared ",rval);)
 	return rval;
 }
 
@@ -1397,7 +1397,7 @@ initialSimplex (size_t n);
 static
 DSimplex
 initialSimplex (size_t n) {
-	Trace trc(1,"initialSimplex");
+	T_(Trace trc(1,"initialSimplex");)
 	vector<double> center(n,1.0);
 	size_t i, j;
 
@@ -1409,7 +1409,7 @@ initialSimplex (size_t n) {
 		radiusSq += npts*npts;
 	}
 	radiusSq *= 100.0;
-	trc.dprint("radius squared = ", radiusSq);
+	T_(trc.dprint("radius squared = ", radiusSq);)
 
 	// SVD of a random matrix to get an orthonormal U
 	size_t nsq = n*n;
@@ -1440,8 +1440,8 @@ initialSimplex (size_t n) {
 	vector<Point> pts;
 	// the first n points are the columns of u scaled by rad
 	// these vectors are orthonormal
-	trc.dprintv(center,"center");
-	trc.dprintv(u,"first n radii");
+	T_(trc.dprintv(center,"center");)
+	T_(trc.dprintv(u,"first n radii");)
 	for (j=0; j<n; j++) {
 		for (i=0; i<n; i++) {
 			jpt[i] = (rad*u[IJ(i,j,n)] + center[i]);
@@ -1452,10 +1452,10 @@ initialSimplex (size_t n) {
 	// last (n+1) pt: combination of -u
 	vector<double> w(n, 1.0);
 	vector<double> z(n);
-	blas_sgemv ("n", n, n, 1.0, &u[0], n, &w[0], 1, 0.0, &z[0], 1);
-	double znorm = blas_snrm2(n, &z[0], 1);
+	blas::gemv ("n", n, n, 1.0, &u[0], n, &w[0], 1, 0.0, &z[0], 1);
+	double znorm = blas::snrm2(n, &z[0], 1);
 	double t = -rad/znorm;
-	blas_scal(n, t, &z[0], 1);
+	blas::scal(n, t, &z[0], 1);
 
 	for (i=0; i<n; i++) {
 		jpt[i] = (z[i] + center[i]);
@@ -1463,7 +1463,7 @@ initialSimplex (size_t n) {
 	pts.push_back(Point(jpt,true));
 
 	DSimplex rval(pts);
-	trc.dprint("initial Simplex",rval);
+	T_(trc.dprint("initial Simplex",rval);)
 	if (trc() > 0) rval.plot(0, "initialSimplex.apf", false);
 	assert(rval.size() == n+1);
 	return rval;
@@ -1595,7 +1595,7 @@ delaunay (vector<double> const& xmin, vector<double> const& xmax) {
 // Triangulate an n-dimensional hypercube described by
 // 2 points in each coordinate. Returns a Cube
 // with n! Simplex's with Points ranging from xmin to xmax
-	Trace trc(1,"delaunay");
+	T_(Trace trc(1,"delaunay");)
 	size_t n = xmin.size();
 	vector<int> npts(n,2);
 	vector<DSimplex> dsimplices;
@@ -1622,7 +1622,7 @@ delaunay (vector<double> const& xmin, vector<double> const& xmax) {
 		os.str("");
 		os << "simplex" << idx;
 		string title(os.str());
-		trc.dprint("working on ", title);
+		T_(trc.dprint("working on ", title);)
 		// get all intersecting dsimplices and the n+1 faces
 		// (n n-dimensional points)
 		vector<int> intersecting;
@@ -1631,7 +1631,7 @@ delaunay (vector<double> const& xmin, vector<double> const& xmax) {
 		vector<DSimplex> nonintersecting;
 		for (i=0; i<dsimplices.size(); i++) {
 			if (dsimplices[i].intersects(pt)) {
-				trc.dprint("Simplex ",i," is intersecting");
+				T_(trc.dprint("Simplex ",i," is intersecting");)
 				vector<Face> fi = dsimplices[i].faces();
 				for (j=0; j<fi.size(); j++) {
 					// check for duplicate faces: only use boundary
@@ -1647,7 +1647,7 @@ delaunay (vector<double> const& xmin, vector<double> const& xmax) {
 						}
 					}
 					if (!found) {
-						trc.dprint("Simplex ",i," contributed face ",faces.size());
+						T_(trc.dprint("Simplex ",i," contributed face ",faces.size());)
 						faces.push_back(fi[j]);
 					}
 				}
@@ -1670,7 +1670,7 @@ delaunay (vector<double> const& xmin, vector<double> const& xmax) {
 		}
 
 		// delete the intersecting dsimplices
-		trc.dprintn("deleting ",intersecting.size()," simplices... ");
+		T_(trc.dprintn("deleting ",intersecting.size()," simplices... ");)
 #ifdef NEVER
 		for (i=0; i<intersecting.size(); i++) {
 			int ii = intersecting[i];
@@ -1682,7 +1682,7 @@ delaunay (vector<double> const& xmin, vector<double> const& xmax) {
 #endif // NEVER
 		// simplices.erase(remove(simplices.begin(), simplices.end(),
 		// 		static_cast<Simplex*>(0)), simplices.end());
-		trc.dprint("now have ",dsimplices.size());
+		T_(trc.dprint("now have ",dsimplices.size());)
 
 		// create a new simplex for each face - a face
 		// has n points, adding the new point determines a simplex
@@ -1692,13 +1692,13 @@ delaunay (vector<double> const& xmin, vector<double> const& xmax) {
 				points.push_back(faces[i][j]);
 			}
 			points.push_back(pt);
-			trc.dprint("creating Simplex ",dsimplices.size()," with face ",i);
+			T_(trc.dprint("creating Simplex ",dsimplices.size()," with face ",i);)
 			dsimplices.push_back(DSimplex(points));
 		}
 		if(trc() > 0)plotDSimplices(dsimplices, title);
 		// next point
 		if (!indices(++idx, npts, ptidx)) {
-			trc.dprint("finished creating Simplexes");
+			T_(trc.dprint("finished creating Simplexes");)
 			break;
 		}
 		for (i=0; i<n; i++) {
@@ -1717,7 +1717,7 @@ delaunay (vector<double> const& xmin, vector<double> const& xmax) {
 		bool arb = false;
 		for (j=0; j<dsimplices[i].size(); j++) {
 			if (dsimplices[i][j].isarb) {
-				trc.dprint("removing initial simplex ",i);
+				T_(trc.dprint("removing initial simplex ",i);)
 				arb = true;
 				break;
 			}
@@ -1729,10 +1729,10 @@ delaunay (vector<double> const& xmin, vector<double> const& xmax) {
 	// permute points on each simplex to give the same orientation
 	orient (rval);
 
-		plotSimplices(rval, trc.fcnname());
+		plotSimplices(rval, T_(trc.fcnname());)
 		// checkSimp(rval);
 
-	trc.dprintv(rval,"returning ",rval.size()," Simplex");
+	T_(trc.dprintv(rval,"returning ",rval.size()," Simplex");)
 	return rval;
 }  // delaunay
 
@@ -1740,18 +1740,18 @@ void
 orient (vector<Simplex>& simplices) {
 // Given a vector of Simplex's, permute the points in each one
 // if necessary to give the same orientation
-	Trace trc(1,"orient");
+	T_(Trace trc(1,"orient");)
 
-	trc.dprint(simplices.size()," simplices");
+	T_(trc.dprint(simplices.size()," simplices");)
 
 	double det[2];
 	for (size_t i=0; i<simplices.size(); i++) {
-		trc.dprint("checking orientation of Simplex ",i);
+		T_(trc.dprint("checking orientation of Simplex ",i);)
 		simplices[i].orientation(det);
 		if (sgn(det[0]) < 0) {
-			trc.dprint("permuting Simplex ",i,": ",simplices[i]);
+			T_(trc.dprint("permuting Simplex ",i,": ",simplices[i]);)
 			simplices[i].permute();
-			trc.dprint("after ",simplices[i]);
+			T_(trc.dprint("after ",simplices[i]);)
 		}
 	}
 }
@@ -1761,10 +1761,10 @@ orient (vector<Simplex>& simplices) {
 static
 void
 plotDSimplices (vector<DSimplex> dsimplices, string const& file) {
-	Trace trc(1,"plotDSimplices");
+	T_(Trace trc(1,"plotDSimplices");)
 	bool append = false;
 
-	trc.dprint(dsimplices.size()," Simplex, to file ",file);
+	T_(trc.dprint(dsimplices.size()," Simplex, to file ",file);)
 	for (size_t i=0; i<dsimplices.size(); i++) {
 		dsimplices[i].plot(i, file, append);
 		append = true;
@@ -1776,10 +1776,10 @@ bool
 checkSimp (vector<DSimplex> simplices) {
 // for each Simplex test every point not part of it
 // to see if the point is contained in it's circumsphere
-	Trace trc(1,"checkSimp");
+	T_(Trace trc(1,"checkSimp");)
 	size_t i, j, pi, pj;
 
-	trc.dprint("checking ",simplices.size()," Simplex");
+	T_(trc.dprint("checking ",simplices.size()," Simplex");)
 
 	for (i=0; i<simplices.size(); i++) {
 		for (j=0; j<simplices.size(); j++) {
@@ -1792,7 +1792,7 @@ checkSimp (vector<DSimplex> simplices) {
 				if (pi <simplices[i].size())
 					break;
 				if (simplices[i].intersects(simplices[j][pj])) {
-					trc.dprint("returning false: simplex ",j, " intersects with ",i);
+					T_(trc.dprint("returning false: simplex ",j, " intersects with ",i);)
 					return false;
 				}
 			}
@@ -1806,11 +1806,11 @@ bool
 indices(int idx, vector<int> const& nitem, vector<int>& rval) {
 // given an index (idx) into an n-dimensional array with "nitem"
 // items in each coord, set the index of each coord in "rval"
-	Trace trc(2,"indices ",idx);
+	T_(Trace trc(2,"indices ",idx);)
 	size_t n = nitem.size();
 	size_t i;
 
-	trc.dprintv(nitem,"number of items in each coord:");
+	T_(trc.dprintv(nitem,"number of items in each coord:");)
 
 	// initialize and check for idx out of range
 	int maxidx = 1;
@@ -1819,7 +1819,7 @@ indices(int idx, vector<int> const& nitem, vector<int>& rval) {
 		maxidx *= nitem[i];
 	}
 	if (idx >= maxidx) {
-		trc.dprint("returning false: ",idx," out of the range 0-",maxidx-1);
+		T_(trc.dprint("returning false: ",idx," out of the range 0-",maxidx-1);)
 		return false;
 	}
 
@@ -1829,7 +1829,7 @@ indices(int idx, vector<int> const& nitem, vector<int>& rval) {
 		rval[i] = idx%nitem[i];
 		idx /= nitem[i];
 	}
-	trc.dprintv(rval,"returning");
+	T_(trc.dprintv(rval,"returning");)
 	return true;
 }
 
@@ -1845,14 +1845,14 @@ int
 main(int argc, char** argv) {
 // Usage:
 //   delaunay n
-	Trace trc(1,"main");
+	T_(Trace trc(1,"main");)
 	size_t n = 2;   // default order
 	ostringstream os;
 	uint64_t mul{numeric_limits<uint64_t>::max()};
 	Cube cube;
 
 	try {
-		trc.dprint("max unsigned long: ",mul," (",(double)mul,")");
+		T_(trc.dprint("max unsigned long: ",mul," (",(double)mul,")");)
 
 		if (argc > 1) {
 			n = atoi(argv[1]);
@@ -1895,7 +1895,7 @@ main(int argc, char** argv) {
 				}
 			}
 		}
-		trc.dprintv(bv,"bitvector");
+		T_(trc.dprintv(bv,"bitvector");)
 
 		// test proto
 		Cube pr = proto(n);
@@ -1914,8 +1914,8 @@ main(int argc, char** argv) {
 		}
 		
 		// until ../picard.c is changed:
-		trc.dprintv(cube,n,"D hypercube: ",cube.size()," Simplex");
-		trc.dprintv(pr,"proto");
+		T_(trc.dprintv(cube,n,"D hypercube: ",cube.size()," Simplex");)
+		T_(trc.dprintv(pr,"proto");)
 	} catch (runtime_error& s) {
 		cerr << "caught exception: " << s << endl;
 	}

@@ -26,7 +26,7 @@ flaps_specs() {
 
 bool
 parser (string const& settings) {
-	Trace trc(1,"parser");
+	T_(Trace trc(1,"parser");)
 
 	Specs& sp = flaps_specs();
 
@@ -69,7 +69,7 @@ parser (string const& settings) {
 		flaps::warning(exc);
 	}
 
-	trc.dprint("specs: {\n",sp,"}");
+	T_(trc.dprint("specs: {\n",sp,"}");)
 	return true;
 }
 

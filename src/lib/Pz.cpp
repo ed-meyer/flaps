@@ -24,6 +24,7 @@
 #include "matrix.h"
 #include "Pz.h"
 #include "text.h"
+#include "trace.h"
 
 using namespace std;
 using namespace std::complex_literals;
@@ -63,7 +64,7 @@ get_dependson(pset& plt) {
 // is a function of (no deep-dives). Method: the evaluation function
 // (eval) is called with monitoring turned on to capture the names of
 // all dependent parameters.
-	Trace trc(2,"Pz::get_dependson");
+	T_(Trace trc(2,"Pz::get_dependson");)
 
 	size_t nr{rsize()};
 	size_t nc{csize()};
@@ -73,10 +74,10 @@ get_dependson(pset& plt) {
 	try {
 		eval(plt, result, nr, nc);
 	} catch (runtime_error& s) {
-		trc.dprint("ignoring exception: ",s.what());
+		T_(trc.dprint("ignoring exception: ",s.what());)
 	}
 	vector<string> rval = plt.rotinom();
-	trc.dprint("returning ",rval.size()," dep param:\n",rval);
+	T_(trc.dprint("returning ",rval.size()," dep param:\n",rval);)
 	return rval;
 }
 
@@ -126,7 +127,7 @@ eval(pset& plt, vector<complex<Ad>>& result, size_t nr, size_t nc) {
 
 Pz::
 Pz(Receiver& s) {
-	Trace trc(2,"Pz Receiver constructor");
+	T_(Trace trc(2,"Pz Receiver constructor");)
 	s.serialize(nrow);
 	s.serialize(ncol);
 }
@@ -134,7 +135,7 @@ Pz(Receiver& s) {
 void
 Pz::
 put (Sender& s) const {
-	Trace trc(2,"Pz::put");
+	T_(Trace trc(2,"Pz::put");)
 	s.serialize(nrow);
 	s.serialize(ncol);
 }
@@ -185,7 +186,7 @@ Pz_const (Receiver& s) : Pz(s) {
 void
 Pz_const::
 put (Sender& s) const {
-	Trace trc(2,"Pz_const::put");
+	T_(Trace trc(2,"Pz_const::put");)
 	Pz::put(s);
 	s.serialize(params.size());
 	for (auto pp : params) {
@@ -276,11 +277,11 @@ IntPz(const vector<Matrix*>& matrices, int extrapol, double rhop) {
  *              if a variable is out if range, evaluate at the closest (min or max)
  *  rhop        smoothing parameter: 0->10: no smoothing -> max (default: 0)
  *------------------------------------------------------------------*/
-	Trace trc(1,"IntPz constructor");
+	T_(Trace trc(1,"IntPz constructor");)
 	vector<Matrix*> list;
 	bool is_complex{false};
 
-	trc.dprint(matrices.size()," matrices, extrap ",extrapol,", rho ",rhop);
+	T_(trc.dprint(matrices.size()," matrices, extrap ",extrapol,", rho ",rhop);)
 
 	// extrapol means it is ok to eval out-of-range, not really extrapolating,
 	// just hold the values constant
@@ -318,16 +319,16 @@ IntPz(const vector<Matrix*>& matrices, int extrapol, double rhop) {
 				pp->altval.clear();
 		}
 		assert(pzi->params.size() == theparams.size());
-		trc.dprint("input ",i+1,": ",*matrices[i]);
+		T_(trc.dprint("input ",i+1,": ",*matrices[i]);)
 		list.push_back(matrices[i]);
 		is_complex = is_complex || matrices[i]->is_complex();
 	}
-	trc.dprint("function of ",theparams.size()," parameters");
+	T_(trc.dprint("function of ",theparams.size()," parameters");)
 		
 	// sort matrices so that each parameter has increasing values
-	trc.dprint("unsorted:\n",matrix_list_summary(list));
+	T_(trc.dprint("unsorted:\n",matrix_list_summary(list));)
 	sort(list.begin(), list.end(), matrix_cmp);
-	trc.dprint("sorted:\n",matrix_list_summary(list));
+	T_(trc.dprint("sorted:\n",matrix_list_summary(list));)
 
 
 	vector<vector<double> > data;
@@ -350,7 +351,7 @@ IntPz(const vector<Matrix*>& matrices, int extrapol, double rhop) {
 
 	// remove any with only 1 value
 	for (auto& pp : theparams) {
-		trc.dprint(pp->name," has ",pp->altval.size()," values: ",pp->altval);
+		T_(trc.dprint(pp->name," has ",pp->altval.size()," values: ",pp->altval);)
 		if (pp->altval.size() < 2)
 			pp = nullptr;
 	}
@@ -397,7 +398,7 @@ IntPz(const vector<Matrix*>& matrices, int extrapol, double rhop) {
 	} else if (theparams.size() == 2) {
 		ip = new vspline2(x,y,data);
 	} else if (theparams.size() == 3) {
-		trc.dprint("vspline3 with x=",x,", y=",y,", z=",z);
+		T_(trc.dprint("vspline3 with x=",x,", y=",y,", z=",z);)
 	 	ip = new vspline3(x,y,z,data);
 	}
 	if (ip == nullptr)
@@ -410,7 +411,7 @@ bool IntPz::regd = Fio::register_class(IntPz::id(), IntPz::get);
 
 IntPz::
 IntPz (Receiver& s) : Pz(s) {
-	Trace trc(1,"IntPz Receiver constructor");
+	T_(Trace trc(1,"IntPz Receiver constructor");)
 	s.serialize(extrap);
 	Fio* op = Interp::get(s);
 	Interp* bp = dynamic_cast<Interp*>(op);
@@ -422,7 +423,7 @@ IntPz (Receiver& s) : Pz(s) {
 void
 IntPz::
 put (Sender& s) const {
-	Trace trc(1,"IntPz::put");
+	T_(Trace trc(1,"IntPz::put");)
 	Pz::put(s);
 	s.serialize(extrap);
 	spline.put(s);
@@ -437,11 +438,11 @@ get_par_values (pset& plt) {
 // Put all the parameter values in an array, checking to see
 // that they are in range; if out of range the value is set
 // to the limit to avoid extrapolation.
-	Trace trc(1,"get_par_values");
+	T_(Trace trc(1,"get_par_values");)
 	vector<Ad> rval;
 	vector<string> dep = this->spline.dependson();
 
-	trc.dprint("dep parameter(s): ",dep);
+	T_(trc.dprint("dep parameter(s): ",dep);)
 
 	// Get the parameter values by calling parval with "inrange" set
 	bool inrange{true};
@@ -449,7 +450,7 @@ get_par_values (pset& plt) {
 		Ad pv = plt.parval(di, inrange);
 		rval.push_back(pv);
 	}
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -457,7 +458,7 @@ bool
 IntPz::
 eval(pset& plt, vector<complex<Ad>>& result, size_t nr, size_t nc) {
 // evaluate a B-spline at the current values of the parameters
-	Trace trc(2,"IntPz::eval");
+	T_(Trace trc(2,"IntPz::eval");)
 
 	// Put all the parameter values in an array,
 	// with the ordering determined by my parameters (dep),
@@ -500,9 +501,9 @@ LMPz::
 
 LMPz::
 LMPz(size_t nr, size_t nc, Elem& el, std::string const& equation, char oper) {
-	Trace trc(1,"LMPz constructor");
+	T_(Trace trc(1,"LMPz constructor");)
 
-	trc.dprint(el," = ",equation," op ",oper);
+	T_(trc.dprint(el," = ",equation," op ",oper);)
 	elem = el;
 	eqn = equation;
 	this->nrow = nr;
@@ -511,12 +512,12 @@ LMPz(size_t nr, size_t nc, Elem& el, std::string const& equation, char oper) {
 	bool is_complex;
 	// get the dependent parameter names
 	dep_par = adeqn::dependson(gpset::get(), eqn, is_complex);
-	trc.dprint("created: ",*this);
+	T_(trc.dprint("created: ",*this);)
 }
 
 LMPz::
 LMPz (Receiver& s) : Pz(s) {
-	Trace trc(2,"LMPz Receiver constructor");
+	T_(Trace trc(2,"LMPz Receiver constructor");)
 	s.serialize(eqn);
 	s.serialize(elem.row);
 	s.serialize(elem.col);
@@ -529,7 +530,7 @@ LMPz (Receiver& s) : Pz(s) {
 void
 LMPz::
 put (Sender& s) const {
-	Trace trc(2,"LMPz::put");
+	T_(Trace trc(2,"LMPz::put");)
 	Pz::put(s);
 	s.serialize(eqn);
 	s.serialize(elem.row);
@@ -547,7 +548,7 @@ put (Sender& s) const {
 bool
 LMPz::
 eval(pset& plt, vector<complex<Ad>>& result, size_t nr, size_t nc) {
-	Trace trc(1,"LMPz::eval");
+	T_(Trace trc(1,"LMPz::eval");)
 	std::ostringstream os;
 
 	int i = elem.row;  // i is 0b
@@ -556,8 +557,8 @@ eval(pset& plt, vector<complex<Ad>>& result, size_t nr, size_t nc) {
 
 	Ad val = adeqn::eval(plt, this->eqn);
 
-	trc.dprint(elem," = ",this->eqn," = ",val,", op: ",op);
-	trc.dprint("result before op: ",result[k]);
+	T_(trc.dprint(elem," = ",this->eqn," = ",val,", op: ",op);)
+	T_(trc.dprint("result before op: ",result[k]);)
 
 	if (op == '*')
 		result[k] *= val;
@@ -569,7 +570,7 @@ eval(pset& plt, vector<complex<Ad>>& result, size_t nr, size_t nc) {
 		result[k] -= val;
 	else
 		result[k] = val;
-	trc.dprint("result after op: ",result[k]);
+	T_(trc.dprint("result after op: ",result[k]);)
 
 	return true;
 }
@@ -615,14 +616,14 @@ RFAApprox (std::vector<std::complex<double> > const& pval,
 RFAPz::
 RFAPz (std::vector<Matrix*> const& matrices, std::vector<double> betas,
 			 bool kscale, bool forceR0, bool optbeta) {
-	Trace trc(1,"RFAPz constructor");
+	T_(Trace trc(1,"RFAPz constructor");)
 	vector<complex<double> > pval;
 	vector<complex<double>*> cmlist;
 	size_t n = matrices[0]->rsize();
 	double rfmin = 1.0e+20;
 	double rfmax = 0.0;
 
-	trc.dprint(matrices.size()," matrices", "betas:\n",betas);
+	T_(trc.dprint(matrices.size()," matrices", "betas:\n",betas);)
 
 	// check that all matrices are complex - cast if not
 	for (auto mp : matrices) {
@@ -682,12 +683,12 @@ RFAPz (size_t n, std::vector<std::complex<double>*> const& matrices,
  * RFAPz constructor
  * Method (latex) is in "rfa.tex"
  *------------------------------------------------------------------*/
-	Trace trc(1,"RFAPz constructor");
+	T_(Trace trc(1,"RFAPz constructor");)
 	size_t i;
 
-	trc.dprint(matrices.size()," matrices, ",betas.size()," betas");
-	trc.dprint("pvals:\n",pval);
-	trc.dprint("betas:\n",betas);
+	T_(trc.dprint(matrices.size()," matrices, ",betas.size()," betas");)
+	T_(trc.dprint("pvals:\n",pval);)
+	T_(trc.dprint("betas:\n",betas);)
 
 	if (matrices.size() == 0)
 		throw runtime_error("attempt to construct a RFA with no matrices");
@@ -748,7 +749,7 @@ open_octlab(string const& file, size_t n) {
 // returns a pointer to the shared memory with n+1 doubles - the first is
 // a semaphore: if it is zero the data has been read and can be overwritten,
 // otherwise it is the number of doubles following.
-	Trace trc(1,"open_octlab");
+	T_(Trace trc(1,"open_octlab");)
 
 	int fd = open(file.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
 	if (fd == -1)
@@ -764,7 +765,7 @@ open_octlab(string const& file, size_t n) {
 	double* rval = (double*)mmap(0, nbytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (rval == MAP_FAILED) {
 		string exc{vastr("cannot map ",file,": ",strerror(errno))};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw std::system_error(errno,std::generic_category(),
 			vastr("cannot map ",file,": ",strerror(errno)));
 	}
@@ -816,7 +817,7 @@ optimize (vector<complex<double>> const& pval, vector<double> const& beta,
 		size_t n, vector<complex<double>*> const& matrices, vector<vector<double>>& R) {
 	// compute an optimal set of beta to minimize the error between the RFA
 	// and the input matrices
-	Trace trc(1,"optimize");
+	T_(Trace trc(1,"optimize");)
 
 	// change to temp directory using RAII class Chdir
 	Chdir tmp(getftmp());
@@ -824,7 +825,7 @@ optimize (vector<complex<double>> const& pval, vector<double> const& beta,
 	int nbeta = beta.size();
 
 	vector<double> x = beta;
-	trc.dprint("initial x:",x);
+	T_(trc.dprint("initial x:",x);)
 
 	// open memory-mapped files to send/receive data to matlab/octave
 	double* enviar = open_octlab("function", 1);
@@ -848,14 +849,14 @@ optimize (vector<complex<double>> const& pval, vector<double> const& beta,
 		cout << "got x = " << x << endl;
 		// signal that we got the message, then optfcn will wait for a reply
 		recibir[0] = 0.0;
-		trc.dprint("set recibir[0] to 0");
+		T_(trc.dprint("set recibir[0] to 0");)
 		// compute the new RFA ...
 		R.clear();
 		RFAApprox (pval, x, n, matrices, R);
 		// ... and the error
 		double err = RFAerror (x, R, pval, matrices);
 
-		trc.dprint("sending err = ",err);
+		T_(trc.dprint("sending err = ",err);)
 		// return the function value (err)
 		enviar[1] = err;
 		enviar[0] = 1.0;	// only one return value
@@ -874,10 +875,10 @@ eval(pset& plt, vector<complex<Ad>>& result, size_t nr, size_t nc) {
 // where Q = R_0 + pR_1 + p^2 R_2 + (p/(p + beta_1)) R_3 + ...
 // p = s/v = complex<double>(rsf, rf)
 // result is dimensioned (nr,nc) where n = A->rsize() and nr >= n
-	Trace trc(2,"RFAPz::eval");
+	T_(Trace trc(2,"RFAPz::eval");)
 	std::ostringstream os;
 
-	trc.dprint(R.size()," R matrices");
+	T_(trc.dprint(R.size()," R matrices");)
 
 	if (R.size() < 3) {
 		throw runtime_error(vastr("invalid RFA representation: only ",
@@ -897,7 +898,7 @@ eval(pset& plt, vector<complex<Ad>>& result, size_t nr, size_t nc) {
 	Ad rf = plt.parval("rf", inrange);
 	complex<Ad> p(rsf, rf);
 
-	trc.dprint("p = ",p);
+	T_(trc.dprint("p = ",p);)
 
 	// result = R0 + p*R1 + p*p*R2 = r^t * pv
 	// XXX 3 saxpy's?
@@ -938,10 +939,10 @@ eval(complex<double> const& p, vector<double> const& beta,
 // Evaluate an RFA as a complex (nr,nc) matrix at "p"
 // where Q = R_0 + pR_1 + p^2 R_2 + (p/(p + beta_1)) R_3 + ...
 // p = s/v = complex<double>(rsf, rf)
-	Trace trc(2,"RFAPz::eval(complex<double>)");
+	T_(Trace trc(2,"RFAPz::eval(complex<double>)");)
 	std::ostringstream os;
 
-	trc.dprint(R.size()," R matrices");
+	T_(trc.dprint(R.size()," R matrices");)
 
 	int nR = R.size();
 	int nbeta = beta.size();
@@ -967,13 +968,13 @@ eval(complex<double> const& p, vector<double> const& beta,
 
 RFAPz::
 RFAPz (Receiver& s) : Pz(s) {
-	Trace trc(1,"RFAPz Receiver constructor");
+	T_(Trace trc(1,"RFAPz Receiver constructor");)
 	size_t i;
 	size_t nR;
 	s.serialize(beta);
 
 	s.serialize(nR);
-	trc.dprint("deserializing ",nR," R matrices");
+	T_(trc.dprint("deserializing ",nR," R matrices");)
 	for (i=0; i<nR; i++) {
 		vector<double> ri;
 		s.serialize(ri);
@@ -984,7 +985,7 @@ RFAPz (Receiver& s) : Pz(s) {
 void
 RFAPz::
 put (Sender& s) const {
-	Trace trc(2,"RFAPz::put");
+	T_(Trace trc(2,"RFAPz::put");)
 	size_t i;
 	size_t nR = R.size();
 	Pz::put(s);
@@ -1033,12 +1034,12 @@ RFAApprox (vector<complex<double> > const& pval,
 		vector<double> const& beta,
 		size_t n, vector<complex<double>*> const& matrices,
 	   vector<vector<double>>& R, bool kscale, bool forceR0) {
-	Trace trc(1,"RFAApprox(double)");
+	T_(Trace trc(1,"RFAApprox(double)");)
 	size_t nsq = n*n;
 	std::ostringstream os;
 
-	trc.dprint(pval.size()," parameter values:",pval,", forceR0? ",forceR0);
-	trc.dprint(beta.size(), " betas:",beta,", kscale? ",kscale);
+	T_(trc.dprint(pval.size()," parameter values:",pval,", forceR0? ",forceR0);)
+	T_(trc.dprint(beta.size(), " betas:",beta,", kscale? ",kscale);)
 
 	// allocate the (3+l) R matrices
 	int nbeta = beta.size();
@@ -1167,8 +1168,8 @@ RFAApprox (vector<complex<double> > const& pval,
 	    np--;
 	}
 
-	trc.dprintm(mca,na,ma,a,"least-squares A");
-	trc.dprintm(mca,nrhs,ma,b,"least-squares B");
+	T_(trc.dprintm(mca,na,ma,a,"least-squares A");)
+	T_(trc.dprintm(mca,nrhs,ma,b,"least-squares B");)
 	// solve the linear system a*x = b
 	// double rcond = sqrt(std::numeric_limits<double>::epsilon());
 	double rcond = -1.0;  // use machine eps
@@ -1177,7 +1178,7 @@ RFAApprox (vector<complex<double> > const& pval,
 	int info = dgelss(ma, na, nrhs, reinterpret_cast<double*>(&a[0]), ma,
 		reinterpret_cast<double*>(&b[0]), ma, &s[0], rcond, &rank);
 
-	trc.dprint("dgelss returned ",info,", rank ",rank, " (",ma,',',na,"), rcond ",rcond);
+	T_(trc.dprint("dgelss returned ",info,", rank ",rank, " (",ma,',',na,"), rcond ",rcond);)
 	if (rank < (int)na) {
 		flaps::warning( "ill-conditioned least-squares problem: ", na-rank,
 				" rank-deficiencies");
@@ -1198,14 +1199,14 @@ RFAApprox (vector<complex<double> > const& pval,
 			for (int j=0; j<nrhs; j++) {
 				R[i+1][j] = bp[IJ(i,j,ma)];
 			}
-			trc.dprintm(n,n,n,R[i],vastr("R",i));
+			T_(trc.dprintm(n,n,n,R[i],vastr("R",i));)
 		}
 	} else {
 	    for (int i=0; i<na; i++) {
 			for (int j=0; j<nrhs; j++) {
 				R[i][j] = bp[IJ(i,j,ma)];
 			}
-			trc.dprintm(n,n,n,R[i],vastr("R",i));
+			T_(trc.dprintm(n,n,n,R[i],vastr("R",i));)
 	    }
 	}
 }
@@ -1235,7 +1236,7 @@ CustomPz (string const& name, size_t nr, size_t nc, int extra) : Pz(nr,nc) {
  *   extra   number of rows/columns above the other matrices this matrix
  *           will be used with
  *------------------------------------------------------------------*/
-	Trace trc(2,"CustomPz constructor");
+	T_(Trace trc(2,"CustomPz constructor");)
 
 	entrypt = name;
 	// sanity check, arbitrary upper limit:
@@ -1248,7 +1249,7 @@ CustomPz (CustomEval fcn, size_t nr, size_t nc, int extra) : Pz(nr,nc) {
 // alternative constructor for the case where the function is not
 // "user-written" and needs to be available in the current process,
 // e.g. in fem or flut (default_dmatrix)
-	Trace trc(2,"CustomPz(function) constructor");
+	T_(Trace trc(2,"CustomPz(function) constructor");)
 	// ok to leave entrypt empty?
 	function = fcn;
 	assert(extra >= 0 && extra < 1000);
@@ -1257,7 +1258,7 @@ CustomPz (CustomEval fcn, size_t nr, size_t nc, int extra) : Pz(nr,nc) {
 
 CustomPz::
 CustomPz (Receiver& s) : Pz(s) {
-	Trace trc(2,"CustomPz Receiver constructor");
+	T_(Trace trc(2,"CustomPz Receiver constructor");)
 	s.serialize(entrypt);
 	s.serialize(nExtra);
 	function = nullptr;
@@ -1267,7 +1268,7 @@ CustomPz (Receiver& s) : Pz(s) {
 void
 CustomPz::
 put (Sender& s) const {
-	Trace trc(2,"CustomPz::put");
+	T_(Trace trc(2,"CustomPz::put");)
 	// invoke (call) parent put
 	Pz::put(s);
 	s.serialize(entrypt);
@@ -1278,7 +1279,7 @@ put (Sender& s) const {
 // replace these with default?
 CustomPz::
 CustomPz (const CustomPz& pz) : Pz(pz) {
-	Trace trc(2,"CustomPz copy constructor");
+	T_(Trace trc(2,"CustomPz copy constructor");)
 	dep_par = pz.dep_par;
 	entrypt = pz.entrypt;
 	nExtra = pz.nExtra;
@@ -1306,7 +1307,7 @@ bool
 CustomPz::
 eval(pset& plt, vector<complex<Ad>>& result, size_t nr, size_t nc) {
 // Evaluate a matrix by calling a custom function
-	Trace trc(2,"CustomPz::eval");
+	T_(Trace trc(2,"CustomPz::eval");)
 	if (nr != Pz::nrow) {
 		throw runtime_error(vastr("CustomPz::eval: nr(", nr,
 					") != Pz::nrow(", Pz::nrow, ')'));

@@ -20,29 +20,24 @@
 
 using namespace std;
 
-  string MODIFIER ("");
-
 constexpr double Radius{6356.766};    // polar radius of the Earth (km)
 constexpr double Gmr{34.153195};    // gas constant
 // ==========================================================================
 Ad
 geopotential(const Ad& alt) {
 // given the geometric altitude in km, returns the geopotential altitude in km
-	Ad rval = alt*Radius/(alt + Radius);
+	Ad rval(alt*Radius/(alt + Radius));
 	return rval;
 }
 
 Ad
 theta (const Ad& z) {
-// theta as a function of geometric altitude in meters
+// theta as a function of geometric altitude z in meters
 	Ad h = geopotential(z/1000.0);  // h in km
-	Ad rval;
 	if (h.value() < 11.0) {         // Troposphere
-      rval = (288.15-6.5*h)/288.15;
-	} else {                        // Stratosphere
-      rval = 216.65/288.15;
+      return (288.15-6.5*h)/288.15;
 	}
-	return rval;
+	return 216.65/288.15;
 }
 
 Ad
@@ -50,14 +45,11 @@ atmos::
 delta (const Ad& z) {
 // delta as a function of geometric altitude in meters
 	Ad h = geopotential(z/1000.0);  // h in km
-	Ad rval;
 	if (h.value() < 11.0) {        // Troposphere
 		Ad th = theta(z);
-      rval = pow(th, Gmr/6.5);
-	} else {                       // Stratosphere
-      rval = 0.2233611*exp(-Gmr*(h-11.0)/216.65);
+      return pow(th, Gmr/6.5);
 	}
-	return rval;
+	return 0.2233611*exp(-Gmr*(h-11.0)/216.65);
 }
 
 Ad
@@ -65,8 +57,7 @@ sigma (const Ad& z) {
 // sigma as a function of geometric altitude in meters
 	Ad th = theta(z);
 	Ad del = atmos::delta(z);
-	Ad rval = del/th;
-	return rval;
+	return del/th;
 }
 
 Ad
@@ -74,32 +65,28 @@ atmos::
 temp (Ad const& z) {
 // temperature in degrees Kelvin (K)
 	double tzero{288.15};      // sea level temperature, kelvins
-	Ad rval = tzero*theta(z);
-	return rval;
+	return tzero*theta(z);
 }
 
 Ad
 atmos::
 press (Ad const& z) {
 	double pzero{101325.0};        // sea-level pressure, N/sq.m
-	Ad rval = pzero*atmos::delta(z);
-	return rval;
+	return pzero*atmos::delta(z);
 }
 
 Ad
 atmos::
 rho (Ad const& z) {
 	double rhozero{1.225};           // sea level density, kg/cu.m
-	Ad rval = rhozero*sigma(z);
-	return rval;
+	return rhozero*sigma(z);
 }
 
 Ad
 atmos::
 vsonic (Ad const& z) {
 	double azero{340.294};    // sea-level speed of sound, m/sec
-	Ad rval = azero*sqrt(theta(z));
-	return rval;
+	return azero*sqrt(theta(z));
 }
 
 double
@@ -136,7 +123,7 @@ vcas(const Ad& vtas, const Ad& alt) {
 // all we need is vtas & alt
 // from wikipedia Equivalent_airspeed
 //
-	Trace trc(3,"atmos::vcas");
+	T_(Trace trc(3,"atmos::vcas");)
 
 	Ad mach = vtas/atmos::vsonic(alt);
 	Ad mach2{mach*mach};
@@ -147,11 +134,10 @@ vcas(const Ad& vtas, const Ad& alt) {
 	//!! Ad delta = atmos::press(alt)/atmos::spressref();
 	Ad delt = atmos::delta(alt);
 
-	Ad t{1.0};
-	t += 0.125*(1.0 - delt)*mach2 +
+	Ad t = 1.0 + 0.125*(1.0 - delt)*mach2 +
 		0.0046875*(1.0 - 10.0*delt + 9.0*delt*delt)*mach2*mach2;
 	Ad rval = veas*t;
-	trc.dprint("returning ",rval);
+	T_(T_(trc.dprint("returning ",rval);))
 	return rval;
 }
 
@@ -164,21 +150,22 @@ cdpress(const Ad& vtas, const Ad& alt) {
 // Reference:
 //   Clancy, L.J. "Aerodynamics", Wiley, 1975
 //   wikipedia.org/wiki/Impact_pressure
-	Trace trc(3,"atmos::cdpress");
+	T_(Trace trc(3,"atmos::cdpress");)
+
+	Ad spress = atmos::press(alt);
+	Ad mach{vtas/atmos::vsonic(alt)};
+	T_(T_(trc.dprint("spress ",spress,", mach ",mach);))
+	if (mach.value() < 0.0) {
+		T_(T_(trc.dprint("mach < 0: ",mach.value());))
+		return spress;
+	}
 	Ad t(1.0);
 	Ad rval(0.0);
-	Ad spress = atmos::press(alt);
-	Ad mach = vtas/atmos::vsonic(alt);
 
-	trc.dprint("spress ",spress,", mach ",mach);
-
-	if (mach.value() >= 0.0) {
-		Ad exp(3.5);
-		t = pow(1.0 + mach*mach*0.2, exp) - 1.0;
-	}
+	constexpr double expon{3.5};
+	t = pow(1.0 + mach*mach*0.2, expon) - 1.0;
 	rval = spress*t;
-
-	trc.dprint("returning ",rval);
+	T_(T_(trc.dprint("returning ",rval);))
 	return rval;
 }
 
@@ -191,7 +178,7 @@ using namespace std;
 
 int
 main() {
-	Trace trc(1,"atmos");
+	T_(Trace trc(1,"atmos");)
 
 	const int nstep = 1001;
 	int i, j;
@@ -232,6 +219,8 @@ main() {
 		}
 		fprintf(fp, "*EOF\n");
 		fclose (fp);
+		cout << "Created \"" << plot[i].filename << "\" with parameters: alt, "
+				<< plot[i].var << ", uscs\n";
 	}
 }
 #endif

@@ -54,7 +54,7 @@ convertOptions (int argc, char** argv) {
  * Convert command-line options like "-x veas -y growth" to
  * a string like "x=veas, y=growth"
  *------------------------------------------------------------------*/
-	Trace trc(1,"convertOptions");
+	T_(Trace trc(1,"convertOptions");)
 	ostringstream os;
 	int i = 1;   // first arg of interest
 
@@ -146,7 +146,7 @@ convertOptions (int argc, char** argv) {
 			i += 1;
 		}
 	}
-	trc.dprint("returning ",os.str());
+	T_(trc.dprint("returning ",os.str());)
 	return os.str();
 }
 
@@ -165,7 +165,7 @@ no_plotfiles(vector<string> plotfiles) {
 
 bool
 parse_specs (string const& optionList, Specs& sp) {
-	Trace trc(1,"parse_specs");
+	T_(Trace trc(1,"parse_specs");)
 	bool rval = true;
 	ostringstream os;
 	vector<string> ignore;
@@ -287,7 +287,7 @@ parse_specs (string const& optionList, Specs& sp) {
 	for (auto& pf : sp.plotfiles) {
 		if (rsubstr(pf, 3) == ".mm") {
 			string cmd = vastr("matview -F ", pf,"&");
-			trc.dprint("starting matview with ",cmd);
+			T_(trc.dprint("starting matview with ",cmd);)
 			system(cmd.c_str());
 		} else {
 			notmm.push_back(pf);

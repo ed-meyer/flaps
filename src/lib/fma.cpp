@@ -21,7 +21,7 @@ Fma (const string& ufname, const string& id) {
 // import a Universal file, construct an Fma. If id is empty (default)
 // attempt to get it from the ufname: "name.vzid.uf", otherwise the
 // vzid is "name", all but the .uf
-	Trace trc(2,"Fma ",ufname);
+	T_(Trace trc(2,"Fma ",ufname);)
 	// connectivity from a uf is in "penlift" format: series of
 	// node numbers defining lines, each series separated by a zero
 	// (penlift).
@@ -38,7 +38,7 @@ Fma (const string& ufname, const string& id) {
 			file = ufname.substr(idx+1);
 		vector<string> toks = string2tok(file, ".");
 		size_t n = toks.size();
-		trc.dprint("ufname has ",n," toks: ",toks);
+		T_(trc.dprint("ufname has ",n," toks: ",toks);)
 		if (n < 2) {
 			vzid = toks[0];
 		} else if (n == 2) {
@@ -52,7 +52,7 @@ Fma (const string& ufname, const string& id) {
 			else
 				vzid = toks[n-1];
 		}
-		trc.dprint("defaulting vzid to ",vzid);
+		T_(trc.dprint("defaulting vzid to ",vzid);)
 	} else {
 		vzid = id;
 	}
@@ -67,7 +67,7 @@ Fma(const string& vzid) {
 // Fma vzid constructor XXX replace fetch?
 // Read Fma named "vzid" from the Flaps data directory,
 // throws a runtime_error exception if the file is corrupt
-	Trace trc(2,"Fma ctor \"",vzid,"\"");
+	T_(Trace trc(2,"Fma ctor \"",vzid,"\"");)
 
 	string filename{"fma"};
 	if (!vzid.empty())
@@ -80,11 +80,11 @@ Fma(const string& vzid) {
 	if (fop == nullptr) {
 		string err = vastr("reading \"",filename,
 			"\", expecting an Fma, got a ",op->vid());
-		trc.dprint("throwing exception: ",err);
+		T_(trc.dprint("throwing exception: ",err);)
 		throw runtime_error(err);
 	}
 	*this = *fop;
-	trc.dprint("read ",filename);
+	T_(trc.dprint("read ",filename);)
 }
 #endif // NEVER // only use fetch
 
@@ -92,15 +92,15 @@ Matrix*
 Fma::
 gct_matrix() {
 // create a Matrix with the generalized-coordinate transformation (gct)
-	Trace trc(2,"Fma::gct_matrix");
+	T_(Trace trc(2,"Fma::gct_matrix");)
 	int m = this->coords.size();
    int n = this->gct.size()/m;
 	string gctmid{"gct"};
 	if (!vzid.empty())
 		gctmid += "." + vzid;
 	Matrix* rval = new Matrix(gctmid,"gct",m,n,true);
-	blas_copy(m*n, this->gct.data(), 1, rval->celem(), 1);
-	trc.dprint("returning ",*rval);
+	blas::copy(m*n, this->gct.data(), 1, rval->celem(), 1);
+	T_(trc.dprint("returning ",*rval);)
 	return rval;
 }
 
@@ -117,7 +117,7 @@ mid(string const& vzid) {
 bool Fma::regd = Fio::register_class(Fma::id(), Fma::get);
 Fma::
 Fma (Receiver& r) {
-	Trace trc(2,"Fma Receiver constructor");
+	T_(Trace trc(2,"Fma Receiver constructor");)
 	r.serialize(nodes);
 	r.serialize(coords);
 	r.serialize(segidx);
@@ -128,7 +128,7 @@ Fma (Receiver& r) {
 void
 Fma::
 put(Sender& s) const {
-	Trace trc(2,"Fma::put");
+	T_(Trace trc(2,"Fma::put");)
 	s.serialize(nodes);
 	s.serialize(coords);
 	s.serialize(segidx);
@@ -139,13 +139,13 @@ put(Sender& s) const {
 void
 Fma::
 store() {
-	Trace trc(2,"Fma::store");
+	T_(Trace trc(2,"Fma::store");)
 	string filename{"fma"};
 	if (!vzid.empty())
 		filename += vastr(".",vzid);
 	Sender file(filename);
 	Fio::put(file, *this);
-	trc.dprint("stored \"",filename,"\"");
+	T_(trc.dprint("stored \"",filename,"\"");)
 }
 
 Fma*
@@ -153,7 +153,7 @@ Fma::
 fetch(const string& vzid) {
 // Read Fma named "vzid" from the Flaps data directory,
 // throws a runtime_error exception if the file is corrupt
-	Trace trc(2,"Fma::fetch \"",vzid,"\"");
+	T_(Trace trc(2,"Fma::fetch \"",vzid,"\"");)
 	Fma* rval{nullptr};
 
 	string filename{"fma"};
@@ -167,10 +167,10 @@ fetch(const string& vzid) {
 	if (rval == nullptr) {
 		string err = vastr("reading \"",filename,
 			"\", expecting an Fma, got a ",op->vid());
-		trc.dprint("throwing exception: ",err);
+		T_(trc.dprint("throwing exception: ",err);)
 		throw runtime_error(err);
 	}
-	trc.dprint("read ",filename);
+	T_(trc.dprint("read ",filename);)
 	return rval;
 }
 

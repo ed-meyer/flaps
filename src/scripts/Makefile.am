@@ -46,7 +46,8 @@ targets \
 tbig \
 tgrep \
 traceback \
-when
+when \
+wraptrace
 
 #EXTRA_DIST = $(bin_SCRIPTS) $(noinst_SCRIPTS)
 EXTRA_DIST = $(bin_SCRIPTS)

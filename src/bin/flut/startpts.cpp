@@ -46,6 +46,7 @@
 #include "process.h"
 #include "specs.h"
 #include "startpts.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -81,14 +82,14 @@ vector<Region>&
 startregions(string const& options) {
 // add to, or get a reference to *the* list of Regions where start
 // points are to be searched for
-	Trace trc(1,"startregions");
+	T_(Trace trc(1,"startregions");)
 	// static: not threadsafe - should be ok since this is just
 	// used in parsing, before any tracking
 	static vector<Region> thelist;
 
 	// If we were called without an arg just return thelist
 	if (options.empty()) {
-		trc.dprint("quick return: no options");
+		T_(trc.dprint("quick return: no options");)
 		return thelist;
 	}
 
@@ -121,7 +122,7 @@ startregions(string const& options) {
 			region.push_back(Bndry(*tok));
 		}
 		thelist.push_back(region);
-		trc.dprint("got startregion<",region,">, now have ",thelist.size());
+		T_(trc.dprint("got startregion<",region,">, now have ",thelist.size());)
 	}
 
 	return thelist;
@@ -136,14 +137,14 @@ startpts() {
 // means there are 2 fixed parameters in the startregions, and
 // for this startregion they are set to the 4th and 2nd altval,
 // respectively.
-	Trace trc(1,"startpts");
+	T_(Trace trc(1,"startpts");)
 	ostringstream os;
 	vector<Flutcurve*> rval;
 	vector<Region>& srlist = startregions();
 	Specs& sp = flutspecs();
 
 	if (srlist.empty()) {
-		trc.dprint("no start regions: adding \"anyregion\"");
+		T_(trc.dprint("no start regions: adding \"anyregion\"");)
 		srlist.push_back(Region());
 	}
 
@@ -161,7 +162,7 @@ startpts() {
 	// parameter value.
 	string srtag;
 	size_t nsr = srlist.size();
-	trc.dprint(nsr," start regions");
+	T_(trc.dprint(nsr," start regions");)
 	for (size_t i=0; i<nsr; i++) {
 		setPointBndrys(srlist[i]);
 		if (nsr > 1)
@@ -182,7 +183,7 @@ startpts() {
 					if (startpts.empty()) {
 						os.str("");
 						os << "no normal modes found in specified start region";
-						trc.dprint("throwing exception: ",os.str());
+						T_(trc.dprint("throwing exception: ",os.str());)
 						throw runtime_error(os.str());
 					}
 				}
@@ -209,7 +210,7 @@ startpts() {
 		} while (!mfvtag.empty());
 	}
 
-	trc.dprint("returning ",rval.size()," start points");
+	T_(trc.dprint("returning ",rval.size()," start points");)
 	return rval;
 }
 
@@ -221,7 +222,7 @@ mindpress() {
 // vtas, veas, vcas, alt. Note that alt is used in a constant-mach-
 // variable-alt analysis and it must be set to its maximum to minimize
 // dynamic pressure.
-	Trace trc(1,"mindpress");
+	T_(Trace trc(1,"mindpress");)
 	string rval;
 	vector<Par*> indeps = gpset::get().get_indep();
 
@@ -251,14 +252,14 @@ mindpress() {
 			if (!pp->has_max())
 				throw runtime_error(vastr("no max given for ", pp->name));
 			pp->value(pp->max());
-			trc.dprint("set ",pp->name," to its max: ",pp->max());
+			T_(trc.dprint("set ",pp->name," to its max: ",pp->max());)
 			return pp->name;
 		}
 		if (std::find(lo.begin(),lo.end(),pp->name) != lo.end()) {
 			if (!pp->has_min())
 				throw runtime_error(vastr("no min given for ", pp->name));
 			pp->value(pp->min());
-			trc.dprint("set ",pp->name," to its min: ",pp->min());
+			T_(trc.dprint("set ",pp->name," to its min: ",pp->min());)
 			return pp->name;
 		}
 	}
@@ -275,13 +276,13 @@ setPointBndrys(Region const& rl) {
 //   startregion{vtas=20, ...}
 // Set the value in the global pl
 // XXX should call make_equations() after setting a par to Fixed
-	Trace trc(1,"setPointBndrys");
+	T_(Trace trc(1,"setPointBndrys");)
 
 	for (size_t j=0; j<rl.size(); j++) {
 		if (rl[j].isPoint()) {
 			Par* pp = gpset::find(rl[j].parname);
 			if (pp != nullptr) {
-				trc.dprint("setting ",pp->name," to ",rl[j].min);
+				T_(trc.dprint("setting ",pp->name," to ",rl[j].min);)
 				pp->valuef(rl[j].min);
 			} else {
 				string exc = vastr("parameter \"",rl[j].parname,
@@ -301,7 +302,7 @@ low_speed(vector<Flutcurve*>& rval, Region& startrl) {
 // Returns: new Flutcurves are added to "rval": one for each
 // freq within the start region.
 //------------------------------------------------------------------
-	Trace trc(1,"low_speed");
+	T_(Trace trc(1,"low_speed");)
 	ostringstream os;
 
 	// find an indep parameter which minimizes dynamic
@@ -325,7 +326,7 @@ low_speed(vector<Flutcurve*>& rval, Region& startrl) {
 	for (auto mp : modes)
 		rval.push_back(mp);
 
-	trc.dprint("returning ",modes.size()," modes, now have ",rval.size());
+	T_(trc.dprint("returning ",modes.size()," modes, now have ",rval.size());)
 }
 
 void
@@ -333,7 +334,7 @@ getFreqLimits(Region& startregion, double& freqMin, double& freqMax) {
 // See if the user has specified a freq startregion - set
 // freqMin, freqMax if he has; otherwise they default to
 // freq[min:max] if available, otherwise to some resonable default?
-	Trace trc(1,"getFreqLimits");
+	T_(Trace trc(1,"getFreqLimits");)
 	Par* freqp = gpset::get().findg("freq");
 	double fconv = freqp->convFactor();
 
@@ -348,7 +349,7 @@ getFreqLimits(Region& startregion, double& freqMin, double& freqMax) {
 	// see if the startregion has frequency limits
 	Bndry* rp = startregion.get("freq");
 	if (rp != nullptr) {
-		trc.dprint("check startregion freq limits [",rp->min,":",rp->max,"]");
+		T_(trc.dprint("check startregion freq limits [",rp->min,":",rp->max,"]");)
 		if (rp->min >= freqMin) {
 			freqMin = rp->min;
 		} else {
@@ -362,7 +363,7 @@ getFreqLimits(Region& startregion, double& freqMin, double& freqMax) {
 					") is greater than the freq max (",freqMax,")");
 		}
 	}
-	trc.dprint("returning [",freqMin,":",freqMax,"]");
+	T_(trc.dprint("returning [",freqMin,":",freqMax,"]");)
 }
 
 // Eigmatrices evaluates and casts to complex all matrices
@@ -378,7 +379,7 @@ public:
 	Matrix* controls{nullptr};
 
 	Eigmatrices() {
-		Trace trc(1,"Eigmatrices constructor");
+		T_(Trace trc(1,"Eigmatrices constructor");)
 		vector<string> names;
 		int n = get_order();
 		gaf = getComplexMatrix("gaf", n);
@@ -394,7 +395,7 @@ public:
 		if (gyro != nullptr)
 			names.push_back("gyro");
 
-		trc.dprint("returning: ",names);
+		T_(trc.dprint("returning: ",names);)
 	}
 	~Eigmatrices() {
 		if (gaf)
@@ -485,7 +486,7 @@ refine() {
 					vector<double>& Dxfreq,		// d(Dx)/dfreq (2n)
 					vector<double>& Dxx) {		// d(Dx)/dx (2n,2n)
 					// compute d(Dx)/ds and d(Dx)/dx for nleig
-						Trace trc(1,"eigensolution dmat");
+						T_(Trace trc(1,"eigensolution dmat");)
 						//!! Par* freqp = gpset::get().findg("freq");
 						//!! Par* sigmap = gpset::get().findg("sigma");
 						size_t n = x.size();
@@ -538,7 +539,7 @@ refine() {
 			// scale frequencies
 			double t = freqscale*flaps::radps2Hz;
 			int nc = results.size()/np;			// results is (np,nc)
-			blas_scal(nc, t, &results[np-2], np);
+			blas::scal(nc, t, &results[np-2], np);
 			Apf::exporter(vastr("mode_",mode),params, results, "nleig.apf", append);
 		}
 		if (!stepdata.empty())
@@ -549,7 +550,7 @@ refine() {
 
 void
 eigensolution(vector<Flutcurve*>& rval, Region& startregion) {
-	Trace trc(1,"eigensolution");
+	T_(Trace trc(1,"eigensolution");)
 	double freq{0.0};
 	double sdamp{0.0};
 	Par* freqp = gpset::get().findg("freq");
@@ -596,7 +597,7 @@ eigensolution(vector<Flutcurve*>& rval, Region& startregion) {
 		rfp->value(rfp->max());
 	// likewise, set freq to it's midpoint in case there is a T-matrix
 	freqp->value((freqMin+freqMax)/2.0);
-	trc.dprint("eval T at freq = ", freqp->value());
+	T_(trc.dprint("eval T at freq = ", freqp->value());)
 
 	// and set the eigenvector components to 1 in case there are
 	// freeplay nonlinearities
@@ -622,16 +623,16 @@ eigensolution(vector<Flutcurve*>& rval, Region& startregion) {
 	// add structural damping to stiffness matrix
 	if (sdamp != 0.0) {
 		complex<double> ctmp(1.0, sdamp);
-		blas_scal(nsq, ctmp, matrices.stif->celem(), 1);
+		blas::scal(nsq, ctmp, matrices.stif->celem(), 1);
 	}
 
 	// add T to the stiffness matrix
 	if (matrices.controls != nullptr) {
 		assert((int)matrices.controls->rsize() == n);
-		trc.dprint("adding T to stif");
-		blas_axpy (2*nsq, 1.0, matrices.controls->elem(), 1,
+		T_(trc.dprint("adding T to stif");)
+		blas::axpy (2*nsq, 1.0, matrices.controls->elem(), 1,
 				matrices.stif->elem(), 1);
-		trc.dprint("gpset for eigensolution\n",gpset::get());
+		T_(trc.dprint("gpset for eigensolution\n",gpset::get());)
 	}
 
 	// these are the results we need to create Flutcurves
@@ -642,12 +643,12 @@ eigensolution(vector<Flutcurve*>& rval, Region& startregion) {
 	if (matrices.gyro != nullptr && matrices.vdamp == nullptr) {
 		vector<int> pi;
 		vector<double> m(nsq, 0.0);
-		blas_copy(nsq, matrices.mass->elem(), 2, &m[0], 1);
+		blas::copy(nsq, matrices.mass->elem(), 2, &m[0], 1);
 		// the gyro matrix was scaled by spin in the Eigmatrices constructor
 		vector<double> g(nsq, 0.0);
-		blas_copy(nsq, matrices.gyro->elem(), 2, &g[0], 1);
+		blas::copy(nsq, matrices.gyro->elem(), 2, &g[0], 1);
 		vector<double> k(nsq, 0.0);
-		blas_copy(nsq, matrices.stif->elem(), 2, &k[0], 1);
+		blas::copy(nsq, matrices.stif->elem(), 2, &k[0], 1);
 		vector<double> iw;
 		lapack::gyroeig(n, m, g, k, iw, vr, pi);		// eigensolution
 		for (auto wi : iw)
@@ -662,7 +663,7 @@ eigensolution(vector<Flutcurve*>& rval, Region& startregion) {
 			if (matrices.vdamp != nullptr) {
 				assert((int)matrices.vdamp->rsize() == n);
 				// gyro was scaled by spin in Eigmatrices
-				blas_axpy (2*nsq, 1.0, matrices.gyro->elem(), 1,
+				blas::axpy (2*nsq, 1.0, matrices.gyro->elem(), 1,
 						matrices.vdamp->elem(), 1);
 			} else {
 				matrices.vdamp = matrices.gyro;
@@ -699,25 +700,25 @@ eigensolution(vector<Flutcurve*>& rval, Region& startregion) {
 			if (w[i].imag() >= 0.0) {
 				posw.push_back(w[i]);
 				vector<complex<double>> tmp(n);
-				blas_copy(n, &vr[IJ(0,i,n)], 1, tmp.data(), 1);
+				blas::copy(n, &vr[IJ(0,i,n)], 1, tmp.data(), 1);
 				blas::append(tmp, posvr);
-				blas_copy(n, &vl[IJ(0,i,n)], 1, tmp.data(), 1);
+				blas::copy(n, &vl[IJ(0,i,n)], 1, tmp.data(), 1);
 				blas::append(tmp, posvl);
 			}
 			if ((int)posw.size() == n)
 				break;
 		}
-		trc.dprint("positive eigenvalues: ",posw);
-		size_t m = posw.size();
-		trc.dprintm(n,m,n,posvr.data(), "pos vectors");
+		T_(trc.dprint("positive eigenvalues: ",posw);)
+		T_(size_t m = posw.size();)
+		T_(trc.dprintm(n,m,n,posvr.data(), "pos vectors");)
 		// sort by increasing imag part
 		lapack::sortEigen(n, posw.size(), posw.data(), posvl.data(), posvr.data());
 		// copy these back to w, vr, vl
 		w = posw;
 		vr = posvr;
 		vl = posvl;
-		trc.dprint("sorted eigenvalues: ",w);
-		trc.dprintm(n,m,n,vr.data(), "sorted vectors");
+		T_(trc.dprint("sorted eigenvalues: ",w);)
+		T_(trc.dprintm(n,m,n,vr.data(), "sorted vectors");)
 	}
 
 	// create a new Flutcurve for each frequency and curveid requested
@@ -736,7 +737,7 @@ eigensolution(vector<Flutcurve*>& rval, Region& startregion) {
 		string curveid{std::to_string(mode)};
 #endif // NEVER // new cid format
 		if (!startregion.contains_mode(mode) && !startregion.curveidOk(curveid)) {
-			trc.dprint("reject mode ",mode,": not requested");
+			T_(trc.dprint("reject mode ",mode,": not requested");)
 			continue;
 		}
 		// freq in range?
@@ -747,11 +748,11 @@ eigensolution(vector<Flutcurve*>& rval, Region& startregion) {
 		}
 		if (!inrange) {
 			outofrange.push_back(mode);
-			trc.dprint("ignoring mode ",mode," freq (",freq, ") out of range [", freqMin,':',freqMax,']');
+			T_(trc.dprint("ignoring mode ",mode," freq (",freq, ") out of range [", freqMin,':',freqMax,']');)
 			continue;
 		}
 		// watch for zero vector XXX why does polyeig return zero eigenvector for i>n?
-		double vnorm = blas_snrm2(2*n, (double*)&vr[IJ(0,i,n)], 1);
+		double vnorm = blas::snrm2(2*n, (double*)&vr[IJ(0,i,n)], 1);
 		if (vnorm < eps)
 			continue;
 
@@ -774,7 +775,7 @@ eigensolution(vector<Flutcurve*>& rval, Region& startregion) {
 			vector<double>* plot_stepdata{nullptr};
 			vector<pair<string,string>> params;
 			vector<pair<string,string>>* plot_params{nullptr};
-			if (trc()) {plot_results = &results; plot_stepdata = &stepdata; plot_params = &params;}
+			T_(if (trc()) {plot_results = &results; plot_stepdata = &stepdata; plot_params = &params;})
 
 			// scale the frequency (imag part of w) for continuation
 			double freqscale{100.0};
@@ -787,7 +788,7 @@ eigensolution(vector<Flutcurve*>& rval, Region& startregion) {
 					vector<double>& Dxfreq,		// d(Dx)/dfreq (2n)
 					vector<double>& Dxx) {		// d(Dx)/dx (2n,2n)
 					// compute d(Dx)/ds and d(Dx)/dx for nleig
-						Trace trc(1,"eigensolution dmat");
+						T_(Trace trc(1,"eigensolution dmat");)
 						size_t n = x.size();
 						sigmap->value(s.real());
 						freqp->value(s.imag()*freqscale);
@@ -837,7 +838,7 @@ eigensolution(vector<Flutcurve*>& rval, Region& startregion) {
 				// scale frequencies
 				double t = freqscale*flaps::radps2Hz;
 				int nc = results.size()/np;			// results is (np,nc)
-				blas_scal(nc, t, &results[np-2], np);
+				blas::scal(nc, t, &results[np-2], np);
 				Apf::exporter(vastr("mode_",mode),params, results, "nleig.apf", append);
 			}
 #ifdef NEVER // new Fv
@@ -852,13 +853,13 @@ eigensolution(vector<Flutcurve*>& rval, Region& startregion) {
 		Flutcurve* newcurve = new Flutcurve(sp.aid, curveid, sp.vzid);
 		// add to return list
 		rval.push_back(newcurve);
-		trc.dprint("new start guess ",curveid, ": ",newcurve->current_values());
+		T_(trc.dprint("new start guess ",curveid, ": ",newcurve->current_values());)
 	}
 
 	if (!outofrange.empty())
 		flaps::warning(outofrange.size()," modes had frequencies out of range");
 
-	trc.dprint("returning ",rval.size()," roots");
+	T_(trc.dprint("returning ",rval.size()," roots");)
 	return;
 }  // eigensolution
 
@@ -913,7 +914,7 @@ consolidateIgnoreMsg(vector<IgnoreMsg>& ignoreMsg) {
 void
 fetch_curves (const string& sid, vector<Flutcurve*>& rval,
 		Region& startregion) {
-	Trace trc(1,"fetch_curves ",sid);
+	T_(Trace trc(1,"fetch_curves ",sid);)
 	size_t i, j;
 	ostringstream os;
 	vector<IgnoreMsg> ignoreMsg;
@@ -940,13 +941,13 @@ fetch_curves (const string& sid, vector<Flutcurve*>& rval,
 			string aid, cid;
 			Curve::mid2comp(mi, aid, cid);
 			if (!startregion.curveidOk(cid)) {
-				trc.dprint("rejecting this region: curveid does not match");
+				T_(trc.dprint("rejecting this region: curveid does not match");)
 				ignoreMsg.push_back(IgnoreMsg("does not match requested id", cid));
 				continue;
 			}
 			ci = Curve::fetch(mi);
 			if (ci->nsolns() == 0) {
-				trc.dprint(ci->cid()," is an empty curve");
+				T_(trc.dprint(ci->cid()," is an empty curve");)
 				continue;
 			}
 			// if a vzid was not specified take it from a source curve
@@ -954,10 +955,10 @@ fetch_curves (const string& sid, vector<Flutcurve*>& rval,
 				sp.vzid = ci->vzid();
 			// XXX need RAII to delete ci
 		} catch (runtime_error const& s) {
-			trc.dprint("no more results available for analysis id \"", sid,"\": ",s.what());
+			T_(trc.dprint("no more results available for analysis id \"", sid,"\": ",s.what());)
 			break;
 		}
-		trc.dprint("working on curve \"",ci->cid(),"\"");
+		T_(trc.dprint("working on curve \"",ci->cid(),"\"");)
 
 		try {
 			vector<string> messages;
@@ -970,7 +971,7 @@ fetch_curves (const string& sid, vector<Flutcurve*>& rval,
 			delete ci;
 		} catch (StartSearch& s) {
 			ignoreMsg.push_back(IgnoreMsg(s.what(), ci->cid()));
-			trc.dprint("caught StartSearch exc: ",s," now have ",ignoreMsg.size()," messages");
+			T_(trc.dprint("caught StartSearch exc: ",s," now have ",ignoreMsg.size()," messages");)
 		}
 	}
 
@@ -1017,7 +1018,7 @@ fetch_curves (const string& sid, vector<Flutcurve*>& rval,
 		cout << separator() << endl;
 	}
 
-	trc.dprint("returning ",rval.size()," start points");
+	T_(trc.dprint("returning ",rval.size()," start points");)
 }
 
 void
@@ -1034,13 +1035,13 @@ search_curve (Curve& source_curve, vector<string>& messages,
  *     DiffValue     the value of a Fixed parameter was different
  *                   in the source analysis
  *------------------------------------------------------------------*/
-	Trace trc(1,"search_curve ",source_curve.cid());
+	T_(Trace trc(1,"search_curve ",source_curve.cid());)
 	ostringstream os;
 	string interpPar;
 	string curveid = source_curve.cid();
 	int nnew{0};
 
-	trc.dprint(" start region: ",rl,", already have ",rval.size()," start pts");
+	T_(trc.dprint(" start region: ",rl,", already have ",rval.size()," start pts");)
 
 	// 1) does this Region (rl) have a point Bndry (e.g. vtas=10)?
 	//    if so interpolate to that point
@@ -1051,7 +1052,7 @@ search_curve (Curve& source_curve, vector<string>& messages,
 				pointBndry->parname, rl, pointBndry->min,
 				pointBndry->closest, messages);
 
-		trc.dprint("got ",newcurves.size(),", ",pointBndry->parname, " = ",pointBndry->min," Solutions, ", messages.size()," messages");
+		T_(trc.dprint("got ",newcurves.size(),", ",pointBndry->parname, " = ",pointBndry->min," Solutions, ", messages.size()," messages");)
 
 		// Create a new Flutcurve for each interpolated pset
 		// give each interpolated value a description which is
@@ -1068,10 +1069,10 @@ search_curve (Curve& source_curve, vector<string>& messages,
 			const Par* oorpar{nullptr};
 			oorpar = rl.outOfRange(newcurves[k]->params, oormsg);
 			if (oorpar == nullptr) {
-				trc.dprint("ok, adding to rval");
+				T_(trc.dprint("ok, adding to rval");)
 				rval.push_back(newcurves[k]);
 				nnew++;
-				trc.dprint("added ",newcurves[k]->cid(),", now have ",rval.size());
+				T_(trc.dprint("added ",newcurves[k]->cid(),", now have ",rval.size());)
 			}
 		}
 	}
@@ -1079,13 +1080,13 @@ search_curve (Curve& source_curve, vector<string>& messages,
 	// if we added start points with pointregrions and
 	// curveid's we are done
 	if (nnew > 0) {
-		trc.dprint("returning ",nnew," new start points");
+		T_(trc.dprint("returning ",nnew," new start points");)
 		return;
 	}
 
 	// Quick return if only one point
 	if (source_curve.nsolns() < 2) {
-		trc.dprint("returning empty pset: only ", source_curve.nsolns()," points in source");
+		T_(trc.dprint("returning empty pset: only ", source_curve.nsolns()," points in source");)
 	}
 
 	// 2) interpolate on a Fixed or multiple-fixed-value (mfv) parameter
@@ -1113,19 +1114,19 @@ search_curve (Curve& source_curve, vector<string>& messages,
 				os.str("");
 				os << si->name << " is below its minimum (" << si->min() << ")"
 					<< " throughout the curve (max is " << pmax << ')';
-				trc.dprint("throwing exception: ",os.str());
+				T_(trc.dprint("throwing exception: ",os.str());)
 				throw OutOfRange(os.str());
 			}
 			if (si->has_max() && is_greaterthan(pmin, si->max(), 5)) {
 				os.str("");
 				os << si->name << " is above its maximum (" << si->max() << ")"
 					<< " throughout the curve (min is " << pmin << ')';
-				trc.dprint("throwing exception: ",os.str());
+				T_(trc.dprint("throwing exception: ",os.str());)
 				throw OutOfRange(os.str());
 			}
 		}
 		if (si->pref && si->is_fixed()) {
-			trc.dprint("trying ",si->name," as interpolation parameter");
+			T_(trc.dprint("trying ",si->name," as interpolation parameter");)
 			// was it constant? if so check to see if it matches input value...
 			if (is_equal(pmin, pmax, 5)) {
 				if (!is_equal(si->value(), pmin, 5)) {
@@ -1134,7 +1135,7 @@ search_curve (Curve& source_curve, vector<string>& messages,
 						<< pmin << ") but not " << si->prevalue();
 					flaps::warning(os.str());
 				} else {
-					trc.dprint("value (",si->prevalue(),") matches source");
+					T_(trc.dprint("value (",si->prevalue(),") matches source");)
 				}
 			} else {
 				// ... otherwise interpolate to get a param list at the
@@ -1166,7 +1167,7 @@ search_curve (Curve& source_curve, vector<string>& messages,
 					oorpar = rl.outOfRange(newcurves[j]->params, oormsg);
 					if (oorpar == nullptr) {
 						rval.push_back(newcurves[j]);
-						trc.dprint("added ",newcurves[j]->cid(), ", now have ",rval.size());
+						T_(trc.dprint("added ",newcurves[j]->cid(), ", now have ",rval.size());)
 					} else {
 						messages.push_back(oormsg);
 						delete newcurves[j];
@@ -1178,7 +1179,7 @@ search_curve (Curve& source_curve, vector<string>& messages,
 			}
 		}
 	}
-	trc.dprint("returning ",rval.size()," solutions");
+	T_(trc.dprint("returning ",rval.size()," solutions");)
 }
 
 vector<Flutcurve*>
@@ -1186,18 +1187,18 @@ interp_curve(Curve* curve, string const& name, const Region& rl,
 		double val, bool closest, vector<string>& messages) {
 // find all points in "curve" where parameter "name" equals "val".
 // Returns a vector of new Flutcurves at the interpolated values
-	Trace trc(1,"interp_curve ",curve->cid());
+	T_(Trace trc(1,"interp_curve ",curve->cid());)
 	ostringstream os;
 	Specs& sp = flutspecs();
 
-	trc.dprint("searching for ",name,closest?" closest to ":" = ",val);
-	trc.dprint("curve parameters:",curve->params);
-	trc.dprint("already have ",messages.size()," ignore-messages");
+	T_(trc.dprint("searching for ",name,closest?" closest to ":" = ",val);)
+	T_(trc.dprint("curve parameters:",curve->params);)
+	T_(trc.dprint("already have ",messages.size()," ignore-messages");)
 
 	Par* interp_par = curve->params.findp(name);
 	if (interp_par == nullptr) {
 		string exc = vastr("\"",name,"\" is not a valid parameter");
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 	
@@ -1211,18 +1212,18 @@ interp_curve(Curve* curve, string const& name, const Region& rl,
 	if (loc.empty()) {
 		double convfactor = interp_par->convFactor();
 		string exc = vastr("does not have ", interp_par->name, " = ", val*convfactor);
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw OutOfRange(exc);
 	}
 
-	trc.dprint("startregions: ",rl);
-	trc.dprint("found ",loc.size()," values where ",interp_par->name," = ",val);
+	T_(trc.dprint("startregions: ",rl);)
+	T_(trc.dprint("found ",loc.size()," values where ",interp_par->name," = ",val);)
 
 	// for each loc create a Flutcurve with this value
 	vector<Flutcurve*> curves;
 	for (size_t j=0; j<loc.size(); j++) {
 		// interpolate each parameter in "curve": sets the value
-		trc.dprint("interpolating parameters, start ",loc[j].first,", t=",loc[j].second);
+		T_(trc.dprint("interpolating parameters, start ",loc[j].first,", t=",loc[j].second);)
 		curve->params.interp(loc[j]);
 		// re-set the interp_par to "exactly" val - may be important for
 		// downstream flut processes that use this as source
@@ -1237,13 +1238,13 @@ interp_curve(Curve* curve, string const& name, const Region& rl,
 				add2msg(msg, vastr(pi," is out of range"));
 			}
 			if (!msg.empty()) {
-				trc.dprint("ignoring crossing: ",msg);
+				T_(trc.dprint("ignoring crossing: ",msg);)
 				continue;
 			}
 		}
 
 		// ... and in the list of Regions
-		trc.dprint("checking target limits");
+		T_(trc.dprint("checking target limits");)
 		const Par* oorpar{nullptr};
 		string oormsg;
 		oorpar = rl.outOfRange(curve->params, oormsg);
@@ -1264,7 +1265,7 @@ interp_curve(Curve* curve, string const& name, const Region& rl,
 		Flutcurve* newcurve = new Flutcurve(sp.aid, curveid, sp.vzid);
 		// add to return list
 		curves.push_back(newcurve);
-		trc.dprint("new interpolated start guess ",curveid, ": ",newcurve->current_values());
+		T_(trc.dprint("new interpolated start guess ",curveid, ": ",newcurve->current_values());)
 	}
 
 	// check for ordinals
@@ -1277,7 +1278,7 @@ interp_curve(Curve* curve, string const& name, const Region& rl,
 			//!! if (loc.size() > 1)
 			if (curves.size() > 1) {
 				curve->cid(vastr(curve->cid(),".", ordinal));
-				trc.dprint("adding ordinal to cid: ",curve->cid(),", ",loc.size()," locations");
+				T_(trc.dprint("adding ordinal to cid: ",curve->cid(),", ",loc.size()," locations");)
 			}
 			rval.push_back(curve);
 		} else {
@@ -1285,7 +1286,7 @@ interp_curve(Curve* curve, string const& name, const Region& rl,
 		}
 	}
 
-	trc.dprint("returning ",rval.size()," start points");
+	T_(trc.dprint("returning ",rval.size()," start points");)
 	return rval;
 }  // interp_curve
 
@@ -1296,13 +1297,13 @@ getComplexMatrix (const string& desc, int n) {
 // values of parameters in the gpset, and inserted into an (n,n)
 // complex Matrix. It is the caller's responsibility to delete the
 // returned matrix. Returns nullptr if the matrix has not been declared.
-	Trace trc(1,"getComplexMatrix ", desc);
+	T_(Trace trc(1,"getComplexMatrix ", desc);)
 	ostringstream os;
 
 	Matrix* mp = Matrix::find_desc(desc);
 
 	if (mp == nullptr) {
-		trc.dprint("returning nullptr: ",desc," is missing");
+		T_(trc.dprint("returning nullptr: ",desc," is missing");)
 		return nullptr;
 	}
 
@@ -1317,7 +1318,7 @@ getComplexMatrix (const string& desc, int n) {
 	// extract the values from the AD array, put them into rval
 	extract (work, 0, rval->celem());
 
-	trc.dprintm(n,n,n,rval->celem(), rval->mid());
+	T_(trc.dprintm(n,n,n,rval->celem(), rval->mid());)
 
 	return rval;
 }

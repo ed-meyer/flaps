@@ -18,9 +18,10 @@
 #include "Curve.h"
 #include "exim.h"
 #include "matrix.h"
-#include "./pset.h"
+#include "pset.h"
 #include "settings.h"
 #include "Stack.h"
+#include "trace.h"
 
 using namespace std;
 using namespace flaps;
@@ -31,7 +32,7 @@ using namespace flaps;
 pset::
 ~pset() {
 // pset destructor deletes all contained Par
-	Trace trc(1,"pset destructor ",desc());
+	T_(Trace trc(1,"pset destructor ",desc());)
 	for (auto pp : this->pmap_)
 		delete pp.second;
 	for (auto pp : this->eigv_)
@@ -82,7 +83,7 @@ put(Sender& s) const {
 pset::
 pset(std::string const& ident) {
 // no parameters are added, only the copy constructor does that
-	Trace trc(1,"pset constructor ",ident);
+	T_(Trace trc(1,"pset constructor ",ident);)
 	desc_ = ident;
 	eqns_made = false;
 }
@@ -90,7 +91,7 @@ pset(std::string const& ident) {
 pset::
 pset(const pset& from) {
 // copy constructor (deep: creates new Par)
-	Trace trc(1,"pset copy constructor ",from.desc());
+	T_(Trace trc(1,"pset copy constructor ",from.desc());)
 	for (const auto& i : from.pmap())
 		this->pmap_.insert(make_pair(i.first, i.second->clone()));
 	for (const auto& i : from.eigv()) {
@@ -103,7 +104,7 @@ pset&
 pset::
 operator=(const pset& rhs) {
 // deep copy assignment operator
-	Trace trc(1,"pset::operator= ",rhs.desc());
+	T_(Trace trc(1,"pset::operator= ",rhs.desc());)
 	
 	if (this == &rhs) {
 		return *this;
@@ -132,7 +133,7 @@ update (const pset& pl) {
 // a preference.
 // Returns true if all my parameters were set; false if there were
 // parameters in pl that are not in mine.
-	Trace trc(2,"pset::update(pset)", desc());
+	T_(Trace trc(2,"pset::update(pset)", desc());)
 	bool rval{true};
 	
 	// pmap
@@ -170,18 +171,18 @@ setValues (const pset& pl) {
 // (same name) parameters in "pl", even if the parameter is Fixed.
 // The diff between this and update() is 1) checking for Fixed
 // and 2) update() changes advalue, this function only changes value()
-	Trace trc(2,"pset::setValues ",this->desc()," from ",pl.desc());
+	T_(Trace trc(2,"pset::setValues ",this->desc()," from ",pl.desc());)
 	bool rval = true;
 
 	for (const auto& par : pl.pmap()) {
 		const Par* pi = par.second;
-		trc.dprintn("working on \"",pi->summary(),"\"...");
+		T_(trc.dprintn("working on \"",pi->summary(),"\"...");)
 		Par* pp = this->findp(pi->name);
 		if (pp) {
-			trc.dprint("found in list: set value to ",pi->stringPreValue());
+			T_(trc.dprint("found in list: set value to ",pi->stringPreValue());)
 			pp->valuef(pi->valuef());
 		} else {
-			trc.dprint("not in this param list");
+			T_(trc.dprint("not in this param list");)
 			rval = false;
 		}
 	}
@@ -215,21 +216,21 @@ void
 pset::
 monitor() {
 // put a new vector<string> on the stack
-	Trace trc(2,"monitor");
+	T_(Trace trc(2,"monitor");)
 	vector<string> empty;
 	monitors.push_back(empty);
-	trc.dprint("now have ",monitors.size()," monitors");
+	T_(trc.dprint("now have ",monitors.size()," monitors");)
 }
 
 void
 pset::
 monitor_add(const string& nm) {
 // add nm to all vectors in the monitors stack if not already there
-	Trace trc(2,"monitor_add ",nm);
+	T_(Trace trc(2,"monitor_add ",nm);)
 	for (auto& j : monitors) {
 		if (std::find(j.begin(), j.end(), nm) == j.end()) {
 			j.push_back(nm);
-			trc.dprint("added ",nm);
+			T_(trc.dprint("added ",nm);)
 		}
 	}
 }
@@ -238,10 +239,10 @@ vector<string>
 pset::
 rotinom() {
 // pop the top vector off the stack, return its list
-	Trace trc(2,"rotinom");
+	T_(Trace trc(2,"rotinom");)
 	vector<string> rval(monitors.back());
 	monitors.pop_back();
-	trc.dprint("now have ",monitors.size()," monitors, returning ",rval);
+	T_(trc.dprint("now have ",monitors.size()," monitors, returning ",rval);)
 	return rval;
 }
 
@@ -273,7 +274,7 @@ const Par*
 pset::
 findp(const std::string& nm) const {
 // Return a pointer to parameter named "nm" or nullptr
-	Trace trc(3,"findp ",nm);
+	T_(Trace trc(3,"findp ",nm);)
 
 	const Par* rval{nullptr};
 
@@ -289,7 +290,7 @@ findp(const std::string& nm) const {
 	} else
 		rval = p->second;
 
-	trc.dprint("returning ",rval==nullptr?"nullptr":rval->name);
+	T_(trc.dprint("returning ",rval==nullptr?"nullptr":rval->name);)
 	return rval;
 }
 
@@ -353,7 +354,7 @@ findic(const std::string& name) {
 void
 pset::
 interp(std::pair<size_t, double> loc) {
-	Trace trc(2,"pset interp");
+	T_(Trace trc(2,"pset interp");)
 // interpolate each Par's solns:
 //   t = solns[start] + t*(solns[start+1]-solns[start])
 // set current value to t
@@ -383,14 +384,14 @@ add(const Par* newpar) {
  *		max
  * value, min, and max are assumed to be in presentation units.
  *------------------------------------------------------------------*/
-	Trace trc(2,"pset::add");
+	T_(Trace trc(2,"pset::add");)
 	Par* rval{nullptr};
 	std::string newconv;
 	std::string oldconv;
 	std::string exc;
 
 	assert(newpar != nullptr);
-	trc.dprint("adding \"",*newpar,"\" to pset ",this->desc());
+	T_(trc.dprint("adding \"",*newpar,"\" to pset ",this->desc());)
 
 	// Search for the parameter in existing list
 	// If found, take stuff from the new parameter
@@ -404,9 +405,9 @@ add(const Par* newpar) {
 			this->eigv_.push_back(dynamic_cast<Eigpar*>(rval));
 		else
 			this->pmap_.insert(make_pair(rval->name, rval));
-		trc.dprint("added ",rval->summary(),", now have ",this->size());
+		T_(trc.dprint("added ",rval->summary(),", now have ",this->size());)
 	} else if (existing == newpar) {
-		trc.dprint("input and existing ptrs identical: no data transfer");
+		T_(trc.dprint("input and existing ptrs identical: no data transfer");)
 	} else {
 		existing->upgrade(newpar);
 	}
@@ -423,11 +424,11 @@ replace(const Par* newpar) {
  * already exist, replace the existing parameter if it does.
  * Return a pointer to which ever ends up on the parameter list.
  *------------------------------------------------------------------*/
-	Trace trc(2,"pset::replace");
+	T_(Trace trc(2,"pset::replace");)
 	Par* rval{nullptr};
 
 	assert(newpar != nullptr);
-	trc.dprint("adding \"",*newpar,"\" to pset ",this->desc());
+	T_(trc.dprint("adding \"",*newpar,"\" to pset ",this->desc());)
 
 	// Search for the parameter in existing list
 	// If found, take stuff from the new parameter
@@ -442,7 +443,7 @@ replace(const Par* newpar) {
 			this->eigv_.push_back(dynamic_cast<Eigpar*>(rval));
 		else
 			this->pmap_.insert(make_pair(rval->name, rval));
-		trc.dprint("added ",rval->summary(),", now have ",this->size());
+		T_(trc.dprint("added ",rval->summary(),", now have ",this->size());)
 	}
 
 	return rval;
@@ -454,7 +455,7 @@ pset::
 inRange() {
 // check all parameters except "rf" for in-range,
 // return a description of the first out-of-range
-	Trace trc(2,"pset::inRange");
+	T_(Trace trc(2,"pset::inRange");)
 	string rval;
 	int sigfig{4};
 	for (auto& i : this->pmap_) {
@@ -467,7 +468,7 @@ inRange() {
 			break;
 		}
 	}
-	trc.dprint("returning \"",rval,"\"");
+	T_(trc.dprint("returning \"",rval,"\"");)
 	return rval;
 }
 #else // NEVER // use inrange
@@ -477,7 +478,7 @@ pset::
 inrange() {
 // Check all parameter limits, return the names of
 // all parameters that are out-of-range
-	Trace trc(2,"pset::inrange");
+	T_(Trace trc(2,"pset::inrange");)
 	vector<string> rval;
 	int sigfig{4};
 	for (auto& i : this->pmap_) {
@@ -485,7 +486,7 @@ inrange() {
 		if (!pp->inRange(sigfig))
 			rval.push_back(pp->name);
 	}
-	trc.dprint("returning ",rval.size()," out of range: ",rval);
+	T_(trc.dprint("returning ",rval.size()," out of range: ",rval);)
 	return rval;
 }
 #endif // NEVER // use inrange
@@ -511,12 +512,12 @@ summary (std::vector<std::string> const& toprint, int maxchar) {
 // can be set with env variable PAGEWIDTH or settings{pagewidth=x}
 //
 // If a parameter is out-of-range print an asterisk at it's right edge
-	Trace trc(3,"pset::summary");
+	T_(Trace trc(3,"pset::summary");)
 	std::ostringstream os;
 	int pw = page_width();
 	bool printev{false};
 
-	trc.dprint(this->size()," par, ",toprint.size()," printed, pagewidth ",pw);
+	T_(trc.dprint(this->size()," par, ",toprint.size()," printed, pagewidth ",pw);)
 
 	if (toprint.empty()) {
 		os << desc() << " " << this->size() << " parameters";
@@ -524,7 +525,7 @@ summary (std::vector<std::string> const& toprint, int maxchar) {
 	}
 
 	for (const auto& nm : toprint) {
-		trc.dprint("toprint: ", nm);
+		T_(trc.dprint("toprint: ", nm);)
 		if (nm == "gc" || nm == "ev" || nm == "eigenvector") {
 			printev = true;
 			continue;
@@ -552,7 +553,7 @@ summary (std::vector<std::string> const& toprint, int maxchar) {
 			os << "   " << flaps::summarize(ev, wid, true);
 		}
 	}
-	trc.dprint("returning ",os.str());
+	T_(trc.dprint("returning ",os.str());)
 	return os.str();
 }
 
@@ -567,12 +568,12 @@ summary_solns (vector<string> const& toprint, const string& header,
 // each line with it. If "firstlast" is true only print the first & last solns
 // with an ellipsis in between. If "header" is not empty, print it.
 // Note: this function modifies "this" so it cannot be const
-	Trace trc(2,"pset::summary_solns");
+	T_(Trace trc(2,"pset::summary_solns");)
 	std::ostringstream os;
 	size_t nval = nsolns();
 	size_t i;
 
-	trc.dprint(this->size()," par, ",nval," solns, ",toprint.size()," to print");
+	T_(trc.dprint(this->size()," par, ",nval," solns, ",toprint.size()," to print");)
 
 	// determine the widest leader so we know how to offset the
 	// header column labels to line up with the values, and
@@ -639,7 +640,7 @@ summary_solns (vector<string> const& toprint, const string& header,
 std::string
 pset::
 display(std::string const& path, std::string const& title) const {
-	Trace trc(3,"pset::display");
+	T_(Trace trc(3,"pset::display");)
 	std::string rval;
 	std::ofstream file;
 	std::ostream* out = &std::cout;
@@ -672,12 +673,12 @@ void
 pset::
 set_adpar_derivs() {
 // set the appropriate AD derivative to 1.0 for each AD parameter
-	Trace trc(2,"set_adpar_derivs ",this->desc());
+	T_(Trace trc(2,"set_adpar_derivs ",this->desc());)
 	vector<string> const& adparnames = Ad::adnames();
 
 	// for each ad par in adparnames find it in this, set deriv i to 1
 	for (size_t i=0; i<adparnames.size(); i++) {
-		trc.dprint("setting der ",i," for ",adparnames[i]);
+		T_(trc.dprint("setting der ",i," for ",adparnames[i]);)
 		Par* pp = this->findp(adparnames[i]);
 		assert(pp != nullptr);
 		pp->deriv(i, 1.0);
@@ -697,7 +698,7 @@ touch() {
 // Also, Constant parameters are changed to Derived, evaluated,
 // and checked for Constant-ness.
 // It is important to call this function after changing Fixed parameter values.
-	Trace trc(3,"pset::touch");
+	T_(Trace trc(3,"pset::touch");)
 	for (auto& i : this->pmap_)
 		i.second->fresh = false;
 }
@@ -706,7 +707,7 @@ void
 pset::
 eval() {
 // evaluate all derived parameters
-	Trace trc(2,"pset::eval ", this->desc());
+	T_(Trace trc(2,"pset::eval ", this->desc());)
 
 	// put a 1 in the appropriate AD spots
 	this->set_adpar_derivs();
@@ -727,7 +728,7 @@ nsolns() const {
 // the contained parameter.
 // Throws a runtime_error exception if not all parameters have the same
 // number of parameters
-	Trace trc(2,"pset::nsolns()");
+	T_(Trace trc(2,"pset::nsolns()");)
 	size_t rval{};
 	int nvi{-1};
 	std::string first_name;
@@ -754,7 +755,7 @@ nsolns() const {
 				" has ", rval, " and ", k->name, " has ", nvi));
 	}
 
-	trc.dprint("returning ", rval);
+	T_(trc.dprint("returning ", rval);)
 	return rval;
 }
 
@@ -799,7 +800,7 @@ vector<Par*>
 pset::
 all () {
 // Returns pointers to all parameters except nostate
-	Trace trc(3,"pset::all ", this->desc());
+	T_(Trace trc(3,"pset::all ", this->desc());)
 	vector<Par*> rval;
 
 	for (auto& i : this->pmap_) {
@@ -808,21 +809,21 @@ all () {
 	}
 	for (auto& i : this->eigv_)
 		rval.push_back(i);
-	trc.dprint(rval.size(), " all parameters");
+	T_(trc.dprint(rval.size(), " all parameters");)
 	return rval;
 }
 
 vector<Par*>
 pset::
 get_nostate () {
-	Trace trc(3,"pset::get_nostate ", this->desc());
+	T_(Trace trc(3,"pset::get_nostate ", this->desc());)
 	vector<Par*> rval;
 
 	for (auto& i : this->pmap_) {
 		if (i.second->is_nostate())
 			rval.push_back(i.second);
 	}
-	trc.dprint(rval.size(), " no-state parameters");
+	T_(trc.dprint(rval.size(), " no-state parameters");)
 	return rval;
 }
 
@@ -832,55 +833,55 @@ get_indep () {
 // Make up a list of all indep variables in this pset
 // Create the list from scratch each time in case the state
 // of variables have changed
-	Trace trc(3,"pset::get_indep ", this->desc());
+	T_(Trace trc(3,"pset::get_indep ", this->desc());)
 	vector<Par*> indep;
 
 	for (auto& i : this->pmap_) {
 		if (i.second->is_indep())
 			indep.push_back(i.second);
 	}
-	trc.dprint(indep.size(), " independent parameters");
+	T_(trc.dprint(indep.size(), " independent parameters");)
 	return indep;
 }
 
 vector<Par*>
 pset::
 get_derived () {
-	Trace trc(3,"pset::get_derived ", this->desc());
+	T_(Trace trc(3,"pset::get_derived ", this->desc());)
 	vector<Par*> rval;
 	for (auto& i : this->pmap_) {
-		trc.dprint(i.first," is ",i.second->state_desc());
+		T_(trc.dprint(i.first," is ",i.second->state_desc());)
 		if (i.second->is_derived())
 			rval.push_back(i.second);
 	}
-	trc.dprint(rval.size(), " derived parameters");
+	T_(trc.dprint(rval.size(), " derived parameters");)
 	return rval;
 }
 
 vector<Par*>
 pset::
 get_fixed () {
-	Trace trc(3,"pset::get_fixed ", this->desc());
+	T_(Trace trc(3,"pset::get_fixed ", this->desc());)
 	vector<Par*> rval;
 	for (auto& i : this->pmap_) {
 		if (i.second->is_fixed())
 			rval.push_back(i.second);
 	}
-	trc.dprint(rval.size(), " fixed parameters");
+	T_(trc.dprint(rval.size(), " fixed parameters");)
 	return rval;
 }
 
 vector<Par*>
 pset::
 get_aux () {
-	Trace trc(3,"pset::get_aux(const) ", this->desc());
+	T_(Trace trc(3,"pset::get_aux(const) ", this->desc());)
 	vector<Par*> rval;
 
 	for (auto& i : this->pmap_) {
 		if (i.second->is_aux())
 			rval.push_back(i.second);
 	}
-	trc.dprint(rval.size(), " Aux parameters");
+	T_(trc.dprint(rval.size(), " Aux parameters");)
 	return rval;
 }
 
@@ -893,10 +894,10 @@ pset::
 getadev(vector<complex<Ad>>& rval) {
 // Fill input "rval" with the current advalues of the
 // eigenvector parameters.
-	Trace trc(2,"pset::getadev");
+	T_(Trace trc(2,"pset::getadev");)
 
 	vector<Eigpar*>& evp = this->eigv();
-	trc.dprint(evp.size(), " eigenvector components");
+	T_(trc.dprint(evp.size(), " eigenvector components");)
 	if (evp.empty())
 		return;
 
@@ -905,7 +906,7 @@ getadev(vector<complex<Ad>>& rval) {
 
 	// re-allocate rval if necessary
 	if (rval.size() != ncev) {
-		trc.dprint("re-allocated input from ",rval.size()," to ",ncev);
+		T_(trc.dprint("re-allocated input from ",rval.size()," to ",ncev);)
 		rval = vector<complex<Ad>>(ncev);
 	}
 	// copy each separately - not contiguous
@@ -969,7 +970,7 @@ get_evmatrix() {
 // return value is rval, then rval[i][j] is the real (i%2=0)
 // or imag (i%2=1) part of the the (i/2)th gc in the jth mode.
 // XXX why not just return a vector<complex<double>>?
-	Trace trc(1,"get_evmatrix");
+	T_(Trace trc(1,"get_evmatrix");)
 	std::vector<std::vector<double> > rval;
 
 	// get pointers to all eigenvector parameters
@@ -978,7 +979,7 @@ get_evmatrix() {
 	size_t nrev = evp.size();  // number of real eigenvector components
 
 	if (nrev == 0) {
-		trc.dprint("returning empty: no eigenvector parameters");
+		T_(trc.dprint("returning empty: no eigenvector parameters");)
 		return rval;
 	}
 	size_t nc = this->nsolns();
@@ -1011,7 +1012,7 @@ updateEv(std::vector<double> const& ev) {
 void
 pset::
 updateEv(size_t n, double const* ev) {
-	Trace trc(2,"pset::updateEv", " n ", n);
+	T_(Trace trc(2,"pset::updateEv", " n ", n);)
 
 	// just cycle through pset::eigv_
 	// Ad::value(x) just sets the value, not derivatives
@@ -1062,7 +1063,7 @@ pset::
 fetch (std::string const& mid) {
 // Fetch a set of parameters previously stored with pset::store.
 // Throws a runtime_error exception if the pset does not exist
-	Trace trc(1,"pset::fetch ",mid);
+	T_(Trace trc(1,"pset::fetch ",mid);)
 	pset* rval{nullptr};
 
 	// a pset is stored in a file called "mid" serialized
@@ -1070,17 +1071,17 @@ fetch (std::string const& mid) {
 	Receiver file(mid);  // throws exception if it does not exist
 	if (!file.good() || file.eof()) {
 		string exc{vastr(mid," does not exist")};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 	Fio* op = Fio::get(file);
 	rval = dynamic_cast<pset*>(op);
 	if (rval == nullptr) {
 		string exc{vastr("reading ", mid, ", expected pset, got ",op->vid())};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
-	trc.dprint("returning ",rval->size()," parameters in ",rval->desc());
+	T_(trc.dprint("returning ",rval->size()," parameters in ",rval->desc());)
 	return rval;
 }
 
@@ -1088,13 +1089,13 @@ void
 pset::
 store (std::string const& mid) {
 // Store a parameter set in a file named "mid"
-	Trace trc(1,"pset::store ", desc());
+	T_(Trace trc(1,"pset::store ", desc());)
 
-	trc.dprint("mid ",mid,", desc ",desc(),", ",this->nsolns()," solns");
+	T_(trc.dprint("mid ",mid,", desc ",desc(),", ",this->nsolns()," solns");)
 
 	if (this->empty()) {
 		string exc{vastr("attempt to store empty pset \"", desc(),'\"')};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 
@@ -1108,11 +1109,11 @@ void
 pset::
 plot (std::string const& path, std::string const& title, std::string const& cid,
 		vector<string> const& toPlot, bool append) {
-	Trace trc(1,"pset::plot");
+	T_(Trace trc(1,"pset::plot");)
 	size_t nv = nsolns();
 
-	trc.dprint("path \"",path,"\", title \"",title,"\", cid \"",cid,"\"");
-	trc.dprint(nv," data points");
+	T_(trc.dprint("path \"",path,"\", title \"",title,"\", cid \"",cid,"\"");)
+	T_(trc.dprint(nv," data points");)
 
 	if (nv == 0) {
 		return;
@@ -1171,7 +1172,7 @@ pset::
 absgcv(int gcno) {
 // returns the absolute value of generalized coordinate gcno (1b)
 // If the parameter absgcxxx does not exist, create it and add it to this
-	Trace trc(2,"pset::absgcv ",gcno);
+	T_(Trace trc(2,"pset::absgcv ",gcno);)
 	Par* absgc_par = this->findp(vastr("absgc",gcno));
 	Ad rval;
 	if (absgc_par == nullptr) {
@@ -1189,7 +1190,7 @@ absgcv(int gcno) {
 			return Ad(0.0);
 	}
 	rval = absgc_par->eval(*this);
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -1198,7 +1199,7 @@ pset::
 absgcp(int gc1, int gc2) {
 // returns the absolute value of the difference between 2 generalized
 // coordinates, gc1 and gc2 (1b)
-	Trace trc(2,"pset::absgcp ",gc1,", ",gc2);
+	T_(Trace trc(2,"pset::absgcp ",gc1,", ",gc2);)
 
 	// findg will throw an exception if the parameter doesn't exist
 	Par* ev1r = this->findg(evname(gc1,false));
@@ -1209,7 +1210,7 @@ absgcp(int gc1, int gc2) {
 	Ad diffr = ev1r->advalue() - ev2r->advalue();
 	Ad diffi = ev1i->advalue() - ev2i->advalue();
 	Ad rval = gcnorm*sqrt(diffr*diffr + diffi*diffi);
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -1224,7 +1225,7 @@ parval(std::string const& name, bool inrange) {
 // "ev32.imag"; generalized-coordinate components are accessed with names
 // like "gc32.real" and "gc32.imag".
 //------------------------------------------------------------------
-	Trace trc(2,"parval ",desc(),'(',name,')');
+	T_(Trace trc(2,"parval ",desc(),'(',name,')');)
 	Ad rval{0.0};
 	Par* pp{nullptr};
 	// GC are not stored so if we are called with, e.g. "gc1.real"
@@ -1235,10 +1236,10 @@ parval(std::string const& name, bool inrange) {
 		if (pp) {
 			Ad gcnorm = this->parval("gcnorm");
 			rval = gcnorm*pp->advalue();
-			trc.dprint("scaled eigenvector by ",gcnorm," to create gc");
+			T_(trc.dprint("scaled eigenvector by ",gcnorm," to create gc");)
 		} else if (!this->monitoring()) {
 		 	string exc{vastr(name," is not a parameter (parval)")};
-		 	trc.dprint("throwing exception: ",exc);
+		 	T_(trc.dprint("throwing exception: ",exc);)
 		 	throw runtime_error(exc);
 		}
 	} else {
@@ -1259,11 +1260,11 @@ parval(std::string const& name, bool inrange) {
 				rval = this->absgcv(cgcno);
 		} else {
 			string exc{vastr(name," is not a parameter (parval)")};
-			trc.dprint("throwing exception: ",exc);
+			T_(trc.dprint("throwing exception: ",exc);)
 			throw runtime_error(exc);
 		}
 	}
-	trc.dprint("returning ",name," = ",rval);
+	T_(trc.dprint("returning ",name," = ",rval);)
 	// assuming RVO is applied here
 	return rval;
 }
@@ -1276,7 +1277,7 @@ setpar(Ad const& x, std::string const& name) {
 // is printed so that you can just call this function from within
 // a function without first defining the parameter.
 // Intended to be called from user-written C++ functions
-	Trace trc(2,"setpar");
+	T_(Trace trc(2,"setpar");)
 	Par* pp = findp(name);
 
 	// if the parameter does not exist create it, add it to this
@@ -1296,7 +1297,7 @@ setpar(Ad const& x, std::string const& name) {
 	// convert the value to internal units
 	Ad val = x/pp->convFactor();
 	pp->advalue(val);
-	trc.dprint("set ",pp->name," to ",val);
+	T_(trc.dprint("set ",pp->name," to ",val);)
 }
 
 Ad
@@ -1323,7 +1324,7 @@ void
 make_gpset(pset& rval) {
 // Make the standard builtin parameters with SI EU units and
 // either SI or USCS presentation units (PU).
-	Trace trc(1,"make_gpset");
+	T_(Trace trc(1,"make_gpset");)
 	ostringstream os;
 	// some conversion factors: check for "units" in the environment
 	bool uscs{(getenv("units") != nullptr)};
@@ -1453,7 +1454,7 @@ make_gpset(pset& rval) {
 	// also each parameter must have its advalue member reallocated after
 	// Ad::initialize() i.e. call pset::realloc()
 
-	trc.dprint("returning ",rval.size()," global parameters");
+	T_(trc.dprint("returning ",rval.size()," global parameters");)
 
 } // make_gpset
 
@@ -1461,7 +1462,7 @@ gpset::
 gpset() {
 // gpset one-and-only constructor. First try fetching it; if this
 // fails build it from scratch with make_gpset()
-	Trace trc(1,"gpset constructor");
+	T_(Trace trc(1,"gpset constructor");)
 	
 	try {
 		pset* pl{nullptr};
@@ -1483,17 +1484,17 @@ gpset() {
 		}
 	// in case fetch throws an exception:
 	} catch (runtime_error& s) {
-		trc.dprint(s.what(),": calling make_gpset");
+		T_(trc.dprint(s.what(),": calling make_gpset");)
 		make_gpset(*this);
 	} catch (const std::exception& e) {
-		trc.dprint(e.what(),": calling make_gpset");
+		T_(trc.dprint(e.what(),": calling make_gpset");)
 		make_gpset(*this);
 	}
 
 	// Give this one-and-only global pset a description
 	this->desc("Global Parameters");
 
-	trc.dprint("returning ",this->size()," global param");
+	T_(trc.dprint("returning ",this->size()," global param");)
 } // gpset constructor
 
 //------------------------------------------------------------------
@@ -1506,7 +1507,7 @@ equations () {
 // Set the "equation" member of each parameter in this list to
 // one of it's candidates
 // -----------------------------------------------------------------
-	Trace trc(2,"pset::equations");
+	T_(Trace trc(2,"pset::equations");)
 
 	// delete equations
 	for (auto& pp : this->pmap())
@@ -1514,11 +1515,11 @@ equations () {
 
 	for (auto& pi : pmap()) {
 		Par* pp = pi.second;
-		trc.dprint("\n", separator());
-		trc.dprint("working on ",pp->name,", ",pp->candidates.size()," candidates");
+		T_(trc.dprint("\n", separator());)
+		T_(trc.dprint("working on ",pp->name,", ",pp->candidates.size()," candidates");)
 		if (pp->is_indep() || pp->is_fixed() || pp->candidates.empty()
 			|| !pp->equation.empty()) {
-			trc.dprint("skip: state ",pp->state);
+			T_(trc.dprint("skip: state ",pp->state);)
 			continue;
 		}
 		try {
@@ -1532,7 +1533,7 @@ equations () {
 			throw runtime_error(vastr(pp->name," is not derivable from the independent "
 				"& fixed parameters. It must be set to a constant or "
 				"derivable from the standard equation(s)"));
-		trc.dprint("\n",separator());
+		T_(trc.dprint("\n",separator());)
 	}
 	this->has_eqns(true);
 } // equations
@@ -1549,19 +1550,19 @@ choose_eqn (Par& par) {
 //     if they are indep or fixed we are done; if they have candidates but no
 //     equation we must call this function (recurse) to get an equation for that parameter.
 // This function is recursive and not thread-safe!
-	Trace trc(1,"choose_eqn ", par.name);
+	T_(Trace trc(1,"choose_eqn ", par.name);)
 	string besteqn;
 	bool best_constant{false};
 	static Stack<string> par_stack;	// the names of all parameters this function has
 												// been called with recursively
 
 	if (!par.equation.empty()) {
-		trc.dprint("quick return: already have equation: ",par.equation);
+		T_(trc.dprint("quick return: already have equation: ",par.equation);)
 		return par.work;
 	}
 
 	if (par_stack.contains(par.name)) {
-		trc.dprint("cycle in dep list for \"",par.name,"\", current stack: ",par_stack);
+		T_(trc.dprint("cycle in dep list for \"",par.name,"\", current stack: ",par_stack);)
 		return -2;
 	}
 	par_stack.push(par.name);
@@ -1574,7 +1575,7 @@ choose_eqn (Par& par) {
 		int worki{0}; // work for this eqn
 		bool is_complex{false};
 		bool constant{true};
-		trc.dprint("testing ",par.name, " = ",eqn," ----------------");
+		T_(trc.dprint("testing ",par.name, " = ",eqn," ----------------");)
 		// parse the equation, get it's dependent parameters...
 		vector<string> dep = adeqn::dependson(*this, eqn, is_complex);
 		// ... then get each dependent's dependencies
@@ -1584,46 +1585,46 @@ choose_eqn (Par& par) {
 			Par* pj = this->findp(dj);
 			if (pj == nullptr) {
 				std::string exc{vastr("unknown parameter: ",dj)};
-				trc.dprint("rejecting equation \"",eqn,"\": ",exc);
+				T_(trc.dprint("rejecting equation \"",eqn,"\": ",exc);)
 				worki = -1;
 				break;
 			}
-			trc.dprint(eqn," depends on ",pj->name,": ",pj->state);
+			T_(trc.dprint(eqn," depends on ",pj->name,": ",pj->state);)
 
 			if (!(pj->is_indep() || pj->is_fixed() || pj->is_aux())
 					&& !pj->candidates.empty()) {
 				if (!pj->equation.empty()) {
 					worki += pj->work;
-					trc.dprint(pj->name," already has equation with work ", pj->work);
+					T_(trc.dprint(pj->name," already has equation with work ", pj->work);)
 				} else {
 					try {
 						int workj = this->choose_eqn(*pj);
 						if (workj < 0) {
-							trc.dprint("rejecting equation \"",eqn,"\"");
+							T_(trc.dprint("rejecting equation \"",eqn,"\"");)
 							worki = -1;
 							break;
 						}
 						worki += workj;
 					} catch (runtime_error& s) {
-						trc.dprint("rejecting equation \"",eqn,"\": ",s.what());
+						T_(trc.dprint("rejecting equation \"",eqn,"\": ",s.what());)
 						worki = -1;
 						break;
 					}
 				}
 			} else {
 				// something other than derived: no change to worki
-				trc.dprint(pj->name," is ",pj->state_desc());
+				T_(trc.dprint(pj->name," is ",pj->state_desc());)
 			}
 			// if pj is not constant => this equation is not constant
 			if (!pj->is_constant()) {
 				constant = false;
-				trc.dprint(eqn," is not constant: ",pj->name," is not constant");
+				T_(trc.dprint(eqn," is not constant: ",pj->name," is not constant");)
 			}
 		}
 
 		// eqn rejected?
 		if (worki < 0) {
-			trc.dprint("rejecting eqn \"",eqn,"\": worki ",worki);
+			T_(trc.dprint("rejecting eqn \"",eqn,"\": worki ",worki);)
 			continue;
 		}
 		// if this equation is constant it's work is zero
@@ -1635,13 +1636,13 @@ choose_eqn (Par& par) {
 			work = worki;
 			besteqn = eqn;
 			best_constant = constant;
-			trc.dprint("best eqn so far: ",eqn);
+			T_(trc.dprint("best eqn so far: ",eqn);)
 		}
 	}
 
 	// give it the best equation and evaluate it
 	if (!besteqn.empty()) {
-		trc.dprint("best equation: ",besteqn);
+		T_(trc.dprint("best equation: ",besteqn);)
 		par.equation = besteqn;
 		par.work = work;
 		// mark this parameter as constant if the equation but evaluate it first
@@ -1649,7 +1650,7 @@ choose_eqn (Par& par) {
 			//!! par.evalf(*this);
 			bool noexc{true};
 			par.advalue(adeqn::eval(*this, par.equation, noexc));
-			trc.dprint("constant (",par.name,") = ",par.stringPreValue()," ",par.presUnits());
+			T_(trc.dprint("constant (",par.name,") = ",par.stringPreValue()," ",par.presUnits());)
 		}
 		par.constant = best_constant;
 	}
@@ -1659,13 +1660,13 @@ choose_eqn (Par& par) {
 	par_stack.pop();
 
 	if (par.equation.empty()) {
-		trc.dprint("no acceptable equation found");
+		T_(trc.dprint("no acceptable equation found");)
 		return -1;
 	}
 	// set this parameter's state to Derived
 	par.set_derived();
 
-	trc.dprint("returning work ",par.work," for ",par.name,", eqn ",besteqn, ", constant? ",par.constant);
+	T_(trc.dprint("returning work ",par.work," for ",par.name,", eqn ",besteqn, ", constant? ",par.constant);)
 	return par.work;
 } // choose_eqn
 
@@ -1695,12 +1696,12 @@ gpset::
 store() {
 // Store the global gpset in the Flaps database
 // with the name given by persistentName()
-	Trace trc(1,"gpset::store");
+	T_(Trace trc(1,"gpset::store");)
 
 	// this is a static member function so we must use gpset::get()
 	gpset& gps = gpset::get();
 
-	trc.dprint(gps.size()," parameters");
+	T_(trc.dprint(gps.size()," parameters");)
 
 	// mark all derived parameters "fresh"
 	vector<Par*> derived = gps.get_derived();
@@ -1721,15 +1722,15 @@ store() {
 		tostore.store(persistentName());
 	} catch (runtime_error& s) {
 		// error("cannot store std parameter list: ", s);
-		trc.dprint("caught exception: ",s.what());
+		T_(trc.dprint("caught exception: ",s.what());)
 		return;
 	}
-	trc.dprint("stored ",tostore.size()," parameters");
+	T_(trc.dprint("stored ",tostore.size()," parameters");)
 }
 
 gpset::
 ~gpset() {
-	Trace trc(1,"gpset destructor");
+	T_(Trace trc(1,"gpset destructor");)
 	// store for subsequent programs
 	this->store();
 }
@@ -1783,7 +1784,7 @@ pset::
 make_eigv (int nev, double init) {
 // create real & imag component parameters for nev
 // complex eigenvector components (only the missing components)
-	Trace trc(2,"make_eigv");
+	T_(Trace trc(2,"make_eigv");)
 	for (int i=1; i<=nev; i++)
 		vector<string> ei = make_eigvk(i, init);
 }
@@ -1793,7 +1794,7 @@ gpset::
 realloc() {
 // a static function in gpset only - must be called
 // after Ad::initialize() but before any clones XXX check this?
-	Trace trc(1,"gpset::realloc");
+	T_(Trace trc(1,"gpset::realloc");)
 	for (auto pp : pmap())
 		pp.second->adrealloc();
 	for (auto ep : eigv())
@@ -1818,7 +1819,7 @@ tableHelper(const Par* pp, vector<int> colsize, char namefn, char valuefn) {
 // write:
 //   name desc value+units limits conv eqn
 // to the output string with widths for each in colsize
-	Trace trc(3,"tableHelper",pp->summary());
+	T_(Trace trc(3,"tableHelper",pp->summary());)
 	ostringstream os;
 	double fac{pp->convFactor()};
 	ios::fmtflags left{ios::left};
@@ -1865,7 +1866,7 @@ ostream&
 gpset::
 table(ostream& s, const string& title) {
 // Special op for gpset: print a full table
-	Trace trc(3,"gpset::operator<<");
+	T_(Trace trc(3,"gpset::operator<<");)
 	std::string ti;
 	std::map<char, std::string> footnote;
 	gpset& pl = gpset::get();
@@ -1935,7 +1936,7 @@ table(ostream& s, const string& title) {
 		colsize[5] = std::max(colsize[5], (int)eqns[i].size());
 		colsize[6] = std::max(colsize[6], (int)states[i].size());
 	}
-	trc.dprintv(colsize, "column sizes");
+	T_(trc.dprintv(colsize, "column sizes");)
 
 	// title
 	s << title << endl;

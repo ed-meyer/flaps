@@ -44,7 +44,7 @@ Tyme::
 
 int
 main() {
-	Trace trc(1,"tyme");
+	T_(Trace trc(1,"tyme");)
 	constexpr int niter{100000};
 	constexpr int nsin{1000};
 	constexpr double pi{atan(1.0)};

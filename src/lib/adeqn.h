@@ -7,9 +7,14 @@
 // WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-// Public interface to adeqn.yy, the automatic differentiation
-// equation parser. The interface consists of
-//   adeqn::eval(pset& plt, string eqn, bool& constant, bool parse_only)
+
+// A simple Automatic Differentiation parser, adapted from
+//   Stroustrup, Bjarne, "The C++ Programming Language", 4th Ed.,
+//   Pearson Education Inc., 2013, section 10.2
+// Public interface consists of
+//   Ad adeqn::eval(pset& plt, string eqn, bool& constant, bool parse_only)
+//   vector<string> adeqn:: dependson(pset& plt, string const& eqn,
+//													bool& isComplex)
 
 #ifndef Adeqn_h
 #define Adeqn_h 1

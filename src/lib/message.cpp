@@ -73,31 +73,20 @@ error_summary() {
 
 } // namespace flaps
 
-string
+vector<string>
 backtrace() {
-	ostringstream os;
-	string rval;
+	vector<string> rval;
 
+	// use RAII Fpipe
 	Fpipe p(vastr("gdb -batch -ex bt -p ",getpid()));
-
-	//!string line;
-	//!while (!in.eof()) {
-	//!	os << line << endl;
-	//!}
 	size_t bufsize{1024};
 	char* buf = new char[bufsize];
-	//! bool accum{false};
 	while (getline(&buf, &bufsize, p()) != -1) {
-		//! if (accum) {
-			//! rval += buf;
-		//! } else if (strstr(buf,"backtrace") != nullptr) {
-		//! 	accum = true;
-		//! }
-		os << buf << endl;
+		string str(buf);
+		if (str.find("LWP") == string::npos)
+			rval.push_back(str);
 	}
-	//! pclose(fp);
-	return os.str();
-	//! return rval;
+	return rval;
 }
 
 #ifdef MAIN
@@ -124,7 +113,7 @@ main(int argc, char** argv) {
 				" men to come to the aid of their country; "
 				"Four-score and thirty years ago our fathers did something"
 				" which I cannot remember");
-	errorSummary();
+	// errorSummary();
 
 	try {
 		throw_excep();

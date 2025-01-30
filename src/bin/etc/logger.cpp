@@ -26,7 +26,7 @@ usage(string const& prog) {
 
 int
 main(int argc, char** argv) {
-	Trace trc(1,"logger");
+	T_(Trace trc(1,"logger");)
 	string prog(argv[0]);
 
 	if (argc < 3)
@@ -54,7 +54,7 @@ main(int argc, char** argv) {
 	ofstream ofs(path, std::ios::app);
 	if (ofs) {
 		ofs << repline << endl;
-		trc.dprint("appended ",repline);
+		T_(trc.dprint("appended ",repline);)
 	} else {
 		cerr << "could not open " << path << endl;
 		exit(1);

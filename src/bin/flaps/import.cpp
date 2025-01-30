@@ -18,6 +18,7 @@
 #include "lexer.h"
 #include "matrix.h"
 #include "settings.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -121,7 +122,7 @@ importer (string const& options) {
 //   path
 //   output=path
 //   vzid=path
-	Trace trc(2,"importer");
+	T_(Trace trc(2,"importer");)
 
 try {
 	vector<Tok*> unrec = flaps::lexer(options, {
@@ -143,7 +144,7 @@ get_format(string const& path) {
 //    uf:  Universal file
 //    mm:  Matrix Market
 // 2) read the first line and try to determine the format from it
-	Trace trc(1,"get_format");
+	T_(Trace trc(1,"get_format");)
 
 	string::size_type idx = path.rfind('.');
 	if (idx != string::npos) {
@@ -157,7 +158,7 @@ get_format(string const& path) {
 		else if (ext == "mm")
 			return "matrixmarket";
 	}
-	trc.dprint("no extension - try reading the first line");
+	T_(trc.dprint("no extension - try reading the first line");)
 
 	// Next try  reading the first line and testing it
 	regex matrixMarketRe{"^%%MatrixMarket"};
@@ -186,7 +187,7 @@ get_format(string const& path) {
 	string line;
 	getline(file, line);
 
-	trc.dprint("testing \"",line," to determine file format");
+	T_(trc.dprint("testing \"",line," to determine file format");)
 
 	string filetype;
 	if (regex_match(line, output4Re))
@@ -201,11 +202,11 @@ get_format(string const& path) {
 void
 rename(vector<Matrix*> ml, vector<pair<string,string>> newnames) {
 // rename a set of matrices from newnames[i].first to newname[i].second
-	Trace trc(1,"rename");
+	T_(Trace trc(1,"rename");)
 
 	for (auto m : ml) {
 		for (size_t i=0; i<newnames.size(); i++) {
-			trc.dprint("testing ",m->mid()," =? ",newnames[i].first," or ",newnames[i].second);
+			T_(trc.dprint("testing ",m->mid()," =? ",newnames[i].first," or ",newnames[i].second);)
 			// old=new
 			if (m->mid() == newnames[i].first) {
 				m->mid(newnames[i].second);

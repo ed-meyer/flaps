@@ -184,11 +184,11 @@ double
 closest_10(double x) {
 // Given a number "x", returns a number that is
 // the closest power of 10 to that number
-	Trace trc(2,"closest_10");
+	T_(Trace trc(2,"closest_10");)
 	double rval = 1.0;
 
 	if (x <= 0.0) {
-		trc.dprint("returning 1.0: x<=0");
+		T_(trc.dprint("returning 1.0: x<=0");)
 		return rval;
 	}
 
@@ -205,7 +205,7 @@ closest_10(double x) {
 			rval /= 10.0;
 		}
 	}
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 

@@ -52,13 +52,13 @@ void
 Det::
 equalize(Det const& p) {
 // adjust my det and exp so that exp == p.exp
-	Trace trc(1,"Det::equalize");
-	trc.dprint("this = ",*this,", p = ",p);
+	T_(Trace trc(1,"Det::equalize");)
+	T_(trc.dprint("this = ",*this,", p = ",p);)
 	if (this->exp != p.exp) {
 		this->coef *= pow(10.0, this->exp-p.exp);
 		this->exp = p.exp;
 	}
-	trc.dprint("equalized this = ",*this,", p = ",p);
+	T_(trc.dprint("equalized this = ",*this,", p = ",p);)
 }
 
 std::ostream&
@@ -71,7 +71,7 @@ operator<<(std::ostream& s, const Det& t) {
 Pac::
 Pac(int nf, int nx, Fjacfcn fj) : fjac(fj) {
 // Pac constructor: allocate x, f, jac and tan
-	Trace trc(1,"Pac constructor");
+	T_(Trace trc(1,"Pac constructor");)
 	f = vect(nf, 0.0);
 	x = vect(nx, 0.0);
 	jac = vect(nf*nx, 0.0);
@@ -82,11 +82,11 @@ Pac::
 Pac(const vect& start, const vect& t, int nf, Fjacfcn fj) :
 	x(start), tan(t), fjac(fj) {
 // Pac constructor: allocate x, f, jac and tan and set starting x and tan
-	Trace trc(1,"Pac x constructor");
+	T_(Trace trc(1,"Pac x constructor");)
 	f = vect(nf, 0.0);
 	int nx = x.size();
 	jac = vect(nf*nx, 0.0);
-	trc.dprint("nx = ",x.size(),", nf = ",nf);
+	T_(trc.dprint("nx = ",x.size(),", nf = ",nf);)
 }
 
 std::ostream&
@@ -99,7 +99,7 @@ Issue*
 Pac::
 sigue (Pac& to, vector<double>* projectee) {
 // Extend this Pac to "to" by continuation using the predicted stepsize (hk)
-	Trace trc(1,"sigue from coord ",coord," to ",to.coord,", stepsize ",step.hk);
+	T_(Trace trc(1,"sigue from coord ",coord," to ",to.coord,", stepsize ",step.hk);)
 	//  int nf = f.size();
 	int nx = x.size();
 	Issue* rval{nullptr};
@@ -114,13 +114,13 @@ sigue (Pac& to, vector<double>* projectee) {
 	// it may be reduced below
 	to.stepsize = step.hk;
 
-	trc.dprint("from tan: ",tan);
+	T_(trc.dprint("from tan: ",tan);)
 
 	// Loop until we get an acceptable solution...
 	while(true) {
 		// predictor: to = this + to.stepsize*tan
 		to.x = x;
-		blas_axpy(nx, to.stepsize, tan.data(), 1, to.x.data(), 1);
+		blas::axpy(nx, to.stepsize, tan.data(), 1, to.x.data(), 1);
 		// ...corrector
 		if (confcn == nullptr)
 			rval = to.corrector();
@@ -154,7 +154,7 @@ sigue (Pac& to, vector<double>* projectee) {
 		if (to.stepsize < specs.minstepsize*pow(specs.reductionfac,4.0))
 			return rval;
 		int red = step.red_angle + step.red_conv + step.red_dsc;
-		trc.dprint("reduction ",red,", retry with stepsize ",to.stepsize,", issue: ",rval);
+		T_(trc.dprint("reduction ",red,", retry with stepsize ",to.stepsize,", issue: ",rval);)
 	}
 
 	return rval;
@@ -165,20 +165,20 @@ Pac::
 determinant() {
 // compute the determinant of the Jacobian augmented by
 // the tangent in the last row
-	Trace trc(2,"Pac::determinant");
+	T_(Trace trc(2,"Pac::determinant");)
 	Det rval;
 	int nx = x.size();
 	int nf = f.size();
 	// only for nx == nf+1
 	if (nx != nf+1) {
-		trc.dprint("quick return: ",nf,", ",nx);
+		T_(trc.dprint("quick return: ",nf,", ",nx);)
 		return rval;
 	}
 	fjac (x, f, jac);
 	vector<double> A(nx*nx, 0.0);
 	for (int j=0; j<nx; j++)
-		blas_copy(nf, &jac[j*nf], 1, &A[j*nx], 1);
-	blas_copy(nx, tan.data(), 1, &A[nf], nx);
+		blas::copy(nf, &jac[j*nf], 1, &A[j*nx], 1);
+	blas::copy(nx, tan.data(), 1, &A[nf], nx);
 	vector<int> ipiv(nx, 0);
 	lapack::dgetrf(nx,nx,A.data(), nx, ipiv.data());
 	double d{1.0};
@@ -198,7 +198,7 @@ determinant() {
 		}
 	}
 	rval = Det(d,exp);
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -220,7 +220,7 @@ corrector() {
 //   3    weak acceptance: two consecutive small residuals
 //   4    weak acceptance: 2 consecutive small iterates
 //------------------------------------------------------------------
-	Trace trc(2,"Pac::corrector");
+	T_(Trace trc(2,"Pac::corrector");)
 	Issue* rval{nullptr};
 	int nx = x.size();
 	int nf = f.size();
@@ -228,7 +228,7 @@ corrector() {
 	// convergence tolerance for norm(f):
 	QR* jf{nullptr};
 
-	trc.dprint ("nx ", nx, ", nf ", nf,", x: ", x);
+	T_(trc.dprint ("nx ", nx, ", nf ", nf,", x: ", x);)
 
 	// Workspace
 	vect h(nx, 0.0);		// Newton correction
@@ -251,9 +251,9 @@ corrector() {
 		// compute function norm, save previous
 		if (step.niter > 0)
 			prev_fxnorm = step.fxnorm;
-		step.fxnorm = blas_snrm2 (nf, &f[0], 1);
-		step.xnorm = blas_snrm2 (nx, &x[0], 1);
-		trc.dprint("iter ",step.niter,", residual ",step.fxnorm, ", norm(x) ",step.xnorm,", f: ",flaps::summarize(f,80));
+		step.fxnorm = blas::snrm2 (nf, &f[0], 1);
+		step.xnorm = blas::snrm2 (nx, &x[0], 1);
+		T_(trc.dprint("iter ",step.niter,", residual ",step.fxnorm, ", norm(x) ",step.xnorm,", f: ",flaps::summarize(f,80));)
 
 		// check for convergence XXX move to after x+h
 		if (specs.minf.empty())
@@ -267,7 +267,7 @@ corrector() {
 
 		// return if converged returned an Issue
 		if (rval != nullptr) {
-			trc.dprint("returning: ",rval->msg);
+			T_(trc.dprint("returning: ",rval->msg);)
 			return rval;
 		}
 		// if it is converged break out of the loop only if we have
@@ -288,11 +288,11 @@ corrector() {
 		// norm of the correction (h)
 		if (step.niter > 0)
 			prev_hnorm = step.hnorm;
-		step.hnorm = blas_snrm2 (nx, &h[0], 1);
-		trc.correction(nx,&this->x[0],&h[0],"correction ",step.niter);
+		step.hnorm = blas::snrm2 (nx, &h[0], 1);
+		T_(trc.correction(nx,&this->x[0],&h[0],"correction ",step.niter);)
 
 		// subtract h from x...
-		blas_axpy(nx, -1.0, &h[0], 1, &x[0], 1);
+		blas::axpy(nx, -1.0, &h[0], 1, &x[0], 1);
 
 		// check for convergence again in case jf was nullptr
 		if (step.conv_crit > 0)
@@ -314,18 +314,18 @@ corrector() {
 	double tol = sqrt(meps);
 	tan = jf->nullProj(tan, scale);
 	// normalize
-	projnorm = blas_snrm2(nx, &tan[0], 1);
+	projnorm = blas::snrm2(nx, &tan[0], 1);
 	if (projnorm > meps)
-		blas_scal(nx, 1.0/projnorm, &tan[0], 1);
+		blas::scal(nx, 1.0/projnorm, &tan[0], 1);
 	if (projnorm < tol)
 		rval = new Issue("small tangent encountered", Kind::zerotan);
-	trc.dprint("tangent: ",tan);
+	T_(trc.dprint("tangent: ",tan);)
 
 	// delete the factorization
 	if (jf != nullptr)
 		delete jf;
 
-	trc.dprint("returning convergence crit: ", step.conv_crit, ", rcond ",step.rcond);
+	T_(trc.dprint("returning convergence crit: ", step.conv_crit, ", rcond ",step.rcond);)
 	return rval;
 }  // corrector
 
@@ -340,7 +340,7 @@ corrector(Constraintfcn constraint) {
 // This function simply calls the unconstrained corrector() with
 // a special Fjacfcn function which adds the constraint.
 //------------------------------------------------------------------
-	Trace trc(2,"Pac::corrector constrained");
+	T_(Trace trc(2,"Pac::corrector constrained");)
 	size_t nx = x.size();
 	size_t nf = f.size();
 	int nf_c = nf + 1;
@@ -348,7 +348,7 @@ corrector(Constraintfcn constraint) {
 
 	// lambda to call the input Fjacfcn and add the constraint
 	Fjacfcn fjac_c = [&](const vect& x_c, vect& f_c, vect& jac_c) {
-		Trace trc(1,"fjac_c");
+		T_(Trace trc(1,"fjac_c");)
 		this->fjac(x_c, this->f, this->jac);
 		std::copy_n(this->f.begin(), nf, f_c.begin());
 		for (size_t j=0; j<nx; j++)
@@ -356,7 +356,7 @@ corrector(Constraintfcn constraint) {
 		// add the constraint to the last row of f and the Jacobian
 		vect c(nx, 0.0);		// constraint vector
 		f_c[nf] = constraint(x, c);	// constraint returns p-\hat{p}
-		blas_copy(nx, &c[0], 1, &jac_c[nf], nf_c);
+		blas::copy(nx, &c[0], 1, &jac_c[nf], nf_c);
 		return 0;
 	};
 		
@@ -383,9 +383,9 @@ corrector(Constraintfcn constraint) {
 	double scale{0.0};
 	this->tan = jf.nullProj(this->tan, scale);
 	// normalize
-	projnorm = blas_snrm2(nx, this->tan.data(), 1);
-	blas_scal(nx, 1.0/projnorm, this->tan.data(), 1);
-	trc.dprint("tangent: ",this->tan);
+	projnorm = blas::snrm2(nx, this->tan.data(), 1);
+	blas::scal(nx, 1.0/projnorm, this->tan.data(), 1);
+	T_(trc.dprint("tangent: ",this->tan);)
 
 	return rval;
 }  // corrector constrained
@@ -409,7 +409,7 @@ converged(double prev_fxnorm, double prev_hnorm) {
 //   Rheinboldt, Werner C., "Numerical Analysis of Parameterized
 //   Nonlinear Equations", John Wiley & Sons, New York, 1986
 //   ISBN 0-471-88814-1 (book)
-	Trace trc(1,"converged");
+	T_(Trace trc(1,"converged");)
 	Issue* rval{nullptr};
 	double meps = std::numeric_limits<double>::epsilon();
 	double relerr = sqrt(meps);
@@ -420,7 +420,7 @@ converged(double prev_fxnorm, double prev_hnorm) {
 	Form sci1;
 	sci1.scientific().precision(1);
 
-	trc.dprint("hnorm ",step.hnorm,"(prev ",prev_hnorm, ") fxnorm ",step.fxnorm, "(prev ",prev_fxnorm,")");
+	T_(trc.dprint("hnorm ",step.hnorm,"(prev ",prev_hnorm, ") fxnorm ",step.fxnorm, "(prev ",prev_fxnorm,")");)
 
 	step.conv_crit = 0;
 
@@ -429,21 +429,18 @@ converged(double prev_fxnorm, double prev_hnorm) {
 	bool fx1 = (step.fxnorm < specs.epsabs);
 	if (fx1 && step.hnorm <= tlstep) {
 		step.conv_crit = 1;
-		trc.dprint("strong acceptance (1): ",step.fxnorm,
-				" <= ",specs.epsabs, " and ", step.hnorm, " <= ", tlstep);
+		T_(trc.dprint("strong acceptance (1): ",step.fxnorm, " <= ",specs.epsabs, " and ", step.hnorm, " <= ", tlstep);)
 		return rval;
 	}
 	// if this is before the first iteration just check for strong acceptance
 	if (step.niter == 0) {
-		trc.dprint("returning 0: niter=0");
+		T_(trc.dprint("returning 0: niter=0");)
 		return rval;
 	}
 	// (2) weak acceptance: small residual or small iterate
 	if (fx1 || step.hnorm <= weakEps*step.xnorm) {
 		step.conv_crit = 2;
-		trc.dprint("weak acceptance (2): norm(f)(", sci1(step.fxnorm),
-			") < ", sci1(specs.epsabs), " or hnorm (", sci1(step.hnorm),
-			") < ", sci1(weakEps*step.xnorm));
+		T_(trc.dprint("weak acceptance (2): norm(f)(", sci1(step.fxnorm), ") < ", sci1(specs.epsabs), " or hnorm (", sci1(step.hnorm), ") < ", sci1(weakEps*step.xnorm));)
 		return rval;
 	}
 
@@ -452,9 +449,7 @@ converged(double prev_fxnorm, double prev_hnorm) {
 		if ((step.fxnorm + prev_fxnorm) <= specs.epsabs &&
 				step.hnorm <= 8.0*prev_hnorm) {
 			step.conv_crit = 3;
-			trc.dprint("weak acceptance (3): ", sci1(step.fxnorm), "+",
-				sci1(prev_fxnorm), " < ", sci1(specs.epsabs), " or hnorm(",
-				sci1(step.hnorm), " <= 8*prev hnorm(",sci1(prev_hnorm),")");
+			T_(trc.dprint("weak acceptance (3): ", sci1(step.fxnorm), "+", sci1(prev_fxnorm), " < ", sci1(specs.epsabs), " or hnorm(", sci1(step.hnorm), " <= 8*prev hnorm(",sci1(prev_hnorm),")");)
 			return rval;
 		}
 		// (4) weak acceptance: 2 consecutive small iterates
@@ -462,9 +457,7 @@ converged(double prev_fxnorm, double prev_hnorm) {
 		//   norm(h_i) + norm(h_{i-1}) < epsabs + relerr*norm(x);
 		bool fx8 = (step.fxnorm < 8.0*specs.epsabs);
 		if (fx8 && (step.hnorm + prev_hnorm) <= tlstep) {
-			trc.dprint("weak acceptance (4): ",sci1(step.fxnorm)," <= 8*",
-					sci1(specs.epsabs)," and ",sci1(step.hnorm),
-					"+",sci1(prev_hnorm), " <= ",sci1(tlstep));
+			T_(trc.dprint("weak acceptance (4): ",sci1(step.fxnorm)," <= 8*", sci1(specs.epsabs)," and ",sci1(step.hnorm), "+",sci1(prev_hnorm), " <= ",sci1(tlstep));)
 			step.conv_crit = 4;
 			return rval;
 		}
@@ -479,7 +472,7 @@ converged(double prev_fxnorm, double prev_hnorm) {
 		string error = vastr("residual is not decreasing (",
 			prev_fxnorm," -> ",step.fxnorm,") and small h: ",step.hnorm);
 		rval = new Issue(error, Kind::noconv);
-		trc.dprint("returning ",step.conv_crit,": ",error);
+		T_(trc.dprint("returning ",step.conv_crit,": ",error);)
 		return rval;
 	}
 	// Divergence or too many iterations.
@@ -493,7 +486,7 @@ converged(double prev_fxnorm, double prev_hnorm) {
 			string error = vastr("divergence after ",step.niter," iterations, h: ",
 				step.hnorm," > ",fmp, " * ",prev_hnorm);
 			step.conv_crit = -1;
-			trc.dprint(error);
+			T_(trc.dprint(error);)
 			rval = new Issue(error, Kind::divergence);
 			return rval;
 		}
@@ -503,7 +496,7 @@ converged(double prev_fxnorm, double prev_hnorm) {
 		string error = vastr("divergence: norm(f) ",sci1(step.fxnorm),
 				", prev norm(f) ",sci1(prev_fxnorm)," + epsabs ",sci1(specs.epsabs));
 		step.conv_crit = -1;
-		trc.dprint("returning -1: ",error);
+		T_(trc.dprint("returning -1: ",error);)
 		rval = new Issue(error, Kind::divergence);
 		return rval;
 	}
@@ -511,11 +504,11 @@ converged(double prev_fxnorm, double prev_hnorm) {
 	if (step.niter >= specs.maxiter) {
 		string error = vastr("converging too slowly (", specs.maxiter, " iterations)");
 		step.conv_crit = -2;
-		trc.dprint("returning -2: ",error);
+		T_(trc.dprint("returning -2: ",error);)
 		rval = new Issue(error, Kind::slow);
 		return rval;
 	}
-	trc.dprint("returning ",step.conv_crit);
+	T_(trc.dprint("returning ",step.conv_crit);)
 	return rval;
 } // Pac::converged
 
@@ -524,15 +517,15 @@ testf(const vect& f, const vect& eps) {
 // test every abs(f[i]) against eps[i], return false the first
 // time abs(f[i]) > eps[i]. The sizes of f and eps may not be the same
 // due to constraints.
-	Trace trc(2,"testf");
+	T_(Trace trc(2,"testf");)
 	size_t n = std::min(f.size(), eps.size());
 	for (size_t i=0; i<n; i++) {
 		if (abs(f[i]) > eps[i]) {
-			trc.dprint("returning false: f[",i,"] ",abs(f[i])," > ",eps[i]);
+			T_(trc.dprint("returning false: f[",i,"] ",abs(f[i])," > ",eps[i]);)
 			return false;
 		}
 	}
-	trc.dprint("returning true");
+	T_(trc.dprint("returning true");)
 	return true;
 }
 
@@ -554,7 +547,7 @@ convergev(double prev_fxnorm, double prev_hnorm) {
 //   Rheinboldt, Werner C., "Numerical Analysis of Parameterized
 //   Nonlinear Equations", John Wiley & Sons, New York, 1986
 //   ISBN 0-471-88814-1 (book)
-	Trace trc(1,"convergev");
+	T_(Trace trc(1,"convergev");)
 	Issue* rval{nullptr};
 	double meps = std::numeric_limits<double>::epsilon();
 	double relerr = sqrt(meps);
@@ -565,7 +558,7 @@ convergev(double prev_fxnorm, double prev_hnorm) {
 	Form sci1;
 	sci1.scientific().precision(1);
 
-	trc.dprint("hnorm ",step.hnorm,"(prev ",prev_hnorm, ") fxnorm ",step.fxnorm, "(prev ",prev_fxnorm,")");
+	T_(trc.dprint("hnorm ",step.hnorm,"(prev ",prev_hnorm, ") fxnorm ",step.fxnorm, "(prev ",prev_fxnorm,")");)
 
 	step.conv_crit = 0;
 
@@ -578,21 +571,18 @@ convergev(double prev_fxnorm, double prev_hnorm) {
 		fx1 = testf(f, specs.minf);
 	if (fx1 && step.hnorm <= tlstep) {
 		step.conv_crit = 1;
-		trc.dprint("strong acceptance (1): ",step.fxnorm,
-				" <= ",specs.epsabs, " and ", step.hnorm, " <= ", tlstep);
+		T_(trc.dprint("strong acceptance (1): ",step.fxnorm, " <= ",specs.epsabs, " and ", step.hnorm, " <= ", tlstep);)
 		return rval;
 	}
 	// if this is before the first iteration just check for strong acceptance
 	if (step.niter == 0) {
-		trc.dprint("returning 0: niter=0");
+		T_(trc.dprint("returning 0: niter=0");)
 		return rval;
 	}
 	// (2) weak acceptance: small residual or small iterate
 	if (fx1 || step.hnorm <= weakEps*step.xnorm) {
 		step.conv_crit = 2;
-		trc.dprint("weak acceptance (2): norm(f)(", sci1(step.fxnorm),
-			") < ", sci1(specs.epsabs), " or hnorm (", sci1(step.hnorm),
-			") < ", sci1(weakEps*step.xnorm));
+		T_(trc.dprint("weak acceptance (2): norm(f)(", sci1(step.fxnorm), ") < ", sci1(specs.epsabs), " or hnorm (", sci1(step.hnorm), ") < ", sci1(weakEps*step.xnorm));)
 		return rval;
 	}
 
@@ -601,9 +591,7 @@ convergev(double prev_fxnorm, double prev_hnorm) {
 		if ((step.fxnorm + prev_fxnorm) <= specs.epsabs &&
 				step.hnorm <= 8.0*prev_hnorm) {
 			step.conv_crit = 3;
-			trc.dprint("weak acceptance (3): ", sci1(step.fxnorm), "+",
-				sci1(prev_fxnorm), " < ", sci1(specs.epsabs), " and hnorm(",
-				sci1(step.hnorm), " <= 8*prev hnorm(",sci1(prev_hnorm),")");
+			T_(trc.dprint("weak acceptance (3): ", sci1(step.fxnorm), "+", sci1(prev_fxnorm), " < ", sci1(specs.epsabs), " and hnorm(", sci1(step.hnorm), " <= 8*prev hnorm(",sci1(prev_hnorm),")");)
 			return rval;
 		}
 		// (4) weak acceptance: 2 consecutive small iterates
@@ -611,9 +599,7 @@ convergev(double prev_fxnorm, double prev_hnorm) {
 		//   norm(h_i) + norm(h_{i-1}) < epsabs + relerr*norm(x);
 		bool fx8 = (step.fxnorm < 8.0*specs.epsabs);
 		if (fx8 && (step.hnorm + prev_hnorm) <= tlstep) {
-			trc.dprint("weak acceptance (4): ",sci1(step.fxnorm)," <= 8*",
-					sci1(specs.epsabs)," and ",sci1(step.hnorm),
-					"+",sci1(prev_hnorm), " <= ",sci1(tlstep));
+			T_(trc.dprint("weak acceptance (4): ",sci1(step.fxnorm)," <= 8*", sci1(specs.epsabs)," and ",sci1(step.hnorm), "+",sci1(prev_hnorm), " <= ",sci1(tlstep));)
 			step.conv_crit = 4;
 			return rval;
 		}
@@ -628,7 +614,7 @@ convergev(double prev_fxnorm, double prev_hnorm) {
 		string error = vastr("residual is not decreasing (",
 			prev_fxnorm," -> ",step.fxnorm,") and small h: ",step.hnorm);
 		rval = new Issue(error, Kind::noconv);
-		trc.dprint("returning ",step.conv_crit,": ",error);
+		T_(trc.dprint("returning ",step.conv_crit,": ",error);)
 		return rval;
 	}
 	// Divergence or too many iterations.
@@ -642,7 +628,7 @@ convergev(double prev_fxnorm, double prev_hnorm) {
 			string error = vastr("divergence after ",step.niter," iterations, h: ",
 				step.hnorm," > ",fmp, " * ",prev_hnorm);
 			step.conv_crit = -1;
-			trc.dprint(error);
+			T_(trc.dprint(error);)
 			rval = new Issue(error, Kind::divergence);
 			return rval;
 		}
@@ -652,7 +638,7 @@ convergev(double prev_fxnorm, double prev_hnorm) {
 		string error = vastr("divergence: norm(f) ",sci1(step.fxnorm),
 				", prev norm(f) ",sci1(prev_fxnorm)," + epsabs ",sci1(specs.epsabs));
 		step.conv_crit = -1;
-		trc.dprint("returning -1: ",error);
+		T_(trc.dprint("returning -1: ",error);)
 		rval = new Issue(error, Kind::divergence);
 		return rval;
 	}
@@ -660,11 +646,11 @@ convergev(double prev_fxnorm, double prev_hnorm) {
 	if (step.niter >= specs.maxiter) {
 		string error = vastr("converging too slowly (", specs.maxiter, " iterations)");
 		step.conv_crit = -2;
-		trc.dprint("returning -2: ",error);
+		T_(trc.dprint("returning -2: ",error);)
 		rval = new Issue(error, Kind::slow);
 		return rval;
 	}
-	trc.dprint("returning ",step.conv_crit);
+	T_(trc.dprint("returning ",step.conv_crit);)
 	return rval;
 } // Pac::convergev
 
@@ -724,7 +710,7 @@ rheinboldt (const Pac& from) {
 //   stalled: tracking stalled with small stepsize
 //   retry:  large angle between tangents: retry the step
 //                with retry.stepsize
-	Trace trc(1,"rheinboldt");
+	T_(Trace trc(1,"rheinboldt");)
 	Issue* rval{nullptr};
 	size_t nx = x.size();
 
@@ -736,7 +722,7 @@ rheinboldt (const Pac& from) {
 
 	// total # of stepsize reductions getting to this
 	int stepred = step.red_conv + step.red_angle + step.red_dsc;
-	trc.dprint("stepsize reductions: conv ",step.red_conv,", angle ",step.red_angle,", dsc ",step.red_dsc);
+	T_(trc.dprint("stepsize reductions: conv ",step.red_conv,", angle ",step.red_angle,", dsc ",step.red_dsc);)
 
 	// 2-norm of the secant
 	step.secant = vector_distance(nx, &x[0], &from.x[0]);
@@ -749,7 +735,7 @@ rheinboldt (const Pac& from) {
 	else
 		step.secssratio = 1.0;
 
-	trc.dprint("secssratio = ",step.secant," / ", ps," = ",step.secssratio);
+	T_(trc.dprint("secssratio = ",step.secant," / ", ps," = ",step.secssratio);)
 	if (abs(coord) > 2 && (step.secant < specs.minstepsize &&
 			step.secssratio < 0.0001))
 		rval = new Issue(vastr("no progress: secant ",step.secant,
@@ -757,13 +743,13 @@ rheinboldt (const Pac& from) {
 
 	// alphak: angle between the previous and current tangents (4.16)
 	double tt;
-	blas_dot(nx, &from.tan[0], 1, &tan[0], 1, tt);
+	blas::dot(nx, &from.tan[0], 1, &tan[0], 1, tt);
 	if (tt >= 1.0)
 		step.alphak = 0.0;
 	else
 		step.alphak = std::acos(tt);
 	string tandiff = vector_diff(from.tan,tan);
-	trc.dprint("alphak = ",step.alphak);
+	T_(trc.dprint("alphak = ",step.alphak);)
 
 	// compute the predicted stepsize (step.hk) for the next step
 	step.dtau(from, *this, stepred);
@@ -773,7 +759,7 @@ rheinboldt (const Pac& from) {
 	if (std::abs(coord) > 3 && step.alphak > specs.maxangle) {
 		string exc{vastr("large angle (",step.alphak/deg2rad," deg)")};
 		rval = new Issue(exc, Kind::angle);
-		trc.dprint("returning issue: ",exc);
+		T_(trc.dprint("returning issue: ",exc);)
 		return rval;
 	}
 
@@ -783,7 +769,7 @@ rheinboldt (const Pac& from) {
 	else
 		step.stepratio = 1.0;
 
-	trc.dprint("returning predicted stepsize ",step.hk);
+	T_(trc.dprint("returning predicted stepsize ",step.hk);)
 	return rval;
 } // rheinboldt
 
@@ -831,7 +817,7 @@ dtau(const Pac& from, Pac& to, int stepred) {
 // Equation numbers and variable names are from ref 3; ref 2 has the
 // same equations but are not all numbered.
 //------------------------------------------------------------------
-	Trace trc(1,"Step::dtau");
+	T_(Trace trc(1,"Step::dtau");)
 	constexpr double meps = std::numeric_limits<double>::epsilon();
 	double growthfac = to.specs.growthfac;
 	double curvaturefac = to.specs.curvaturefac;
@@ -842,7 +828,7 @@ dtau(const Pac& from, Pac& to, int stepred) {
 	// if the secant is zero, return with stepsize=??
 	if (this->secant <= 0.0) {
 		*this = from.step;
-		trc.dprint("returning prev step ",from.stepsize);
+		T_(trc.dprint("returning prev step ",from.stepsize);)
 		return from.stepsize;
 	}
 	
@@ -850,7 +836,7 @@ dtau(const Pac& from, Pac& to, int stepred) {
 	// tangents; lower limit on angle (dpcon61.f 2628) is arccos(1-meps)
 	constexpr double minangle = acos(1.0 - meps);
 	if (this->alphak < minangle) {
-		trc.dprint("replacing alphak (",this->alphak,") with ",minangle);
+		T_(trc.dprint("replacing alphak (",this->alphak,") with ",minangle);)
 		this->alphak = minangle;
 	}
 
@@ -861,7 +847,7 @@ dtau(const Pac& from, Pac& to, int stepred) {
 	prevwk = from.step.wk;
 	if (prevwk <= 0.0)
 		prevwk = this->wk;
-	trc.dprint("curvature (wk) = 2*curvaturefac*sin(alphak/2)/secant = 2*", curvaturefac,"*sin(",alphak,"/2)/", secant," = ",wk,", prev wk ",prevwk);
+	T_(trc.dprint("curvature (wk) = 2*curvaturefac*sin(alphak/2)/secant = 2*", curvaturefac,"*sin(",alphak,"/2)/", secant," = ",wk,", prev wk ",prevwk);)
 
 	// eqn 4.17a ref 3 (dpcon61.f:2636)
 	// simple linear extrapolation to predict curvature during
@@ -876,10 +862,10 @@ dtau(const Pac& from, Pac& to, int stepred) {
 	// double gammaMin = std::max(0.001, 0.01/secant);
 	double gammaMin = 0.001;
 	if (gammak < gammaMin) {
-		trc.dprint("increasing gammak from ",gammak," to ",gammaMin);
+		T_(trc.dprint("increasing gammak from ",gammak," to ",gammaMin);)
 		gammak = gammaMin;
 	}
-	trc.dprint("gammak = ",gammak);
+	T_(trc.dprint("gammak = ",gammak);)
 
 	// Eqn 4.20 (Ref 3): epsk, the desired starting error for the next step.
 	// Nominally epsk is deltak_star (Eqn 4.11), the quality times the corrector
@@ -893,16 +879,16 @@ dtau(const Pac& from, Pac& to, int stepred) {
 	} else {
 		this->epsk = deltak_star;
 	}
-	trc.dprint("deltak_star = quality*distance = ",deltak_star,", epsk = ",this->epsk);
+	T_(trc.dprint("deltak_star = quality*distance = ",deltak_star,", epsk = ",this->epsk);)
 
 	// Eqn 4.21 (Ref 3): tentative step h_k^1. If convergence distance was
 	// zero, set estimate to growthfactor*secant
 	if (deltak == 0.0) {
 		hk1 = growthfac*secant;
-		trc.dprint("corrector dist = 0 so use growthfactor*secant = ", growthfac,"*",secant," = ",hk1);
+		T_(trc.dprint("corrector dist = 0 so use growthfactor*secant = ", growthfac,"*",secant," = ",hk1);)
 	} else {
 		hk1 = sqrt(2.0*this->epsk/gammak);
-		trc.dprint("hk1 = sqrt(2*epsk<",this->epsk,">/gammak<",gammak,">) = ",hk1);
+		T_(trc.dprint("hk1 = sqrt(2*epsk<",this->epsk,">/gammak<",gammak,">) = ",hk1);)
 	}
 
 	// if there were stepsize reductions limit hk1 to
@@ -912,7 +898,7 @@ dtau(const Pac& from, Pac& to, int stepred) {
 	if (stepred > 0) {
 		double gf = std::max(growthfac-1.0, 1.0);
 		hk1 = std::min(hk1, gf*secant/2.0);
-		trc.dprint(stepred," step reductions: trunc hk1 to ",hk1);
+		T_(trc.dprint(stepred," step reductions: trunc hk1 to ",hk1);)
 	}
 
 	// Eqn 4.22: hk2 (dpcon61.f:2657)
@@ -922,10 +908,10 @@ dtau(const Pac& from, Pac& to, int stepred) {
 	// tangent and use this. Ref 2 suggests doing this in double precision;
 	// using long double seems to make very little diff but do it anyway
 	size_t nx = to.x.size();
-	int ipc = blas_isamax(nx, &to.tan[0], 1) - 1;  // 0b
+	int ipc = blas::isamax(nx, &to.tan[0], 1) - 1;  // 0b
 	long double tk = to.tan[ipc];
 	long double tkm1 = from.tan[ipc];
-	trc.dprint(" using tan[",ipc,"] = ",tk,", prev = ",tkm1);
+	T_(trc.dprint(" using tan[",ipc,"] = ",tk,", prev = ",tkm1);)
 	long double lhk1{hk1};
 	long double lhk2{lhk1};
 	long double lsecant{secant};
@@ -934,27 +920,27 @@ dtau(const Pac& from, Pac& to, int stepred) {
 	if (tk != 0.0)
 		lhk2 = lhk1*(one + lhk1*(one - tkm1/tk)/(two*lsecant));
 	hk2 = lhk2;
-	trc.dprint("hk2 = ",hk2,", hk1 = ",hk1);
+	T_(trc.dprint("hk2 = ",hk2,", hk1 = ",hk1);)
 
 	// ... a couple of lambdas for checking limits on hk2:
 	// Eqn 4.23, dpcon61.f:2663
 	auto hk2min = [&](double h, double low) {
-		Trace trc(1,"hk2min");
+		T_(Trace trc(1,"hk2min");)
 		if (h > low) {
-			trc.dprint("decreasing hk2 to ",low);
+			T_(trc.dprint("decreasing hk2 to ",low);)
 			h = low;
 		}
 		return h;
 	};
 	auto hk2max = [&](double h, double hi) {
-		Trace trc(1,"hk2max");
+		T_(Trace trc(1,"hk2max");)
 		if (h < hi) {
-			trc.dprint("increasing hk2 to ",hi);
+			T_(trc.dprint("increasing hk2 to ",hi);)
 			h = hi;
 		}
 		return h;
 	};
-	trc.dprint("truncate to min/maxstepsize: ",minstepsize, ", ",maxstepsize);
+	T_(trc.dprint("truncate to min/maxstepsize: ",minstepsize, ", ",maxstepsize);)
 	// hk2 = std::max(hk2, secant/reductionfac);
 	hk = hk2max(hk2, secant/reductionfac);
 	// hk2 = std::min(hk2, secant*growthfac);
@@ -963,7 +949,7 @@ dtau(const Pac& from, Pac& to, int stepred) {
 	hk = hk2max(hk, minstepsize);
 	// hk2 = std::min(hk2, maxstepsize);
 	hk = hk2min(hk, maxstepsize);
-	trc.dprint("returning stepsize ",hk);
+	T_(trc.dprint("returning stepsize ",hk);)
 	return hk;
 } // dtau
 
@@ -978,14 +964,14 @@ convergence_quality (int maxiter) {
 // which one is used is determined by "usecoqual":
 	bool usecoqual{true};
 // the 2 methods are plotted in main() below
-	Trace trc(1,"convergence_quality");
+	T_(Trace trc(1,"convergence_quality");)
 	double rval{0.0};
 	double eight{8.0};
 	double thgie{0.125};
 	int aveIter = maxiter/2 - 1;
 	double meps{std::numeric_limits<double>::epsilon()};
 
-	trc.dprint("niter ",niter,", max iter ",maxiter,", hnorm ",hnorm, ", distance ",deltak);
+	T_(trc.dprint("niter ",niter,", max iter ",maxiter,", hnorm ",hnorm, ", distance ",deltak);)
 
 	if (niter <= 1 || deltak <= 8.0*meps)
 		rval = eight;
@@ -994,7 +980,7 @@ convergence_quality (int maxiter) {
 	else if (niter >= maxiter)
 		rval = thgie;
 	if (rval > 0.0) {
-		trc.dprint("returning ",rval);
+		T_(trc.dprint("returning ",rval);)
 		return rval;
 	}
 
@@ -1004,7 +990,7 @@ convergence_quality (int maxiter) {
 	} else {
 		rval = table1(niter, omegatilde);
 	}
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -1121,7 +1107,7 @@ ecc() {
  *   x        n double vector
  * Returns: the 2-norm of the estimated interval f(x) lies in
  *------------------------------------------------------------------*/
-	Trace trc(1,"ecc");
+	T_(Trace trc(1,"ecc");)
 
 	int nx = x.size();
 	int nf = f.size();
@@ -1154,9 +1140,9 @@ ecc() {
 	double ratio = lo/hi;
 	if (specs.ecc < 0 || (specs.ecc == 0 && ratio > tol)) {
 		specs.minf.clear();
-		trc.dprint("returning ",rval,", not using minf, ratio = ",ratio,", ecc=",specs.ecc);
+		T_(trc.dprint("returning ",rval,", not using minf, ratio = ",ratio,", ecc=",specs.ecc);)
 	} else {
-		trc.dprint("using minf, ratio = ",ratio,", ecc = ",specs.ecc);
+		T_(trc.dprint("using minf, ratio = ",ratio,", ecc = ",specs.ecc);)
 	}
 	return rval;
 }
@@ -1173,7 +1159,7 @@ homotopy(vect& x0, Fjacfcn fjac, vect* results,
 //   and using continuation to h=1, g(y1) = f(x1) = 0
 //   where y1 = [ x1 1 ]' and x1 is the desired solution
 //   dg/dh = f0
-	Trace trc(1,"homotopy");
+	T_(Trace trc(1,"homotopy");)
 	int n = x0.size();
 	int m = n+1;		// x0 + homotopy parameter (h)
 	bool rval{true};
@@ -1183,17 +1169,17 @@ homotopy(vect& x0, Fjacfcn fjac, vect* results,
 	vect tan(n, 0.0);
 	// compute f0 = f(x0) ...
 	fjac(x0, f0, jac);
-	trc.dprint("x0 = ",x0,", f0 = ",f0);
+	T_(trc.dprint("x0 = ",x0,", f0 = ",f0);)
 	// ... and return if it is small
 	double tol{std::numeric_limits<double>::epsilon()};
-	double fnorm = blas_snrm2(n, f0.data(), 1);
+	double fnorm = blas::snrm2(n, f0.data(), 1);
 	if (fnorm < tol)
 		return true;
 
 	// continuation on g(y)
 	// lambda to compute g(y), gjac(y)
 	auto gj = [&](const vect& y, vect& g, vect& gjac) {
-		Trace trc(1,"homotopy gj");
+		T_(Trace trc(1,"homotopy gj");)
 		vect x(y.begin(), y.end()-1);
 		vect f(x.size(), 0.0);
 		fjac(x, f, jac);
@@ -1204,8 +1190,8 @@ homotopy(vect& x0, Fjacfcn fjac, vect* results,
 				gjac[i+j*n] = jac[i+j*n];
 			gjac[i+n*n] = f0[i];
 		}
-		trc.dprint("g(",y,") = ",g);
-		trc.dprintm(n,m,n,&gjac[0],"g Jacobian");
+		T_(trc.dprint("g(",y,") = ",g);)
+		T_(trc.dprintm(n,m,n,&gjac[0],"g Jacobian");)
 		return 0;
 	};
 		
@@ -1220,7 +1206,7 @@ homotopy(vect& x0, Fjacfcn fjac, vect* results,
 	y0.step.hk = 0.0;		// let trace correct the initial y0
 	// lambda to constrain h=0
 	y0.confcn = [&](const vector<double>& x, vector<double>& c) {
-		Trace trc(1,"h=0 constraint");
+		T_(Trace trc(1,"h=0 constraint");)
 		int m = x.size()-1;
 		c[m] = 1.0;
 		return x[m];
@@ -1228,22 +1214,22 @@ homotopy(vect& x0, Fjacfcn fjac, vect* results,
 	// trace the curve from 0 -> 1 with a lambda Processfcn
 	rval = y0.trace([&n,&results,&stepdata](Pac& y0, Pac& y1, Issue* issue) {
 			// process the results from trace() for homotopy
-			Trace trc(1,"process (homotopy trace)");
+			T_(Trace trc(1,"process (homotopy trace)");)
 			bool rval{true};
 			double h = y1.x[n];
 			double dh = y1.tan[n];
-			trc.dprint("h = ",h);
+			T_(trc.dprint("h = ",h);)
 			// watch for homotopy at the limit (1)
 			y1.confcn = nullptr;
 			if (abs(h-1.0) < 0.001)
 					rval = false;	// tell trace() to quit
 			else if (h + y1.stepsize*dh > 1.0) {
 				double newsz = (1.0 - h)/dh;
-				trc.dprint("decreasing stepsize from ",y1.step.hk," to ",newsz," to hit 1, h: ",h,", dh: ",dh);
+				T_(trc.dprint("decreasing stepsize from ",y1.step.hk," to ",newsz," to hit 1, h: ",h,", dh: ",dh);)
 				y1.step.hk = newsz;
 				// return a constraint function
 				y1.confcn = [&](const vector<double>& x, vector<double>& c) {
-					Trace trc(1,"h=1 constraint");
+					T_(Trace trc(1,"h=1 constraint");)
 					int m = x.size()-1;
 					c[m] = 1.0;
 					return x[m] - 1.0;
@@ -1275,7 +1261,7 @@ bool
 Pac::
 trace (Processfcn process, vect* projectee, int direction) {
 // trace a curve from "this" until "process" returns 0
-	Trace trc(1,"Pac::trace" );
+	T_(Trace trc(1,"Pac::trace" );)
 	bool rval{true};
 	int maxsteps = this->specs.maxsteps;
 	int stat{0};
@@ -1329,22 +1315,22 @@ nleig(complex<double>& s, vector<complex<double>>& x, Dfcn dmat,
 // eigenvalue problem D(s)x = 0, refine the estimate using homotopy
 // let g(y) = | D(s)x | = 0,  y = [ x s ]'
 //            | x[k]-1 |
-	Trace trc(1,"nleig");
+	T_(Trace trc(1,"nleig");)
 	size_t n = x.size();
 	vect y(2*n+2, 0.0);
-	trc.dprint("s = ",s,", x = ",x);
+	T_(trc.dprint("s = ",s,", x = ",x);)
 	for (size_t i=0; i<n; i++) {
 		y[2*i] = x[i].real();
 		y[2*i+1] = x[i].imag();
 	}
 	// normalize y: y'y = 1
-	double ynorm = blas_snrm2(2*n, &y[0], 1);
+	double ynorm = blas::snrm2(2*n, &y[0], 1);
 	if (ynorm == 0.0)
 		throw runtime_error("zero x passed to nleig");
-	blas_scal(2*n, 1.0/ynorm, &y[0], 1);
+	blas::scal(2*n, 1.0/ynorm, &y[0], 1);
 
 	// find the largest component (0 based) of x, set its phase to zero
-	int phase_idx = blas_isamax(n, &x[0], 1) - 1;
+	int phase_idx = blas::icamax(n, &x[0], 1) - 1;
 
 	// last 2 components: s
 	y[2*n] = s.real();
@@ -1355,7 +1341,7 @@ nleig(complex<double>& s, vector<complex<double>>& x, Dfcn dmat,
 			[&dmat,&phase_idx](const vect& y, vect& g, vect& jac) {
 				// lambda to evaluate g(y) and g'(y) = jac where
 				// y = [x s]' and g = [ f(x) x'x-1 x_k ]'
-				Trace trc(1,"nleig fjac");
+				T_(Trace trc(1,"nleig fjac");)
 				size_t m = y.size();		// 2n + 2
 				size_t n = (m - 2)/2;
 				vector<double> Dx(2*n,0.0);			// D*x
@@ -1378,7 +1364,7 @@ nleig(complex<double>& s, vector<complex<double>>& x, Dfcn dmat,
 					g[i] = Dx[i];
 
 				// last 2 equations are normalization: y'y - 1 & x[phase_idx] real
-				blas_dot(2*n, &y[0], 1, &y[0], 1, g[2*n]);
+				blas::dot(2*n, &y[0], 1, &y[0], 1, g[2*n]);
 				g[2*n] -= 1.0;
 				g[2*n+1] = y[2*phase_idx+1];	// set imag(x[phase_idx]) = 0
 
@@ -1386,19 +1372,19 @@ nleig(complex<double>& s, vector<complex<double>>& x, Dfcn dmat,
 				double* dxx = Dxx.data();
 				double* jacd = jac.data();
 				for (size_t j=0; j<2*n; j++)
-					blas_copy(2*n, &dxx[j*2*n], 1, &jacd[j*m], 1);
+					blas::copy(2*n, &dxx[j*2*n], 1, &jacd[j*m], 1);
 				// copy Dxsigma & Dxfreq to last 2 columns XXX just jac[2*n*m] to dmat?
-				blas_copy(2*n, Dxsigma.data(), 1, &jac[2*n*m], 1);
-				blas_copy(2*n, Dxfreq.data(), 1, &jac[(2*n+1)*m], 1);
+				blas::copy(2*n, Dxsigma.data(), 1, &jac[2*n*m], 1);
+				blas::copy(2*n, Dxfreq.data(), 1, &jac[(2*n+1)*m], 1);
 				// last 2 eqns: normalization
-				blas_copy(2*n, &y[0], 1, &jac[2*n], m);
-				blas_scal(2*n, 2.0, &jac[2*n], m);
+				blas::copy(2*n, &y[0], 1, &jac[2*n], m);
+				blas::scal(2*n, 2.0, &jac[2*n], m);
 				jac[(2*n+1)+(2*phase_idx+1)*m] = 1.0;		// phase row 2*n+1, col 2*phase_idx+1
 
-				trc.dprint("x = ",x);
-				trc.dprintm(n,n,n,Dx.data(),"Dx");
-				trc.dprint("g(",y,") = ",g);
-				trc.dprintm(m,m,m,&jac[0],"Jacobian");
+				T_(trc.dprint("x = ",x);)
+				T_(trc.dprintm(n,n,n,Dx.data(),"Dx");)
+				T_(trc.dprint("g(",y,") = ",g);)
+				T_(trc.dprintm(m,m,m,&jac[0],"Jacobian");)
 				return 0;
 			},
 			results, params, stepdata);
@@ -1421,7 +1407,7 @@ check_jac(double* xmin, double* xmax,
 		Issue* reason, vector<string>* pnames, double tol) {
 // pnames:   names of the parameters in x to check
 // Just call the vector version
-	Trace trc(1,"check_jac(Pac) ", reason);
+	T_(Trace trc(1,"check_jac(Pac) ", reason);)
 	return checkjac(x, f, jac, fjac, xmin, xmax, reason, pnames, tol);
 }
 
@@ -1430,7 +1416,7 @@ checkjac(vect& x, vect& f, vect& jac, Fjacfcn fjac, double* xmin, double* xmax,
 		Issue* reason, vector<string>* pnames, double tol) {
 // pnames:   names of the parameters in x to check XXX unused??
 // tol:      Largest allowable error in Jacobian
-	Trace trc(1,"check_jac ", reason->msg);
+	T_(Trace trc(1,"check_jac ", reason->msg);)
 	// Jacobian is (nf,nx)
 	size_t nx = x.size();
 	size_t nf = f.size();
@@ -1448,7 +1434,7 @@ checkjac(vect& x, vect& f, vect& jac, Fjacfcn fjac, double* xmin, double* xmax,
 	std::ostringstream os;
 	std::ostringstream erros;
 
-	trc.dprint("nx ",nx,", nf ",nf," <",reason->msg,">");
+	T_(trc.dprint("nx ",nx,", nf ",nf," <",reason->msg,">");)
 
 	// Accumulate messages regarding the check, throw an exception
 	// if there is an error or the jacobian has errors
@@ -1465,7 +1451,7 @@ checkjac(vect& x, vect& f, vect& jac, Fjacfcn fjac, double* xmin, double* xmax,
 	// Compute the analytical Jacobian
 	if (fjac (x, f, anjac) != 0) {
 		erros << "could not evaluate the jacobian for checking";
-		trc.dprint("throwing exception \"", erros.str(),"\"");
+		T_(trc.dprint("throwing exception \"", erros.str(),"\"");)
 		throw runtime_error(erros.str());
 	}
 
@@ -1484,32 +1470,32 @@ checkjac(vect& x, vect& f, vect& jac, Fjacfcn fjac, double* xmin, double* xmax,
 			xmaxj = xmax[j];
 		else
 			xmaxj = x[j] + del;
-		trc.dprint("-----------------> checking column ",j,", [",xminj,":",xmaxj,"]");
+		T_(trc.dprint("-----------------> checking column ",j," (0b), [",xminj,":",xmaxj,"]");)
 		double err;
 		if (!NRC::fdapprox (nf, x[j], xminj, xmaxj, &df[0],
 			[&x,&f,&jac,&fjac,&j](int n, double t, double* y) {
 			// lambda to evaluate y(t) for ridders
-				Trace trc(2,"fdfcn col ",j," 0b");
+				T_(Trace trc(2,"fdfcn col ",j," 0b");)
 				// save and restore the current value of x
 				double save = x[j];
 				x[j] = t;
 				// compute the jacobian and function
 				fjac(x, f, jac);
 				// copy f to y
-				blas_copy(f.size(), f.data(), 1, y, 1);
+				blas::copy(f.size(), f.data(), 1, y, 1);
 				// restore x
 				x[j] = save;
-				trc.dprint("y(",t,") = ",f);
+				T_(trc.dprint("y(",t,") = ",f);)
 			}, err)) {
 			//!! flaps::info("Jacobian check failed (",reason->msg,") for ",x);
 			return new Issue(vastr("Jacobian check failed (",reason->msg,
 				") for ",x), reason->kind);
 		}
-		dfnorm = blas_snrm2 (nf, &df[0], 1);
-		exnorm = blas_snrm2 (nf, &anjac[j*nf], 1);
+		dfnorm = blas::snrm2 (nf, &df[0], 1);
+		exnorm = blas::snrm2 (nf, &anjac[j*nf], 1);
 		if (exnorm < eps && dfnorm < eps)
 			continue;
-		blas_copy(nf, &df[0], 1, &diffJac[j*nf], 1);
+		blas::copy(nf, &df[0], 1, &diffJac[j*nf], 1);
 	}
 
 	// For each (i,j) compute the difference between the
@@ -1519,8 +1505,8 @@ checkjac(vect& x, vect& f, vect& jac, Fjacfcn fjac, double* xmin, double* xmax,
 		for (i=0; i<nf; i++) {
 			jij = anjac[IJ(i,j,nf)];
 			fdjij = diffJac[IJ(i,j,nf)];
-			double jn = blas_snrm2(nf, &anjac[IJ(0,j,nf)], 1);
-			double fdn = blas_snrm2(nf, &diffJac[IJ(0,j,nf)], 1);
+			double jn = blas::snrm2(nf, &anjac[IJ(0,j,nf)], 1);
+			double fdn = blas::snrm2(nf, &diffJac[IJ(0,j,nf)], 1);
 			t =  std::max(jn, fdn);
 			rdiff = fabs(fdjij - jij)/std::max(0.1, t);
 			reldiff = fabs(fdjij - jij)/std::max(0.1, t); // w/o col norm
@@ -1539,38 +1525,38 @@ checkjac(vect& x, vect& f, vect& jac, Fjacfcn fjac, double* xmin, double* xmax,
 	}
 
 	string maxrelerror = vastr("max relative error in Jacobian (",reason->msg,") = ",
-		maxReldiff, " in the (", maxreli, ",", maxrelj, ") term");
+		maxReldiff, " in the (", maxreli, ",", maxrelj, ") (1b) term");
 	erros << maxrelerror << std::endl;
-	trc.dprint("Result of checking Jacobian: \"",erros.str(),"\"");
+	T_(trc.dprint("Result of checking Jacobian: \"",erros.str(),"\"");)
 
 	os.str("");
 	os << "column " << maxj << " (1b): exact and by diff";
 	for (size_t i=0; i<nf; i++)
 		os << "   " << anjac[IJ(i,maxj-1,nf)] << "   "
 			<< diffJac[IJ(i,maxj-1,nf)] << endl;
-	trc.dprint(os.str());
+	T_(trc.dprint(os.str());)
 
-		MM::exporter("jac_exact.mm","analytic",&anjac[0],nf,nx);
-		MM::exporter("jac_fd.mm","finite_diff",&diffJac[0],nf,nx);
+	MM::exporter("jac_exact.mm","analytic",&anjac[0],nf,nx);
+	MM::exporter("jac_fd.mm","finite_diff",&diffJac[0],nf,nx);
 
 	if (maxReldiff > tol) {
 		os.str("");
 		os << "jacobian errors rel to col norm (max " << maxRdiff << ")";
-		trc.dprintm(nf,nx,nf,relNormErrJac, "jacobian rel errors");
+		T_(trc.dprintm(nf,nx,nf,relNormErrJac, "jacobian rel errors");)
 		os.str("");
 		os << "jacobian errors rel (max " << maxReldiff << " (" << maxreli << ','
 			<< maxrelj << "))";
-		trc.dprintm(nf,nx,nf,relErrJac, "analytical jacobian");
+		T_(trc.dprintm(nf,nx,nf,relErrJac, "analytical jacobian");)
 		MM::exporter("jac_rel.mm","rel errors",&relErrJac[0],nf,nx);
 	}
 
 	// throw an exception if the largest error is too large
 	if (maxReldiff > tol) {
-		trc.dprint("throwing exception: large error: ",erros.str());
+		T_(trc.dprint("throwing exception: large error: ",erros.str());)
 		throw runtime_error(erros.str());
 	}
 
-	trc.dprint("returning (",reason->msg,") max rel err ",maxReldiff);
+	T_(trc.dprint("returning (",reason->msg,") max rel err ",maxReldiff);)
 	//!! return maxReldiff;
 	return new Issue(vastr(reason->msg," (",maxReldiff,")"), reason->kind);
 }
@@ -1615,7 +1601,7 @@ compare_cq() {
 int
 test_nleig() {
 // simple nonlinear eigenvalue problem
-	Trace trc(1,"test_nleig");
+	T_(Trace trc(1,"test_nleig");)
 	int nf{2};
 	complex<double> s(0.1,0.5);
 	vector<complex<double>> x(nf, 0.0);
@@ -1631,13 +1617,13 @@ test_nleig() {
 			vector<double>& Dxsigma,
 			vector<double>& Dxfreq,
 			vector<double>& Dxx) {
-			Trace trc(1,"Dfcn");
+			T_(Trace trc(1,"Dfcn");)
 			// lambda to compute Dx, d(Dx)/dsigma, etc
 			int n = x.size();
 			vector<complex<double>> D(n*n, complex<double>(0.0));
 			D[0] = 1.0 - s;
 			D[3] = 2.0 - s;
-			trc.dprintm(n,n,n,D.data(),"D matrix");
+			T_(trc.dprintm(n,n,n,D.data(),"D matrix");)
 			vector<complex<double>> cDx(n);
 			blas::gemv("n",n,n,1.0,D.data(),n,x.data(),1,0.0,cDx.data(),1);
 			Dx[0] = cDx[0].real();
@@ -1657,10 +1643,10 @@ test_nleig() {
 			// Dxx[0] = complex<double>(1.0) - s;
 			// Dxx[3] = complex<double>(2.0) - s;
 			blas::real_rep(n,n,D.data(),n,Dxx.data(),2*n);
-			trc.dprintm(2*n,2*n,2*n,Dxx.data(),"Dxx");
+			T_(trc.dprintm(2*n,2*n,2*n,Dxx.data(),"Dxx");)
 			return  0;
 		}, &results, &params, &stepdata);
-	trc.dprint("nleig returned s = ",s,", x = ",x);
+	T_(trc.dprint("nleig returned s = ",s,", x = ",x);)
 	// plot the homotopy and stepdata results
 	bool append{false};
 	if (!results.empty())
@@ -1678,12 +1664,12 @@ test_ex24() {
 // f(x) = | 1 + p*(x1^2 + x2^2 - 1)          |
 //        | 10*x2 - p*x2*(1 + 2*x1^2 + x2^2) | = 0
 // where p = \lambda
-	Trace trc(1,"test_ex24");
+	T_(Trace trc(1,"test_ex24");)
 
 	auto fjac = [&](const vect& x, vect& f, vect& jac) {
 		// lambda for computing f(x), f'(x) with x=(x1,x2,p)
 		// jac: (2,3)
-		Trace trc(1,"fjac");
+		T_(Trace trc(1,"fjac");)
 		double p = x[2];
 		f[0] = 1.0 + p*(x[0]*x[0] + x[1]*x[1] - 1.0);
 		f[1] = 10.0*x[1] - p*x[1]*(1.0 + 2.0*x[0]*x[0] + x[1]*x[1]);
@@ -1693,8 +1679,8 @@ test_ex24() {
 		jac[3] = 10.0 - p - 2.0*p*x[0]*x[0] - 3.0*p*x[1]*x[1];
 		jac[4] = x[0]*x[0] + x[1]*x[1] - 1.0;
 		jac[5] = -x[1]*(1.0 + 2.0*x[0]*x[0] + x[1]*x[1]);
-		trc.dprint("f(",x,") = ",f);
-		trc.dprintm(2,2,2,&jac[0],"Jacobian");
+		T_(trc.dprint("f(",x,") = ",f);)
+		T_(trc.dprintm(2,2,2,&jac[0],"Jacobian");)
 		return 0;
 	};
 
@@ -1705,18 +1691,18 @@ test_ex24() {
 	homotopy(y, [&p0](const vect& y, vect& f, vect& jac) {
 		// lambda for computing a start point with p fixed at p0
 		// f(y) = 0, y = (x1,x2), jac: (2,2)
-		Trace trc(1,"fjh");
+		T_(Trace trc(1,"fjh");)
 		f[0] = 1.0 + p0*(y[0]*y[0] + y[1]*y[1] - 1.0);
 		f[1] = 10.0*y[1] - p0*y[1]*(1.0 + 2.0*y[0]*y[0] + y[1]*y[1]);
 		jac[0] = 2.0*p0*y[0];
 		jac[1] = -4.0*p0*y[1]*y[0];
 		jac[2] = 2.0*p0*y[1];
 		jac[3] = 10.0 - p0 - 2.0*p0*y[0]*y[0] - 3.0*p0*y[1]*y[1];
-		trc.dprint("f(",y,") = ",f);
-		trc.dprintm(2,2,2,&jac[0],"Jacobian");
+		T_(trc.dprint("f(",y,") = ",f);)
+		T_(trc.dprintm(2,2,2,&jac[0],"Jacobian");)
 		return 0;
 	});
-	trc.dprint("homotopy returned ",y);
+	T_(trc.dprint("homotopy returned ",y);)
 
 	// ... then trace the u-shaped curve in the y1-p plane
 	int nf{2};
@@ -1764,7 +1750,7 @@ test_fr() {
 	auto fjac = [&](const vect& x, vect& f, vect& jac) {
 		// lambda for computing f(x), f'(x) with x=(x1,x2,p)
 		// jac: (2,3)
-		Trace trc(1,"fjac");
+		T_(Trace trc(1,"fjac");)
 		double x2 = x[1]*x[1];
 		double x3 = x2*x[1];
 		f[0] = x[0] - x3 + 5.0*x2 - 2.0*x[1] - 13.0 + 34.0*(x[2]-1.0);
@@ -1775,8 +1761,8 @@ test_fr() {
 		jac[3] = 3.0*x2 + 2.0*x[1] - 14.0;
 		jac[4] = 34.0;
 		jac[5] = 10.0;
-		trc.dprint("f(",x,") = ",f);
-		trc.dprintm(2,2,2,&jac[0],"Jacobian");
+		T_(trc.dprint("f(",x,") = ",f);)
+		T_(trc.dprintm(2,2,2,&jac[0],"Jacobian");)
 		return 0;
 	};
 
@@ -1834,7 +1820,7 @@ test_hopf() {
 	auto fjac = [&](const vect& x, vect& f, vect& jac) {
 		// lambda for computing f(x), f'(x) with x=(x1,x2,p)
 		// jac: (2,3)
-		Trace trc(1,"fjac");
+		T_(Trace trc(1,"fjac");)
 		double p = x[2];
 		f[0] = -x[1] + x[0]*(p - x[0]*x[0] - x[1]*x[1]);
 		f[1] = x[0] + x[1]*(p - x[0]*x[0] - x[1]*x[1]);
@@ -1844,8 +1830,8 @@ test_hopf() {
 		jac[3] = p;
 		jac[4] = x[0];
 		jac[5] = x[1];
-		trc.dprint("f(",x,") = ",f);
-		trc.dprintm(2,2,2,&jac[0],"Jacobian");
+		T_(trc.dprint("f(",x,") = ",f);)
+		T_(trc.dprintm(2,2,2,&jac[0],"Jacobian");)
 		return 0;
 	};
 	Pac x0(nf, nx, fjac);
@@ -1896,7 +1882,7 @@ usage(char const* prog) {
 #include "main.h"
 int
 main(int argc, char** argv) {
-	Trace trc(1,"main");
+	T_(Trace trc(1,"main");)
 
 Pac q;
 	mtrace();	// run with MALLOC_TRACE=path

@@ -252,7 +252,7 @@ int
 dggev (char const* jobvl, char const* jobvr, int n, double* a, int lda,
 	double* b, int ldb, double* alphar, double* alphai, double* beta,
 	double* vl, int ldvl, double* vr, int ldvr) {
-	Trace trc(1,"dggev");
+	T_(Trace trc(1,"dggev");)
 
 	// workspace query
 	int info{0};
@@ -263,7 +263,7 @@ dggev (char const* jobvl, char const* jobvr, int n, double* a, int lda,
 	lwork = query;
 	assert(lwork > 0);
 	assert(info == 0);
-	trc.dprint("using lwork ",lwork);
+	T_(trc.dprint("using lwork ",lwork);)
 
 	vector<double> work(lwork, 0.0);
 
@@ -276,7 +276,7 @@ int
 zggev (char const* jobvl, char const* jobvr, int n, complex<double>* a, int lda,
 	complex<double>* b, int ldb, complex<double>* alpha, complex<double>* beta,
 	complex<double>* vl, int ldvl, complex<double>* vr, int ldvr) {
-	Trace trc(1,"zggev");
+	T_(Trace trc(1,"zggev");)
 
 	// workspace query
 	int info = 0;
@@ -288,7 +288,7 @@ zggev (char const* jobvl, char const* jobvr, int n, complex<double>* a, int lda,
 	lwork = query.real();
 	assert(lwork > 0);
 	assert(info == 0);
-	trc.dprint("using lwork ",lwork);
+	T_(trc.dprint("using lwork ",lwork);)
 
 	vector<complex<double> > work(lwork, complex<double>(0.0));
 
@@ -304,7 +304,7 @@ zggevx (char const* balanc, char const* jobvl, char const* jobvr,
 	complex<double>* vl, int ldvl, complex<double>* vr,
 	int ldvr, double* rconde, double* rcondv) {
 
-	Trace trc(1,"zggevx");
+	T_(Trace trc(1,"zggevx");)
 	int info = 0;
 	int ilo, ihi;
 	double abnrm, bbnrm;
@@ -325,11 +325,11 @@ zggevx (char const* balanc, char const* jobvl, char const* jobvr,
 	lwork = query.real();
 	assert(lwork > 0);
 	assert(info == 0);
-	trc.dprint("using lwork ",lwork);
+	T_(trc.dprint("using lwork ",lwork);)
 
 	vector<complex<double>> work(lwork, complex<double>(0.0));
 
-	trc.dprint("zggevx n ",n,", sense ",sense);
+	T_(trc.dprint("zggevx n ",n,", sense ",sense);)
 	
 	// Generalized eigenvalue routines have had problems in the
 	// past when scaling is done (see mail re deprecated routine
@@ -339,7 +339,7 @@ zggevx (char const* balanc, char const* jobvl, char const* jobvr,
 			b, &ldb, alpha, beta, vl, &ldvl, vr, &ldvr,
 			&ilo, &ihi, &lscale[0], &rscale[0], &abnrm, &bbnrm, rconde, rcondv,
 			&work[0], &lwork, &rwork[0], &iwork[0], &bwork[0], &info);
-	trc.dprint("ZGGEVX returned info ",info);
+	T_(trc.dprint("ZGGEVX returned info ",info);)
 	return info;
 }
 
@@ -406,7 +406,7 @@ eigstring (complex<double> w, int n, complex<double>* vr) {
 		<< std::setprecision(8) << w.imag();
 	// normalize vr: largest component 1.0
 	vector<complex<double> > v(n);
-	blas_copy(n, vr, 1, &v[0], 1);
+	blas::copy(n, vr, 1, &v[0], 1);
 	blas::normalize_inf(n, &v[0], 1, true, 1.0);
 	os << flaps::summarize(v, 80);
 	return os.str();
@@ -420,7 +420,7 @@ eigstring (double w, int n, double* vr) {
 		<< std::setprecision(8) << w;
 	// normalize vr: largest component 1.0
 	vector<double> v(n);
-	blas_copy(n, vr, 1, &v[0], 1);
+	blas::copy(n, vr, 1, &v[0], 1);
 	blas::normalize_inf(n, &v[0], 1, true, 1.0);
 	os << flaps::summarize(v, 80);
 	return os.str();
@@ -432,9 +432,9 @@ filter (int n, complex<double>* a, string const& title) {
 	double eps{sqrt(std::numeric_limits<double>::epsilon())};
 	vector<complex<double> > zeroed(n*n, complex<double>(0.0));
 	for (int i=0; i<n; i++) {
-		double rownorm = blas_scnrm2(n, &a[IJ(i,0,n)], n);
+		double rownorm = blas::scnrm2(n, &a[IJ(i,0,n)], n);
 		for (int j=0; j<n; j++) {
-			double colnorm = blas_scnrm2(n, &a[IJ(0,j,n)], 1);
+			double colnorm = blas::scnrm2(n, &a[IJ(0,j,n)], 1);
 			double aa = abs(a[IJ(i,j,n)]);
 			if (aa < eps*(rownorm+colnorm)) {
 				zeroed[IJ(i,j,n)] = a[IJ(i,j,n)];
@@ -458,25 +458,25 @@ sortEigen (size_t n, size_t m, complex<double> *s, complex<double>* vl, complex<
 	for (j=1; j<(int)m; j++) {
 		complex<double> t = s[j];
 		if (vl)
-			blas_copy (n, &vl[IJ(0,j,n)], 1, &zl[0], 1);
+			blas::copy (n, &vl[IJ(0,j,n)], 1, &zl[0], 1);
 		if (vr)
-			blas_copy (n, &vr[IJ(0,j,n)], 1, &zr[0], 1);
+			blas::copy (n, &vr[IJ(0,j,n)], 1, &zr[0], 1);
 		i = j - 1;
 		// sort criteria:
 		// while(i >= 0 && abs(s[i].imag()) > abs(t.imag())) 
 		while(i >= 0 && abs(s[i]) > abs(t)) {
 			s[i+1] = s[i];
 			if (vl)
-				blas_copy (n, &vl[IJ(0,i,n)], 1, &vl[IJ(0,i+1,n)], 1);
+				blas::copy (n, &vl[IJ(0,i,n)], 1, &vl[IJ(0,i+1,n)], 1);
 			if (vr)
-				blas_copy (n, &vr[IJ(0,i,n)], 1, &vr[IJ(0,i+1,n)], 1);
+				blas::copy (n, &vr[IJ(0,i,n)], 1, &vr[IJ(0,i+1,n)], 1);
 			i--;
 		}
 		s[i+1] = t;
 		if (vl)
-			blas_copy (n, &zl[0], 1, &vl[IJ(0,i+1,n)], 1);
+			blas::copy (n, &zl[0], 1, &vl[IJ(0,i+1,n)], 1);
 		if (vr)
-			blas_copy (n, &zr[0], 1, &vr[IJ(0,i+1,n)], 1);
+			blas::copy (n, &zr[0], 1, &vr[IJ(0,i+1,n)], 1);
 	}
 }
 
@@ -509,7 +509,7 @@ cinsert(size_t m, size_t nb, size_t ib, size_t jb, complex<double> const* a, com
 
 double
 cmatrixNorm2(size_t n, complex<double> const* a) {
-	double rval = blas_scnrm2(n*n, a, 1);
+	double rval = blas::scnrm2(n*n, a, 1);
 	return rval;
 }
 
@@ -519,19 +519,19 @@ perfind (int n, const vector<double>& A, const vector<double>& B,
 // compute a performance index for the generalized symmetric eigenvalue
 // problem Ax = \lambda B x
 // where 0 is bad and 14 is about as good as possible
-	Trace trc(1,"perfind(A,B)");
-	trc.dprintm(n,1,n,x,"eigenvector");
+	T_(Trace trc(1,"perfind(A,B)");)
+	T_(trc.dprintm(n,1,n,x,"eigenvector");)
 	int nsq{n*n};
 	vector<double> D{A};
 	for (int i=0; i<nsq; i++)
 		D[i] -= w*B[i];
-	trc.dprintm(n,n,n,D,"D matrix");
+	T_(trc.dprintm(n,n,n,D,"D matrix");)
 	double alpha{1.0};
 	double beta{0.0};
 	vector<double> res(n, 0.0);
-	blas_sgemv("n",n,n,alpha,&D[0],n,&x[0],1,beta,&res[0],1);
-	double rnorm = blas_snrm2(n, &res[0], 1);
-	double dnorm = blas_snrm2(nsq, &D[0], 1);
+	blas::gemv("n",n,n,alpha,&D[0],n,&x[0],1,beta,&res[0],1);
+	double rnorm = blas::snrm2(n, &res[0], 1);
+	double dnorm = blas::snrm2(nsq, &D[0], 1);
 	double eps{sqrt(std::numeric_limits<double>::epsilon())};
 	if (rnorm < eps)
 		return 14;
@@ -543,7 +543,7 @@ perfind (int n, const vector<double>& A, const vector<double>& B,
 		rval = 0;
 	else
 		rval = t;
-	trc.dprint("residual ",rnorm,", D ",dnorm,", t ",t,", eps ",eps,", pi ",rval);
+	T_(trc.dprint("residual ",rnorm,", D ",dnorm,", t ",t,", eps ",eps,", pi ",rval);)
 	return rval;
 }
 
@@ -552,10 +552,10 @@ perfind (int n, const vector<double>& m, const vector<double>& g,
 		const vector<double>& k, double w, complex<double>* x) {
 // compute a performance index for the free-vibration gyro problem
 // where 0 is bad and 14 is about as good as possible
-	Trace trc(1,"perfind");
+	T_(Trace trc(1,"perfind");)
 	int rval{0};
 
-	trc.dprintm(n,1,n,x,"eigenvector");
+	T_(trc.dprintm(n,1,n,x,"eigenvector");)
 	int nsq{n*n};
 	vector<complex<double>> D(nsq, 0.0);
 	complex<double> iw(0.0, w);
@@ -566,15 +566,15 @@ perfind (int n, const vector<double>& m, const vector<double>& g,
 		D[i] += iw*g[i];
 	for (int i=0; i<nsq; i++)
 		D[i] += -ww*m[i];
-	trc.dprintm(n,n,n,D,"D matrix");
+	T_(trc.dprintm(n,n,n,D,"D matrix");)
 	complex<double> alpha(1.0);
 	complex<double> beta(0.0);
 	vector<complex<double>> res(n, 0.0);
-	blas_cgemv("n",n,n,alpha,&D[0],n,&x[0],1,beta,&res[0],1);
-	double rnorm = blas_scnrm2(n, &res[0], 1);
-	double dnorm = blas_scnrm2(nsq, &D[0], 1);
+	blas::gemv("n",n,n,alpha,&D[0],n,&x[0],1,beta,&res[0],1);
+	double rnorm = blas::scnrm2(n, &res[0], 1);
+	double dnorm = blas::scnrm2(nsq, &D[0], 1);
 	double eps{std::numeric_limits<double>::epsilon()};
-	trc.dprint("residual ",rnorm,", D ",dnorm,", eps ",eps);
+	T_(trc.dprint("residual ",rnorm,", D ",dnorm,", eps ",eps);)
 	if (dnorm < eps)
 		rval = 0.0;
 	else {
@@ -586,7 +586,7 @@ perfind (int n, const vector<double>& m, const vector<double>& g,
 		if (t > 1)
 			rval = t;
 	}
-	trc.dprint("pi ",rval);
+	T_(trc.dprint("pi ",rval);)
 	return rval;
 }
 
@@ -614,15 +614,15 @@ gyroeig (int n, const vector<double>& m, const vector<double>& g,
 //   pages={1337--1342},
 //   year={1974}
 // }
-	Trace trc(1,"gyroeig");
+	T_(Trace trc(1,"gyroeig");)
 
 	int n2{2*n};
 	assert(m.size() == n*n);
 	assert(m.size() == g.size());
 	assert(m.size() == k.size());
-	trc.dprintm(n,n,n,m,"gyroeig_m");
-	trc.dprintm(n,n,n,g,"gyroeig_g");
-	trc.dprintm(n,n,n,k,"gyroeig_k");
+	T_(trc.dprintm(n,n,n,m,"gyroeig_m");)
+	T_(trc.dprintm(n,n,n,g,"gyroeig_g");)
+	T_(trc.dprintm(n,n,n,k,"gyroeig_k");)
 
 	// create I
 	vector<double> I(n2*n2, 0.0);
@@ -640,22 +640,22 @@ gyroeig (int n, const vector<double>& m, const vector<double>& g,
 	vector<double> mig{g};
 	info = lapack::dpotrs("u", n, n, &mi[0], n, &mig[0], n);
 	vector<double> gmig{k};
-	blas_sgemm("t","n",n,n,n,1.0,&g[0],n,&mig[0],n, 1.0, &gmig[0], n);
+	blas::gemm("t","n",n,n,n,1.0,&g[0],n,&mig[0],n, 1.0, &gmig[0], n);
 	insert(n, n2, 0, 0, &gmig[0], 1.0, &K[0]);
 	// g'm^{-1}k
 	vector<double> mik{k};
 	info = lapack::dpotrs("u", n, n, &mi[0], n, &mik[0], n);
 	vector<double> gmik{k};
-	blas_sgemm("t","n",n,n,n,1.0,&g[0],n,&mik[0],n, 0.0, &gmik[0], n);
+	blas::gemm("t","n",n,n,n,1.0,&g[0],n,&mik[0],n, 0.0, &gmik[0], n);
 	insert(n, n2, 0, 1, &gmik[0], 1.0, &K[0]);
 	tinsert(n, n2, 1, 0, &gmik[0], 1.0, &K[0]);
 	// km^{-1}k
 	vector<double> kmik{k};
-	blas_sgemm("n","n",n,n,n,1.0,&k[0],n,&mik[0],n, 0.0, &kmik[0], n);
+	blas::gemm("n","n",n,n,n,1.0,&k[0],n,&mik[0],n, 0.0, &kmik[0], n);
 	insert(n, n2, 1, 1, &kmik[0], 1.0, &K[0]);
 
-	trc.dprintm(n2,n2,n2,K,"K matrix");
-	trc.dprintm(n2,n2,n2,I,"I matrix");
+	T_(trc.dprintm(n2,n2,n2,K,"K matrix");)
+	T_(trc.dprintm(n2,n2,n2,I,"I matrix");)
 	// save K and I - destroyed in dsygv
 	vector<double> Kp{K};
 	vector<double> Ip{I};
@@ -666,7 +666,7 @@ gyroeig (int n, const vector<double>& m, const vector<double>& g,
 	info = lapack::dsygv(1, "v", "u", n2, &K[0], n2, &I[0], n2, &ev[0]);
 	if (info != 0) {
 		// failure: try to figure out which matrix is the culprit
-		trc.dprint("dsygv returned ",info);
+		T_(trc.dprint("dsygv returned ",info);)
 		// (k,m) eigenvalues
 		vector<double> w(n,0.0);
 		vector<double> mass{m};
@@ -675,7 +675,7 @@ gyroeig (int n, const vector<double>& m, const vector<double>& g,
 		if (info != 0)
 			throw runtime_error(vastr("solution of the free-vibration (K,M) "
 				"eigenvalue problem failed: dsygv returned ",info));
-		trc.dprint("eigenvalues of (stif,mass):",w);
+		T_(trc.dprint("eigenvalues of (stif,mass):",w);)
 		if (w[0] < -eps*w[n-1]) {
 			// mass matrix eigenvalues
 			mass = m;
@@ -687,7 +687,7 @@ gyroeig (int n, const vector<double>& m, const vector<double>& g,
 			stif = k;
 			info = dsyev("v", "u", n, &stif[0], n, &w[0]);
 			if (w[0] <= 0.0) {
-				trc.dprint("eigenvalues of stif:",w);
+				T_(trc.dprint("eigenvalues of stif:",w);)
 				throw runtime_error(vastr("solution of the free-vibration (K,G,M) "
 					"problem failed: the stiffness matrix is not positive definite: ",
 					w[0]," ",flaps::summarize(n,&stif[0],80)));
@@ -702,9 +702,9 @@ gyroeig (int n, const vector<double>& m, const vector<double>& g,
 	for (int j=0; j<n2; j++) {
 		pis.push_back(perfind(n2,Kp,Ip,ev[j],&K[j*n2]));
 	}
-	trc.dprint("perf ind for dsygv:",pis);
-	trc.dprint("eigenvalues:\n",ev);
-	trc.dprintm(n2,n2,n2,K,"eigenvectors");
+	T_(trc.dprint("perf ind for dsygv:",pis);)
+	T_(trc.dprint("eigenvalues:\n",ev);)
+	T_(trc.dprintm(n2,n2,n2,K,"eigenvectors");)
 
 	// there are 2n eigenvalues and vectors; there will be 2 of
 	// each eigenvalue - the 2 corresponding eigenvectors are the
@@ -736,8 +736,8 @@ gyroeig (int n, const vector<double>& m, const vector<double>& g,
 		}
 		pi.push_back(p);
 	}
-	trc.dprint("frequencies (rad/s): ",w);
-	trc.dprint("performance indices\n",pi);
+	T_(trc.dprint("frequencies (rad/s): ",w);)
+	T_(trc.dprint("performance indices\n",pi);)
 	return 0;
 }
 
@@ -755,7 +755,7 @@ poly (int n, vector<double*>& A, vector<complex<double>>& w, vector<complex<doub
 //   \bar{x} = {  x }
 //             { \lambda x }
 //
-	Trace trc(1,"poly"," n ",n,", ",A.size()," matrices");
+	T_(Trace trc(1,"poly"," n ",n,", ",A.size()," matrices");)
 	int r = A.size() - 1;
 
 	// Abar and Bbar are (r*n, r*n)
@@ -785,8 +785,8 @@ poly (int n, vector<double*>& A, vector<complex<double>>& w, vector<complex<doub
 	vector<double> vlbar(rn*rn, 0.0);
 	vector<double> vrbar(rn*rn, 0.0);
 
-	trc.dprintm(rn,rn,rn,Abar,"poly Abar");
-	trc.dprintm(rn,rn,rn,Bbar,"poly Bbar");
+	T_(trc.dprintm(rn,rn,rn,Abar,"poly Abar");)
+	T_(trc.dprintm(rn,rn,rn,Bbar,"poly Bbar");)
 
 	int info = dggev ("n", "V", rn, &Abar[0], rn, &Bbar[0], rn, &alphar[0],
 		&alphai[0], &beta[0], &vlbar[0], rn, &vrbar[0], rn);
@@ -794,9 +794,9 @@ poly (int n, vector<double*>& A, vector<complex<double>>& w, vector<complex<doub
 	if (info != 0)
 		throw runtime_error(vastr("error ",info," returned from dggev"));
 
-	trc.dprint("alphar",alphar,"alphai",alphai);
-	trc.dprint("beta",beta);
-	trc.dprintm(rn,rn,rn,vrbar,"vr");
+	T_(trc.dprint("alphar",alphar,"alphai",alphai);)
+	T_(trc.dprint("beta",beta);)
+	T_(trc.dprintm(rn,rn,rn,vrbar,"vr");)
 
 	// dggev returns w = (alphar+ialphai)/beta
 	// Save the first n elements of the left and right
@@ -809,7 +809,7 @@ poly (int n, vector<double*>& A, vector<complex<double>>& w, vector<complex<doub
 	w = vector<complex<double>>(rn, complex<double>(0.0));
 	x = vector<complex<double>>(rn*rn, complex<double>(0.0));
 	for (int j=0; j<rn; j++) {
-		double vnorm = blas_snrm2(n, &vrbar[IJ(0,j,rn)], 1);
+		double vnorm = blas::snrm2(n, &vrbar[IJ(0,j,rn)], 1);
 		if (vnorm < eps) continue;
 		if (beta[j] == 0.0)
 			beta[j] = eps;
@@ -823,7 +823,7 @@ poly (int n, vector<double*>& A, vector<complex<double>>& w, vector<complex<doub
 			} else
 				continue;
 		} else {
-			double vnormi = blas_snrm2(n, &vrbar[IJ(0,j+1,rn)], 1);
+			double vnormi = blas::snrm2(n, &vrbar[IJ(0,j+1,rn)], 1);
 			if (vnorm > eps || vnormi > eps) {
 				for (int i=0; i<n; i++)
 					x[IJ(i,neig,n)] = complex<double>(vrbar[IJ(i,j,rn)],vrbar[IJ(i,j+1,rn)]);
@@ -832,13 +832,13 @@ poly (int n, vector<double*>& A, vector<complex<double>>& w, vector<complex<doub
 			} else
 				continue;
 		}
-		trc.dprint("eig[",neig,"]: ",w[neig]," vector: ", flaps::summarize(n,&x[IJ(0,neig,n)],80));
+		T_(trc.dprint("eig[",neig,"]: ",w[neig]," vector: ", flaps::summarize(n,&x[IJ(0,neig,n)],80));)
 		neig++;
 	}
 
 	sortEigen (n, n, &w[0], nullptr, &x[0]);
 
-	trc.dprint("returning ",neig," eigenpair");
+	T_(trc.dprint("returning ",neig," eigenpair");)
 	return neig;
 }
 
@@ -858,25 +858,25 @@ polyeig (size_t n, int maxeig, vector<complex<double>*>& A,
 //   \bar{x} = {  y }
 //             { sy }
 //
-	Trace trc(1,"polyeig"," n ",n,", ",A.size()," matrices");
+	T_(Trace trc(1,"polyeig"," n ",n,", ",A.size()," matrices");)
 	size_t r = A.size() - 1;
 	ostringstream os;
 	size_t j;
-	int neig = 0;
-	complex<double> one(1.0);
-	double gamma(1.0);
+	int neig{0};
+	complex<double> one{1.0};
+	double gamma{1.0};
 
 	// first and last point must not be null
 	if (A[0] == nullptr) {
 		os << "attempt to solve a polynomial eigenvalue problem "
 			<< "with A[0] null";
-		trc.dprint("throwing exception: ",os.str());
+		T_(trc.dprint("throwing exception: ",os.str());)
 		throw runtime_error(os.str());
 	}
 	if (A[r] == nullptr) {
 		os << "attempt to solve a polynomial eigenvalue problem with A["
 			<< r << "] null";
-		trc.dprint("throwing exception: ",os.str());
+		T_(trc.dprint("throwing exception: ",os.str());)
 		throw runtime_error(os.str());
 	}
 
@@ -890,8 +890,8 @@ polyeig (size_t n, int maxeig, vector<complex<double>*>& A,
 		vector<double> rconde(n);
 		vector<double> rcondv(n);
 		double eps(std::numeric_limits<double>::epsilon());
-		trc.dprintm(n,n,n,A[0],"polyeig A");
-		trc.dprintm(n,n,n,A[2],"polyeig B");
+		T_(trc.dprintm(n,n,n,A[0],"polyeig A");)
+		T_(trc.dprintm(n,n,n,A[2],"polyeig B");)
 		// int info = zggevx ("N", "V", "V", "B", n, A[0], n, A[2], n,
 	 	// 	&alpha[0], &beta[0], vl, n, vr, n, &rconde[0], &rcondv[0]);
 		int info = zggev ("V", "V", n, A[0], n, A[2], n,
@@ -907,7 +907,7 @@ polyeig (size_t n, int maxeig, vector<complex<double>*>& A,
 			} else {
 				os << "error " << info << " returned from zggevx";
 			}
-			trc.dprint("throwing exception: ",os.str());
+			T_(trc.dprint("throwing exception: ",os.str());)
 			throw runtime_error(os.str());
 		}
 		for (size_t i=0; i<n; i++) {
@@ -920,7 +920,7 @@ polyeig (size_t n, int maxeig, vector<complex<double>*>& A,
 			} else {
 				w[i] = 1.0/eps;
 			}
-			trc.dprint("w[",i,"] = sqrt(",alpha[i],'/',beta[i],") = ", w[i], "  ",flaps::summarize(n,&vr[IJ(0,i,n)]));
+			T_(trc.dprint("w[",i,"] = sqrt(",alpha[i],'/',beta[i],") = ", w[i], "  ",flaps::summarize(n,&vr[IJ(0,i,n)]));)
 		}
 		sortEigen (n, n, w, vl, vr);
 		return n;
@@ -943,20 +943,20 @@ polyeig (size_t n, int maxeig, vector<complex<double>*>& A,
 		double d = cmatrixNorm2(n, A[1]);
 		double m = cmatrixNorm2(n, A[2]);
 		double eps(std::numeric_limits<double>::epsilon());
-		trc.dprint("norm(A) = ",k,", norm(B) = ",d,", norm(C) = ",m);
+		T_(trc.dprint("norm(A) = ",k,", norm(B) = ",d,", norm(C) = ",m);)
 		if (abs(m) > eps) {
 			gamma = sqrt(k/m);
 			double delta = 2.0/(k + d*gamma);
 			scale[0] = delta;
 			scale[1] = gamma*delta;
 			scale[2] = gamma*gamma*delta;
-			trc.dprint("gamma ",gamma,", delta ",delta);
+			T_(trc.dprint("gamma ",gamma,", delta ",delta);)
 		}
 	}
 
-	trc.dprintm(n,n,n,A[0],"polyeig A[0]");
-	trc.dprintm(n,n,n,A[1],"polyeig A[1]");
-	trc.dprintm(n,n,n,A[2],"polyeig A[2]");
+	T_(trc.dprintm(n,n,n,A[0],"polyeig A[0]");)
+	T_(trc.dprintm(n,n,n,A[1],"polyeig A[1]");)
+	T_(trc.dprintm(n,n,n,A[2],"polyeig A[2]");)
 
 	// Abar and Bbar are (r*n, r*n)
 	size_t rn = r*n;
@@ -997,8 +997,8 @@ polyeig (size_t n, int maxeig, vector<complex<double>*>& A,
 	filter(rn, &Abar[0], "filtered Abar");
 	filter(rn, &Bbar[0], "filtered Bbar");
 
-	trc.dprintm(rn,rn,rn,Abar,"polyeig Abar");
-	trc.dprintm(rn,rn,rn,Bbar,"polyeig Bbar");
+	T_(trc.dprintm(rn,rn,rn,Abar,"polyeig Abar");)
+	T_(trc.dprintm(rn,rn,rn,Bbar,"polyeig Bbar");)
 
 	int info = zggevx ("B", "V", "V", "B", rn, &Abar[0], rn, &Bbar[0], rn,
 	 		&alpha[0], &beta[0], &vlbar[0], rn, &vrbar[0], rn, &rconde[0], &rcondv[0]);
@@ -1013,14 +1013,14 @@ polyeig (size_t n, int maxeig, vector<complex<double>*>& A,
 		} else {
 			os << "error " << info << " returned from zggevx";
 		}
-		trc.dprint("throwing exception: ",os.str());
+		T_(trc.dprint("throwing exception: ",os.str());)
 		throw runtime_error(os.str());
 	}
 
-	trc.dprint("alpha",alpha);
-	trc.dprint("beta",beta);
-	trc.dprintm(rn,rn,rn,vrbar,"vr");
-	trc.dprintm(rn,rn,rn,vlbar,"vl");
+	T_(trc.dprint("alpha",alpha);)
+	T_(trc.dprint("beta",beta);)
+	T_(trc.dprintm(rn,rn,rn,vrbar,"vr");)
+	T_(trc.dprintm(rn,rn,rn,vlbar,"vl");)
 
 	// zggevx returns w = alpha/beta
 	// Save the first n elements of the left and right
@@ -1035,34 +1035,35 @@ polyeig (size_t n, int maxeig, vector<complex<double>*>& A,
 	// size_t rm1n = (r-1)*n;
 	size_t rm1n = 0;
 	for (j=0; j<(size_t)maxeig; j++) {
-		double vlnorm = blas_scnrm2(n, &vlbar[IJ(rm1n,j,rn)], 1);
-		double vrnorm = blas_scnrm2(n, &vrbar[IJ(rm1n,j,rn)], 1);
-		trc.dprint("alpha[",j,"]=",alpha[j],", beta=",beta[j], " vlnorm ",vlnorm," vrnorm ",vrnorm);
+		double vlnorm = blas::scnrm2(n, &vlbar[IJ(rm1n,j,rn)], 1);
+		double vrnorm = blas::scnrm2(n, &vrbar[IJ(rm1n,j,rn)], 1);
+		T_(trc.dprint("alpha[",j,"]=",alpha[j],", beta=",beta[j], " vlnorm ",vlnorm," vrnorm ",vrnorm);)
 		if (vlnorm > eps && vrnorm > eps) {
-			blas_copy(n, &vlbar[IJ(rm1n,j,rn)], 1, &vl[IJ(0,neig,n)], 1);
-			blas_copy(n, &vrbar[IJ(rm1n,j,rn)], 1, &vr[IJ(0,neig,n)], 1);
+			blas::copy(n, &vlbar[IJ(rm1n,j,rn)], 1, &vl[IJ(0,neig,n)], 1);
+			blas::copy(n, &vrbar[IJ(rm1n,j,rn)], 1, &vr[IJ(0,neig,n)], 1);
 			if (abs(beta[j]) > eps) {
 				w[neig] = gamma*alpha[j]/beta[j];
 			} else {
 				w[neig] = big;
 			}
-			trc.dprint("eig[",j,"]: ",w[neig]," vector: ", flaps::summarize(n,&vr[IJ(0,neig,n)],80));
+			T_(trc.dprint("eig[",j,"]: ",w[neig]," vector: ", flaps::summarize(n,&vr[IJ(0,neig,n)],80));)
 			neig++;
 		} else {
-			trc.dprint("ignoring eig[",j,"]: zero vector(s)");
+			T_(trc.dprint("ignoring eig[",j,"]: zero vector(s)");)
 		}
 	}
 
 	// sort the eigenvalues prior to refining
 	sortEigen (n, neig, w, vl, vr);
 
-	for (int j=0; j<neig; j++)
-		trc.dprint("sorted eig[",j,"]: ",w[j]," vector: ", flaps::summarize(n,&vr[IJ(0,j,n)],80));
+	T_(for (int j=0; j<neig; j++))
+		T_(trc.dprint("sorted eig[",j,"]: ",w[j]," vector: ", flaps::summarize(n,&vr[IJ(0,j,n)],80));)
 
-	trc.dprint("returning ",neig," eigenpair");
+	T_(trc.dprint("returning ",neig," eigenpair");)
 	return neig;
 }
 
+#ifdef NEVER // no Ad specializations
 // specializations of triprod
 template<>
 void
@@ -1078,6 +1079,7 @@ triprod(int n, int m, const double* T, const complex<Ad>* A, complex<Ad>* tat) n
 		}
 	}
 }
+#endif // NEVER // no Ad specializations
 
 } // namespace lapack
 
@@ -2263,7 +2265,7 @@ main (int argc, char **argv) {
 			vector<double> g = MM::importer(argv[2], nr, nc, is_complex);
 			// scale g by spin
 			double spin{100.0};
-			blas_scal(nr*nr, spin, &g[0], 1);
+			blas::scal(nr*nr, spin, &g[0], 1);
 			vector<double> m = MM::importer(argv[3], nr, nc, is_complex);
 			vector<double> w(nr,0.0);
 			vector<complex<double>> x(nr*nr,0.0);

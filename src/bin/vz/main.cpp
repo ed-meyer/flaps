@@ -281,7 +281,7 @@ int
 main(int argc, char** argv) {
 	char* dbg = getenv("DEBUG");
 	if (dbg != nullptr) Trace::debug(std::stoi(dbg));
-	Trace trc(1,"main");
+	T_(Trace trc(1,"main");)
 	Ftmpdir ftmp;   // create a temp directory if not already
 
 	try {
@@ -301,7 +301,7 @@ static int
 dovz (int argc, char** argv) {
 // This sets up the hard-wired defaults and reads the X defaults.
 // The command line format is: xgraph [host:display].
-	Trace trc(2,"dovz");
+	T_(Trace trc(2,"dovz");)
 	Window primary;
 	XEvent theEvent;
 	LocalWin *win_info;
@@ -336,7 +336,7 @@ dovz (int argc, char** argv) {
 		}
 	}
 
-	trc.dprint("opening display on ",disphost);
+	T_(trc.dprint("opening display on ",disphost);)
 
 	disp = XOpenDisplay(0);
 	if (!disp) {
@@ -354,7 +354,7 @@ dovz (int argc, char** argv) {
 		}
 		return(1);
 	} else {
-		trc.dprint("got display ",disp);
+		T_(trc.dprint("got display ",disp);)
 	}
 
 	XSetErrorHandler(XErrHandler);
@@ -378,7 +378,7 @@ dovz (int argc, char** argv) {
 	urx = ury = -std::numeric_limits<int>::max();
 	Curves = Plotcurve::getcurves();
 	if (Curves.empty()) {
-		trc.dprint("quitting: Plotcurve::getcurves returned empty");
+		T_(trc.dprint("quitting: Plotcurve::getcurves returned empty");)
 		return(1);
 	}
 	// take vzid from the first curve
@@ -522,7 +522,7 @@ dovz (int argc, char** argv) {
 
 static void
 gnuplot() {
-	Trace trc(1,"gnuplot");
+	T_(Trace trc(1,"gnuplot");)
 	string ftmp{getenv("FTMP")};
 	ostringstream os;
 
@@ -590,7 +590,7 @@ gnuplot() {
 
 	cmdfile.close();
 
-	trc.dprint("running gnuplot with (",gnudir,'/',cmdfilename);
+	T_(trc.dprint("running gnuplot with (",gnudir,'/',cmdfilename);)
 
 	execlp ("gnuplot", "gnuplot", ".gnuplot", nullptr);
 
@@ -756,7 +756,7 @@ xtb_data info)			/* User Information */
  * posted.
  */
 {
-	Trace trc(1,"hcpy_func");
+	T_(Trace trc(1,"hcpy_func");)
 	Window the_win = (Window) info;
 	LocalWin *win_info;
 
@@ -1019,14 +1019,14 @@ closestPoint (double screenx, double screeny, LocalWin* wi, size_t& solnidx,
  *    solnidx - index (zero-based) of the point on the curve, i.e. the
  *             index in the solns arrays of the parameters
  */
-	Trace trc(1,"closestPoint");
+	T_(Trace trc(1,"closestPoint");)
 	int curveno = -1;
 	double mindist = std::numeric_limits<double>::max();
 
 	for (size_t idx=0; idx<Curves.size(); idx++) {
 		Par* xp = Curves[idx]->xparam;
 		if (xp == nullptr) continue;
-		trc.dprint("searching ",Curves[idx]->cid());
+		T_(trc.dprint("searching ",Curves[idx]->cid());)
 		Par* yp = Curves[idx]->yparam;
 		for (size_t j = 0; j < yp->nsolns(); j++) {
 			if (VISIBLE(wi,xp->solns[j],yp->solns[j])) {
@@ -1049,7 +1049,7 @@ closestPoint (double screenx, double screeny, LocalWin* wi, size_t& solnidx,
 
 bool
 get_mids(string& nodes, string& coords, string& conn, string& gct) {
-	Trace trc(1,"get_mids");
+	T_(Trace trc(1,"get_mids");)
 	Specs& sp = specs();
 	// first check to see if they are in Matrix::collection()
 	Matrix* nodes_p = Matrix::find_desc("nodes");
@@ -1081,10 +1081,10 @@ get_mids(string& nodes, string& coords, string& conn, string& gct) {
 				gct = pp.second;
 		}
 	}
-	trc.dprint("returning nodes=\"",nodes,"\"");
-	trc.dprint("returning coords=\"",coords,"\"");
-	trc.dprint("returning conn=\"",conn,"\"");
-	trc.dprint("returning gct=\"",gct,"\"");
+	T_(trc.dprint("returning nodes=\"",nodes,"\"");)
+	T_(trc.dprint("returning coords=\"",coords,"\"");)
+	T_(trc.dprint("returning conn=\"",conn,"\"");)
+	T_(trc.dprint("returning gct=\"",gct,"\"");)
 	return true;
 }
 
@@ -1094,7 +1094,7 @@ HandlePickPoint( char *progname, XButtonPressedEvent *evt,
 // Respond to a right-click by multiplying the gc transformation matrix
 // (gctransform) by the picked gc, add the result to the global vector Disp.
 // Create optional universal and output4 files (.op4)
-	Trace trc(1,"HandlePickPoint");
+	T_(Trace trc(1,"HandlePickPoint");)
 	double actualx, actualy;
 	int ax, ay;
 	int markFlag, pixelMarks, bigPixel, colorMark;
@@ -1120,7 +1120,7 @@ HandlePickPoint( char *progname, XButtonPressedEvent *evt,
 	set_mark_flags(&markFlag, &pixelMarks, &bigPixel, &colorMark);
 	startX = evt->x;  
 	startY = evt->y;
-	trc.dprint("x ",startX,", y ",startY);
+	T_(trc.dprint("x ",startX,", y ",startY);)
 	wi->dev_info.xg_dot(wi->dev_info.user_state,
 	    startX,startY,
 	    P_MARK,MARKSTYLE(0),PIXVALUE(0));
@@ -1132,7 +1132,7 @@ HandlePickPoint( char *progname, XButtonPressedEvent *evt,
 
 	if (index == -1) {
 		cout << "no visible points\n";
-		trc.dprint("returning 0: no visible points");
+		T_(trc.dprint("returning 0: no visible points");)
 		return 0;
 	}
 	// no x parameter?
@@ -1140,13 +1140,13 @@ HandlePickPoint( char *progname, XButtonPressedEvent *evt,
 		return 0;
 
 	Curves[index]->tagged[solnidx] = true;  // for redraws
-	trc.dprint("subindex ",solnidx," tagged");
+	T_(trc.dprint("subindex ",solnidx," tagged");)
 
-	trc.dprint("index ",index,", cid ",Curves[index]->cid());
-	trc.dprint("actual x ",actualx,", y ",actualy);
+	T_(trc.dprint("index ",index,", cid ",Curves[index]->cid());)
+	T_(trc.dprint("actual x ",actualx,", y ",actualy);)
 	ax = SCREENX(wi, actualx);
 	ay = SCREENY(wi, actualy);
-	trc.dprint("coord of actual pt (screen units): ",actualx, " (",ax,") ",actualy," (",ay,") solnidx ",solnidx);
+	T_(trc.dprint("coord of actual pt (screen units): ",actualx, " (",ax,") ",actualy," (",ay,") solnidx ",solnidx);)
 	/* wi->dev_info.xg_dot(wi->dev_info.user_state,
 							ax, ay,
 							P_MARK,BWMARK(0),PIXVALUE(0)); */
@@ -1164,7 +1164,7 @@ HandlePickPoint( char *progname, XButtonPressedEvent *evt,
 
 	XFlush (disp);
 
-	trc.dprint("index ",index,",  title ",os.str());
+	T_(trc.dprint("index ",index,",  title ",os.str());)
 
 	ModeName = Curves[index]->cid();
 	XParValue = Curves[index]->xparam->solns[solnidx];
@@ -1203,7 +1203,7 @@ HandlePickPoint( char *progname, XButtonPressedEvent *evt,
 	if (amvz_thread == nullptr) {
 		amvz_thread = new std::thread(amvz);
 		amvz_thread->detach();
-		trc.dprint("started amvz thread: ", amvz_thread->get_id());
+		T_(trc.dprint("started amvz thread: ", amvz_thread->get_id());)
 	}
 
 	return 0;
@@ -1212,7 +1212,7 @@ HandlePickPoint( char *progname, XButtonPressedEvent *evt,
 static int
 HandleShowZ ( char *progname, XButtonPressedEvent *evt,
 	LocalWin *wi, Cursor cur) {
-	Trace trc(1,"HandleShowZ");
+	T_(Trace trc(1,"HandleShowZ");)
 // Respond to a middle or shift-left button click by displaying
 // all parameter values in a separate window.
 // Also write these values to a file, ".vz" which gets
@@ -1235,7 +1235,7 @@ HandleShowZ ( char *progname, XButtonPressedEvent *evt,
 	set_mark_flags(&markFlag, &pixelMarks, &bigPixel, &colorMark);
 	startX = evt->x;  
 	startY = evt->y;
-	trc.dprint("HandleShowZ: x ",startX,", y ",startY);
+	T_(trc.dprint("HandleShowZ: x ",startX,", y ",startY);)
 	wi->dev_info.xg_dot(wi->dev_info.user_state,
 	    startX,startY,
 	    P_MARK,MARKSTYLE(0),PIXVALUE(0));
@@ -1736,7 +1736,7 @@ DrawGridAndAxis(LocalWin *wi) {
  * This routine draws grid line labels in engineering notation,
  * the grid lines themselves,  and unit labels on the axes.
  */
-	Trace trc(1,"DrawGridAndAxis");
+	T_(Trace trc(1,"DrawGridAndAxis");)
 	Specs& sp = specs();
 	int expX, expY;		/* Engineering powers */
 	int startX, startY;
@@ -2135,7 +2135,7 @@ static int
 DrawData(LocalWin* wi) {
 // This routine draws the data sets themselves using the macros
 // for translating coordinates.
-	Trace trc(1,"DrawData");
+	T_(Trace trc(1,"DrawData");)
 	double sx1{0.0}, sy1{0.0}, sx2{0.0}, sy2{0.0};
 	double tx{0.0}, ty{0.0};
 	double wval = 0.0;
@@ -2148,7 +2148,7 @@ DrawData(LocalWin* wi) {
 	set_mark_flags(&markFlag, &pixelMarks, &bigPixel, &colorMark);
 	// idx: loop over each curve
 	for (size_t idx = 0;  idx < Curves.size();  idx++) {
-		trc.dprint("Curves[",idx,"]: ",Curves[idx]->summary());
+		T_(trc.dprint("Curves[",idx,"]: ",Curves[idx]->summary());)
 		Par* xp = Curves[idx]->xparam;
 		Par* wp = Curves[idx]->wparam;
 
@@ -2159,7 +2159,7 @@ DrawData(LocalWin* wi) {
 		int currentColor = color;
 		int style = LINESTYLE(Curves[idx]->style);
 		int nseg = (int)yp->nsolns()-1;
-		trc.dprint("y ",yp->name,", color ",color,", style ",style, ", number of segments: ",nseg);
+		T_(trc.dprint("y ",yp->name,", color ",color,", style ",style, ", number of segments: ",nseg);)
 
 		// subindex: loop over each x value, adding to xsegs until
 		// either all x's processed or w value changes sign
@@ -2169,7 +2169,7 @@ DrawData(LocalWin* wi) {
 				wval = wp->solns[subindex];
 				if (subindex > 1 && !xsegs.empty() &&
 						wval*wp->solns[subindex-1] < 0.0) {
-					trc.dprint("w sign change: dump ",xsegs.size()," segs");
+					T_(trc.dprint("w sign change: dump ",xsegs.size()," segs");)
 					wi->dev_info.xg_seg(wi->dev_info.user_state,
 						 xsegs.size(), &xsegs[0], lineWidth, L_VAR,
 						 style, currentColor);
@@ -2194,7 +2194,7 @@ DrawData(LocalWin* wi) {
 				} else if (wval > 0.0) {
 					currentColor = color;
 				}
-				trc.dprint("w value ",wval,", using color ",currentColor);
+				T_(trc.dprint("w value ",wval,", using color ",currentColor);)
 			}
 			lineWidth = PM_INT("LineWidth");
 
@@ -2208,10 +2208,10 @@ DrawData(LocalWin* wi) {
 			}
 			sy1 = yp->solns[subindex];
 			sy2 = yp->solns[subindex+1];
-			trc.dprint("seg ",subindex,": x(",sx1,',',sx2,"), y(",sy1,',',sy2,")");
+			T_(trc.dprint("seg ",subindex,": x(",sx1,',',sx2,"), y(",sy1,',',sy2,")");)
 			isTagged = Curves[idx]->tagged[subindex];
 			if (isTagged)
-				trc.dprint("idx ",idx,", subindex ",subindex," is tagged");
+				T_(trc.dprint("idx ",idx,", subindex ",subindex," is tagged");)
 			/* Now clip to current window boundary */
 			C_CODE(sx1, sy1, code1);
 			C_CODE(sx2, sy2, code2);
@@ -2253,7 +2253,7 @@ DrawData(LocalWin* wi) {
 		}
 
 		// Draw last segments
-		trc.dprint("finishing with ",xsegs.size()," segments");
+		T_(trc.dprint("finishing with ",xsegs.size()," segments");)
 		wi->dev_info.xg_seg(wi->dev_info.user_state, xsegs.size(),
 				&xsegs[0], lineWidth, L_VAR, style, currentColor);
 
@@ -2279,7 +2279,7 @@ static int
 DrawLegend(LocalWin* wi) {
 // This draws a legend of the data sets displayed.  Only those that
 // will fit are drawn.
-	Trace trc(1,"DrawLegend");
+	T_(Trace trc(1,"DrawLegend");)
 	int spot;
 	size_t idx;
 	XSegment leg_line;
@@ -2296,7 +2296,7 @@ DrawLegend(LocalWin* wi) {
 		maxleg = std::max(maxleg, (int)curve->legend.size());
 	}
 	int linelen = maxleg * wi->dev_info.axis_width;
-	trc.dprint("max legend ",maxleg,", linelen ",linelen);
+	T_(trc.dprint("max legend ",maxleg,", linelen ",linelen);)
 
 	leg_line.x1 = wi->XOppX + wi->dev_info.bdr_pad;
 	leg_line.x2 = leg_line.x1 + linelen;

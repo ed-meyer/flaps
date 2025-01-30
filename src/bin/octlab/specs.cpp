@@ -16,6 +16,7 @@
 #include "pset.h"
 #include "specs.h"
 #include "text.h"
+#include "trace.h"
 #undef Complex
 
 using namespace std;
@@ -28,7 +29,7 @@ Specs& specs() {
 
 bool
 parse_specs (string const& options) {
-	Trace trc(1,"parse_specs");
+	T_(Trace trc(1,"parse_specs");)
 	bool rval = true;
 	Specs& sp = specs();
 	ostringstream os;
@@ -42,7 +43,7 @@ parse_specs (string const& options) {
 			for (auto i : p.roptvec) {
 				if (i.empty())
 					continue;
-				trc.dprint("treating ropt \"",i,"\"");
+				T_(trc.dprint("treating ropt \"",i,"\"");)
 				vector<Tok*> unrec = flaps::lexer(i, {
 					{".*", [&](const Tok& s) {
 						sp.params.push_back(new Par(s.lhs, s.srhs));
@@ -69,7 +70,7 @@ parse_specs (string const& options) {
 		if (pp == nullptr)
 			throw runtime_error(vastr("parameter \"",pi->name,"\" is not defined"));
 		pp->value(pi->value());
-		trc.dprint("set ",*pp);
+		T_(trc.dprint("set ",*pp);)
 	}
 
 /*----------------  end of parse_specs ----------------------------------------*/

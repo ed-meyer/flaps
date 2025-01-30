@@ -18,6 +18,7 @@
 #include "df.h"
 #include "matrix.h"
 #include "pset.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -170,7 +171,7 @@ Adeqn::
 dfval(Ad& result) {
 // parse a call to dfval, declared as
 //   dfval(string& dfid, int gcno, vector<double>& userpar)
-	Trace trc(2,"dfval");
+	T_(Trace trc(2,"dfval");)
 
 	char ch;
 	next();
@@ -182,7 +183,7 @@ dfval(Ad& result) {
 	// dfid
 	next(true);
 	dfid = ct.text_value;
-	trc.dprint("got dfid ",dfid);
+	T_(trc.dprint("got dfid ",dfid);)
 
 	next();
 	if (ct.kind != Kind::comma)
@@ -196,7 +197,7 @@ dfval(Ad& result) {
 	next();   // eat the comma
 	if (ct.kind != Kind::comma)
 		throw runtime_error("expected comma after gcno");
-	trc.dprint("got gcno ",gcno);
+	T_(trc.dprint("got gcno ",gcno);)
 
 	// vector<double> userpar or just a vector initializer:
 	// {0.001, 2.0} XXX only allow initializer in an equation
@@ -212,9 +213,9 @@ dfval(Ad& result) {
 			throw runtime_error("expected comma");
 		}
 	}
-	trc.dprint("got ",userpar.size()," userpar");
+	T_(trc.dprint("got ",userpar.size()," userpar");)
 	result = ::dfval(params, dfid, gcno, userpar);
-	trc.dprint("returning dfval ",result);
+	T_(trc.dprint("returning dfval ",result);)
 	return true;
 }
 
@@ -398,7 +399,7 @@ next(bool nofcn) {
 Ad
 adeqn::
 eval (pset& plt, const string& eqn, bool noexc) {
-	Trace trc(2,"adeqn::eval ",eqn);
+	T_(Trace trc(2,"adeqn::eval ",eqn);)
 	Adeqn eq(eqn, plt, noexc);
 	Ad rval;
 	try {
@@ -415,14 +416,14 @@ dependson(pset& plt, string const& eqn, bool& isComplex) {
 // Returns a vector of parameter names that "eqn" depends on.
 // Method: turn on monitoring in "plt", call adeqn::eval with parse_only=true,
 // then turn off monitoring in "plt" to retrieve the vector.
-	Trace trc(2,"adeqn::dependson");
+	T_(Trace trc(2,"adeqn::dependson");)
 
-	trc.dprint("evaluating \"",eqn,"\" to determine dependencies");
+	T_(trc.dprint("evaluating \"",eqn,"\" to determine dependencies");)
 	plt.monitor();
 	bool noexc{true};		// do not throw exceptions
 	adeqn::eval(plt, eqn, noexc);
 	vector<string> rval = plt.rotinom();
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 

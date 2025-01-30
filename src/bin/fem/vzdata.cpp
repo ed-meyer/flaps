@@ -39,7 +39,7 @@ vzdata() {
 //   coords_    (x,y,z) at each node in the same order as "nodes_"
 //   conn_      connectivity in penlift format
 //   gct_nodal_ transform from retained Freedoms to translations at visualization grid
-	Trace trc(1,"vzdata");
+	T_(Trace trc(1,"vzdata");)
 
 	size_t n = retained().size();	// # Freedom in Fem
 
@@ -77,7 +77,7 @@ vzstif(vector<int>& node_numbers, vector<double>& coords,
 	vector<int>& segments, vector<double>& gct_nodal) {
 // add all stiffness elements to the gc transformation matrix (gct_nodal):
 // (tx,ty,tz), node_numbers, coordinates, and connectivities (segments)
-	Trace trc(1,"vzstif");
+	T_(Trace trc(1,"vzstif");)
 
 	// create the "coordinates" matrix of the amvz grid
 	int maxnode{0};
@@ -166,7 +166,7 @@ vzstif(vector<int>& node_numbers, vector<double>& coords,
 		}
 	}
 
-	trc.dprintm(nr, nc, nr, gct_nodal,"gct_nodal");
+	T_(trc.dprintm(nr, nc, nr, gct_nodal,"gct_nodal");)
 }
 
 void
@@ -182,7 +182,7 @@ vzpgaf (vector<int>& node_numbers, vector<double>& coords,
 //   segments
 //   gct_nodal     on output gct_nodal has been allocated nr*nc and the propellor
 //                 terms inserted, where nr = coords.size() and nc = retained.size()
-	Trace trc(1,"vzpgaf");
+	T_(Trace trc(1,"vzpgaf");)
 
 	if (this->pgaf_elements.empty())
 		return;
@@ -346,9 +346,9 @@ vzpgaf (vector<int>& node_numbers, vector<double>& coords,
 				}
 			}
 		}
-		trc.dprint("new node numbers ",new_node_numbers);
-		trc.dprintm(3,5,3,&new_coords[0],"new coords");
-		trc.dprintm(15,nc,15,&new_gct_nodal[0],"new gct_nodal");
+		T_(trc.dprint("new node numbers ",new_node_numbers);)
+		T_(trc.dprintm(3,5,3,&new_coords[0],"new coords");)
+		T_(trc.dprintm(15,nc,15,&new_gct_nodal[0],"new gct_nodal");)
 
 		// add to the input vectors (append is in fem.h)
 		append(new_node_numbers, node_numbers);
@@ -359,9 +359,9 @@ vzpgaf (vector<int>& node_numbers, vector<double>& coords,
 		flaps::info("propeller ",++iprop," is rows ",nr+1," to ",newnr," in gct_nodal");
 		vector<double> tmp(newnr*nc);
 		for (int j=0; j<nc; j++)
-			blas_copy(nr, &gct_nodal[j*nr], 1, &tmp[j*newnr], 1);
+			blas::copy(nr, &gct_nodal[j*nr], 1, &tmp[j*newnr], 1);
 		for (int j=0; j<nc; j++)
-			blas_copy(15, &new_gct_nodal[j*15], 1, &tmp[IJ(nr,j,newnr)], 1);
+			blas::copy(15, &new_gct_nodal[j*15], 1, &tmp[IJ(nr,j,newnr)], 1);
 		gct_nodal = tmp;
 		nr = newnr;
 	}
@@ -372,7 +372,7 @@ Fem::
 vzmatrices(const string& vzid, vector<double>& gct) {
 // create and store a Fem structure tagged with "vzid" and
 // descriptions nodes|coords|conn|gct
-	Trace trc(1,"vzmatrices");
+	T_(Trace trc(1,"vzmatrices");)
 
 	if (gct.empty())
 		throw runtime_error(vastr("vzmatrices (",vzid,") called with empty gct"));
@@ -381,7 +381,7 @@ vzmatrices(const string& vzid, vector<double>& gct) {
 	string ext;
 	if (!vzid.empty()) {
 		ext = "." + vzid;
-		trc.dprint("extension: ",ext);
+		T_(trc.dprint("extension: ",ext);)
 	}
 	Fma fma;
 	fma.nodes = nodes_;
@@ -394,7 +394,7 @@ vzmatrices(const string& vzid, vector<double>& gct) {
 		throw runtime_error(vastr("the size of gct (",gct.size(),") should be "
 			"a multiple of ",nr));
 	fma.gct = vector<complex<double>>(gct.size(), complex<double>(0.0));
-	blas_copy(gct.size(), gct.data(), 1, (double*)fma.gct.data(), 2);
+	blas::copy(gct.size(), gct.data(), 1, (double*)fma.gct.data(), 2);
 	fma.vzid = vzid;
 	fma.store();
 	flaps::info("Created an Fma:\n",fma);

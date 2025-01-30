@@ -53,7 +53,7 @@ VizSizes vizsizes;
 VizSizes::
 VizSizes() {
 // VizSizes ctor
-	Trace trc(2,"VizSizes ctor");
+	T_(Trace trc(2,"VizSizes ctor");)
 	// display = wxGetDisplaySize();
 	//!! wxDisplay dpy;
 	//!! display = dpy.GetGeometry().GetSize();
@@ -84,15 +84,15 @@ VizSizes() {
 	footnotes = wxSize(panel.x, 200);
 	legendbox = wxSize(panel.x, plot.y - infobox.y - footnotes.y);
 #endif // SQUARE
-	trc.dprint("display ", display);
-	trc.dprint("plot ", plot);
-	trc.dprint("panel ", panel);
-	trc.dprint("legendbox ", legendbox);
-	trc.dprint("infobox ", infobox);
-	trc.dprint("footnotes ", footnotes);
-	trc.dprint("menu ", menu);
-	trc.dprint("toolbar ", toolbar);
-	trc.dprint("frame ", frame);
+	T_(trc.dprint("display ", display);)
+	T_(trc.dprint("plot ", plot);)
+	T_(trc.dprint("panel ", panel);)
+	T_(trc.dprint("legendbox ", legendbox);)
+	T_(trc.dprint("infobox ", infobox);)
+	T_(trc.dprint("footnotes ", footnotes);)
+	T_(trc.dprint("menu ", menu);)
+	T_(trc.dprint("toolbar ", toolbar);)
+	T_(trc.dprint("frame ", frame);)
 }
 
 ostream&
@@ -215,7 +215,7 @@ LeftPanel(LowerPanel* parent, wxWindowID id, const wxPoint& pos, const wxSize& s
 		wxPanel(parent, id, pos, size), lowerpanel(parent) {
 // A LeftPanel consist of an Infobox, a scrollable legend, and a
 // scrollable footnote panel, all contained in a vertical sizer (lpsizer)
-	Trace trc(2,"LeftPanel ctor");
+	T_(Trace trc(2,"LeftPanel ctor");)
 
 	wxPoint defpos{wxDefaultPosition};
 
@@ -239,7 +239,7 @@ LeftPanel(LowerPanel* parent, wxWindowID id, const wxPoint& pos, const wxSize& s
 
 	lpsizer->Layout();
 
-	trc.dprint("LeftPanel sizer: ",sizer2string(*lpsizer));
+	T_(trc.dprint("LeftPanel sizer: ",sizer2string(*lpsizer));)
 }	// LeftPanel ctor
 
 void
@@ -257,7 +257,7 @@ OnPaint(wxPaintEvent& event) {
 Infobox::
 Infobox(LeftPanel* parent) : wxPanel(parent, wxID_ANY,
 	wxDefaultPosition, vizsizes.infobox, wxBORDER_SIMPLE) {
-	Trace trc(2,"Infobox ctor");
+	T_(Trace trc(2,"Infobox ctor");)
 	leftpanel = parent;
 	Bind(wxEVT_PAINT, &Infobox::OnPaint, this);
 }
@@ -269,7 +269,7 @@ OnPaint(wxPaintEvent& event) {
 // An Infobox's parent is a LeftPanel, who's parent is a LowerPanel,
 // who's parent is a Vizframe,
 // which contains a Vizplot* (currentview)
-	Trace trc(2,"Infobox::OnPaint");
+	T_(Trace trc(2,"Infobox::OnPaint");)
 	wxPaintDC dc(this);
 	dc.DrawText(leftpanel->lowerpanel->vizframe->currentview->ibcoords, 10, 5);
 	Refresh();
@@ -280,7 +280,7 @@ OnPaint(wxPaintEvent& event) {
 myScroll::
 myScroll(LeftPanel* p, wxWindowID id, const wxPoint& pos, const wxSize& size) :
 	wxScrolled<wxPanel>(p, id, pos, size, wxBORDER_SIMPLE) {
-	Trace trc(2,"myScroll ctor");
+	T_(Trace trc(2,"myScroll ctor");)
 
 	leftpanel = p;
 
@@ -299,7 +299,7 @@ myScroll(LeftPanel* p, wxWindowID id, const wxPoint& pos, const wxSize& size) :
 	csizer = new wxBoxSizer(wxVERTICAL);
 	csizer->Add(canvas, 1, wxEXPAND);
 	SetSizer(csizer);
-	trc.dprint("sizer: ",sizer2string(*csizer));
+	T_(trc.dprint("sizer: ",sizer2string(*csizer));)
 }
 
 void
@@ -334,7 +334,7 @@ OnPaint(wxPaintEvent& event) {
 Footnotes::
 Footnotes(LeftPanel* p, wxWindowID id, const wxPoint& pos, const wxSize& size) :
 	wxScrolled<wxPanel>(p, id, pos, size, wxBORDER_SIMPLE) {
-	Trace trc(2,"Footnotes ctor");
+	T_(Trace trc(2,"Footnotes ctor");)
 
 	leftpanel = p;
 
@@ -353,7 +353,7 @@ Footnotes(LeftPanel* p, wxWindowID id, const wxPoint& pos, const wxSize& size) :
 	csizer = new wxBoxSizer(wxVERTICAL);
 	csizer->Add(canvas, 1, wxEXPAND);
 	SetSizer(csizer);
-	trc.dprint("sizer: ",sizer2string(*csizer));
+	T_(trc.dprint("sizer: ",sizer2string(*csizer));)
 }
 
 void
@@ -400,7 +400,7 @@ vector<Plotcurve*>
 Viz::
 loaddata(const vector<string>& aids, const vector<string>& plotfiles) {
 // read Plotcurves from given plotfile/aid names, add to existing
-	Trace trc(2,"Viz::loaddata");
+	T_(Trace trc(2,"Viz::loaddata");)
 
 	// read the aid/plotfiles...
 	vector<Plotcurve*> newcurves = Plotcurve::getcurves(aids, plotfiles);
@@ -432,7 +432,7 @@ Vizplot::
 set_legends() {
 // create a legend for each curve with name, color, linestyle, and dotstyle
 // chosen to make identification easier
-	Trace trc(2,"Viz::set_legends");
+	T_(Trace trc(2,"Viz::set_legends");)
 	string leadsep{"."};		// separator between leader and cid
 	Specs& sp = specs();
 	Viz& viz{Viz::instance()};
@@ -446,12 +446,12 @@ set_legends() {
 	vector<string> leaders;
 	vector<string> extensions;
 	for (auto ly : layers) {
-		trc.dprint("working on lead ",ly->legend.lead,", num ",ly->legend.num,", yname ",ly->legend.yname);
+		T_(trc.dprint("working on lead ",ly->legend.lead,", num ",ly->legend.num,", yname ",ly->legend.yname);)
 		add2vector(ly->legend.num, nums);
 		add2vector(ly->legend.lead, leaders);
 		add2vector(ly->legend.ext, extensions);
 	}
-	trc.dprint("leaders: ",leaders,", extensions: ",extensions,", colorby ",viz.colorby);
+	T_(trc.dprint("leaders: ",leaders,", extensions: ",extensions,", colorby ",viz.colorby);)
 
 	// if colorby has not been set, set to a default:
 	// - from command line (sp.colorby)
@@ -499,13 +499,13 @@ set_legends() {
 
 		// tokenize id_ XXX is toks used?
 		ly->legend.toks = string2tok(ly->legend.id_, '.');
-		trc.dprint("id_: ",ly->legend.id_);
-		trc.dprint("sid_: ",ly->legend.sid_);
+		T_(trc.dprint("id_: ",ly->legend.id_);)
+		T_(trc.dprint("sid_: ",ly->legend.sid_);)
 	}
 
 	// set the colorkey for each curve depending on colorby
 
-	trc.dprint("colorby ",viz.colorby);
+	T_(trc.dprint("colorby ",viz.colorby);)
 
 	int linewidth{1};	// line width
 	// colors
@@ -580,7 +580,7 @@ set_legends() {
 				viz.footnotes[ly->legend.lead] = ly->legend;
 		}
 	}
-	trc.dprint(viz.footnotes.size()," footnotes");
+	T_(trc.dprint(viz.footnotes.size()," footnotes");)
 }
 
 string
@@ -605,7 +605,7 @@ parTitle(const string& name) const {
 void
 Viz::
 run() {
-	Trace trc(1,"Viz::run");
+	T_(Trace trc(1,"Viz::run");)
 
 #ifdef wxUSE_STD_IOSTREAM
 	// redirect messages from wx to FTMP
@@ -619,9 +619,9 @@ run() {
 	argv[1] = nullptr;
 	int argc = 1;
 	try {
-		trc.dprint("calling wxEntry");
+		T_(trc.dprint("calling wxEntry");)
 		wxEntry(argc, argv);
-		trc.dprint("returned from wxEntry");
+		T_(trc.dprint("returned from wxEntry");)
 	} catch (runtime_error const& s) {
 		cerr << s.what() << std::endl;
 	} catch (std::exception const& t) {
@@ -636,7 +636,7 @@ vector<myFXYVector*>
 Vizplot::
 plotlayers() {
 // Returns a vector of all myFXYVector layers
-	Trace trc(2,"plotlayers");
+	T_(Trace trc(2,"plotlayers");)
 	vector<myFXYVector*> rval;
 	for (unsigned int p2 = 0; p2 < CountAllLayers(); p2++) {
 		myFXYVector* ly = dynamic_cast<myFXYVector*>(GetLayer(p2));
@@ -650,7 +650,7 @@ vector<myFXYVector*>
 Vizplot::
 visplotlayers() {
 // Returns a vector of all visible myFXYVector layers
-	Trace trc(2,"visplotlayers");
+	T_(Trace trc(2,"visplotlayers");)
 	vector<myFXYVector*> rval;
 	for (unsigned int p2 = 0; p2 < CountAllLayers(); p2++) {
 		myFXYVector* ly = dynamic_cast<myFXYVector*>(GetLayer(p2));
@@ -665,7 +665,7 @@ long Vizplot::flags{0};
 Vizplot::
 Vizplot(LowerPanel* parent, wxWindowID id, const wxPoint& pos, const wxSize& size) :
 			mpWindow(parent, id, pos, size, Vizplot::flags) {
-	Trace trc(2,"Vizplot ctor");
+	T_(Trace trc(2,"Vizplot ctor");)
 
 	lowerpanel = parent;
 	vizframe = parent->vizframe;
@@ -709,7 +709,7 @@ loadxy(const string& xnm, const vector<string>& ynms, const vector<int>& toplot,
 // from Viz. If xnm is empty create a set of points
 // XXX rm xmin,xmax,ymin,ymax rely on clipping? otherwise the layer numbering
 //     get screwed up
-	Trace trc(2,"Vizplot::loadxy");
+	T_(Trace trc(2,"Vizplot::loadxy");)
 	Viz& viz{Viz::instance()};
 
 #ifdef NEVER // ignore input xmin, etc: rely on clipping
@@ -720,8 +720,8 @@ loadxy(const string& xnm, const vector<string>& ynms, const vector<int>& toplot,
 	xmax = std::numeric_limits<double>::max();
 	ymin = -std::numeric_limits<double>::max();
 	ymax = std::numeric_limits<double>::max();
-	trc.dprint("xmin,xmax: ",xmin,", ",xmax);
-	trc.dprint("ymin,ymax: ",ymin,", ",ymax);
+	T_(trc.dprint("xmin,xmax: ",xmin,", ",xmax);)
+	T_(trc.dprint("ymin,ymax: ",ymin,", ",ymax);)
 #endif // NEVER // ignore input xmin, etc: rely on clipping
 
 	this->xname = xnm;
@@ -800,7 +800,7 @@ loadxy(const string& xnm, const vector<string>& ynms, const vector<int>& toplot,
 				}					
 			}
 			// XXX should each layer get a unique int id?
-			trc.dprint("curve ",i," has ",xs.size()," points");
+			T_(trc.dprint("curve ",i," has ",xs.size()," points");)
 
 			if (xs.size() > 0) {
 				// mpFXYVector layer is the main drawing class
@@ -818,7 +818,7 @@ loadxy(const string& xnm, const vector<string>& ynms, const vector<int>& toplot,
 				cp->ymax = *(ymm.second);
 				bbymin = std::min(bbymin, cp->ymin);
 				bbymax = std::max(bbymax, cp->ymax);
-				trc.dprint(cp->cid()," x min/max: ",cp->xmin,", ",cp->xmax,", y min/max: ",cp->ymin,", ",cp->ymax);
+				T_(trc.dprint(cp->cid()," x min/max: ",cp->xmin,", ",cp->xmax,", y min/max: ",cp->ymin,", ",cp->ymax);)
 			 
 				m_vector->SetData(xs, ys);
 				m_vector->ShowName(false);		// do not show the curve name
@@ -831,7 +831,7 @@ loadxy(const string& xnm, const vector<string>& ynms, const vector<int>& toplot,
 			}
 		}
 	}
-	trc.dprint("this Vizplot has ",plotlayers().size(),", ",visplotlayers().size()," visible");
+	T_(trc.dprint("this Vizplot has ",plotlayers().size(),", ",visplotlayers().size()," visible");)
 
 	// if x,y limits were given call fit to add these
 	Specs& sp = specs();
@@ -853,7 +853,7 @@ loadxy(const string& xnm, const vector<string>& ynms, const vector<int>& toplot,
 	vector<myFXYVector*> layers = plotlayers();
 	for (auto li : layers) {
 		li->SetName(li->legend.id());
-		trc.dprint("set layer \"",li->GetName(),"\"");
+		T_(trc.dprint("set layer \"",li->GetName(),"\"");)
 	}
 
 }	// Vizplot::loadxy
@@ -862,7 +862,7 @@ void
 Vizplot::
 add(vector<Plotcurve*>& newcurves) {
 // add new curves to an existing Vizplot
-	Trace trc(2,"Vizplot::add");
+	T_(Trace trc(2,"Vizplot::add");)
 
 	// create a myFXYVector layer for each new curve
 	// get the bounding box of the data, which may be altered by specs
@@ -906,7 +906,7 @@ add(vector<Plotcurve*>& newcurves) {
 				cp->ymax = *(ymm.second);
 				bbymin = std::min(bbymin, cp->ymin);
 				bbymax = std::max(bbymax, cp->ymax);
-				trc.dprint(cp->cid()," x min/max: ",cp->xmin,", ",cp->xmax,", y min/max: ",cp->ymin,", ",cp->ymax);
+				T_(trc.dprint(cp->cid()," x min/max: ",cp->xmin,", ",cp->xmax,", y min/max: ",cp->ymin,", ",cp->ymax);)
 			}
 			 
 			m_vector->SetData(xs, ys);
@@ -922,7 +922,7 @@ feedAmviz(int ix, int iy) {
 // given screen coords (ix,iy) of a picked point, find the closest curve,
 // interpolate the eigenvector at the 2 enclosing points, send it to
 // amviz via evq. Called on right click
-	Trace trc(2, "feedAmviz");
+	T_(Trace trc(2, "feedAmviz");)
 	VizFrame* frame = lowerpanel->vizframe;
 	Amviz& amviz{Amviz::instance()};
 
@@ -974,13 +974,13 @@ wxPoint
 Vizplot::
 transform(Vizplot* from, wxPoint& p) {
 // transform a point on "from" to the equivalent point on this
-	Trace trc(2,"transform");
-	trc.dprint("input p: ",p);
+	T_(Trace trc(2,"transform");)
+	T_(trc.dprint("input p: ",p);)
 	double px = from->p2x(p.x);
 	double py = from->p2y(p.y);
-	trc.dprint("px ",px," scale ",from->GetXscl(),", py ",py," scale ",from->GetYscl());
+	T_(trc.dprint("px ",px," scale ",from->GetXscl(),", py ",py," scale ",from->GetYscl());)
 	wxPoint rval(this->x2p(px), this->y2p(py));
-	trc.dprint("output rval: ",rval,", scalex ",GetXscl(),", scaley ",GetYscl());
+	T_(trc.dprint("output rval: ",rval,", scalex ",GetXscl(),", scaley ",GetYscl());)
 	return rval;
 }
 
@@ -989,14 +989,14 @@ Mark::
 Mark(Vizplot* mp, int ix, int iy, string txt) {
 // Mark constructor: find the closest solution to (ix,iy), 
 // and the corresponding Plotcurve
-	Trace trc(2,"Mark ctor");
+	T_(Trace trc(2,"Mark ctor");)
 	// closestCurve returns (myFXYVector*, idx)
 	auto cpt = mp->closestCurve(ix,iy);
 	layerno = get<0>(cpt);
 	idx = get<1>(cpt);
 	if (layerno == -1)	// not found?
 		return;
-	trc.dprint("layer number \"",layerno,"\", idx ",idx);
+	T_(trc.dprint("layer number \"",layerno,"\", idx ",idx);)
 	text = txt;
 }
 
@@ -1039,13 +1039,13 @@ closestCurve(int ix, int iy) {	// XXX rename to closest_soln?
 //   get<2>(rval): x (plot units)
 //   get<3>(rval): y (plot units)
 // vector<complex<double>> ev = viz.curves[jmin]->params.get_eigenvector(imin);
-	Trace trc(2,"closestCurve");
+	T_(Trace trc(2,"closestCurve");)
 	// bounding box in plot units
 	double xmin = p2x(GetMarginLeft());
 	double ymax = p2y(GetMarginTop());
 	double xmax = p2x(GetScrX()-GetMarginRight());
 	double ymin = p2y(GetScrY()-GetMarginBottom());
-	trc.dprint("bounding box: (",xmin,", ",ymin,") (",xmax,", ",ymax,")");
+	T_(trc.dprint("bounding box: (",xmin,", ",ymin,") (",xmax,", ",ymax,")");)
 	// lambda for checking in range
 	auto oor = [&](double x, double y) {
 		if (x >= xmin && x <= xmax && y >= ymin && y <= ymax)
@@ -1060,7 +1060,7 @@ closestCurve(int ix, int iy) {	// XXX rename to closest_soln?
 	vector<myFXYVector*> layers = visplotlayers();	// visible plot layers
 	for (size_t j=0; j<layers.size(); j++) {
 		string name = layers[j]->GetName().ToStdString();
-		trc.dprint("working on layer ",name);
+		T_(trc.dprint("working on layer ",name);)
 		const vector<double>& xs = layers[j]->getxs();	// XXX return reference?
 		const vector<double>& ys = layers[j]->getys();
 		int n = xs.size();
@@ -1074,7 +1074,7 @@ closestCurve(int ix, int iy) {	// XXX rename to closest_soln?
 			int dx = ix - jxi;
 			int dy = iy - jyi;
 			int d = dx*dx + dy*dy;
-			trc.dprint("curve ",j," soln ",i," d ",d);
+			T_(trc.dprint("curve ",j," soln ",i," d ",d);)
 			if (d < dmin) {
 				imin = i;
 				jmin = j;
@@ -1084,10 +1084,10 @@ closestCurve(int ix, int iy) {	// XXX rename to closest_soln?
 		}
 	}
 	if (jmin == -1) {
-		trc.dprint("no layers found in range");
+		T_(trc.dprint("no layers found in range");)
 		return {jmin,0};
 	}
-	trc.dprint("returning layer \"",closest_layer->GetName(),"\", imin ",imin);
+	T_(trc.dprint("returning layer \"",closest_layer->GetName(),"\", imin ",imin);)
 	return std::tuple<int,int>(jmin,imin);
 }
 
@@ -1107,7 +1107,7 @@ myFXYVector::
 curveidx(int idx) {
 // Returns the index in the soln member of my plotcurve
 // corresponding to my index "idx" XXX should always be the same?
-	Trace trc(2,"curveidx");
+	T_(Trace trc(2,"curveidx");)
 	Plotcurve* pc = this->plotcurve;
 	Par* xp = pc->findp(this->vizplot->xname);
 	Par* yp = pc->findp(this->yname);
@@ -1129,7 +1129,7 @@ curveidx(int idx) {
 			dmin = d;
 		}
 	}
-	trc.dprint("index ",idx," corresponds to ",rval);
+	T_(trc.dprint("index ",idx," corresponds to ",rval);)
 	return rval;
 }
 
@@ -1137,9 +1137,9 @@ void
 Vizplot::
 OnLeftDown(wxMouseEvent& event) {
 // Handle a left mouse press: just grab the current position
-	Trace trc(2,"OnLeftDown");
+	T_(Trace trc(2,"OnLeftDown");)
 	this->startPos = event.GetPosition();
-	trc.dprint("start pos: ",this->startPos.x,", ",this->startPos.y);
+	T_(trc.dprint("start pos: ",this->startPos.x,", ",this->startPos.y);)
 	this->leftDown = true;
 }
 void
@@ -1147,12 +1147,12 @@ Vizplot::
 OnLeftUp(wxMouseEvent& event) {
 // Handle a left-mouse release: might be a zoom (if position changed) or
 // just a parameter-list request
-	Trace trc(2,"OnLeftUp");
+	T_(Trace trc(2,"OnLeftUp");)
 	VizFrame* frame = lowerpanel->vizframe;
 	this->currentPos = event.GetPosition();
 	int dist = abs(this->startPos.x-this->currentPos.x) +
 		abs(this->startPos.y-this->currentPos.y);
-	trc.dprint("current pos: ",this->currentPos.x,", ",this->currentPos.y);
+	T_(trc.dprint("current pos: ",this->currentPos.x,", ",this->currentPos.y);)
 	if (dist < 5) this->isDragging = false;
 	if (this->isDragging) {
 		this->isDragging = false;
@@ -1215,9 +1215,9 @@ OnLeftUp(wxMouseEvent& event) {
 void
 Vizplot::
 OnMiddleDown(wxMouseEvent& event) {
-	Trace trc(2,"OnMiddleDown");
+	T_(Trace trc(2,"OnMiddleDown");)
 	startPos = event.GetPosition();
-	trc.dprint("start pos: ",startPos.x,", ",startPos.y);
+	T_(trc.dprint("start pos: ",startPos.x,", ",startPos.y);)
 	//!! isDragging = true;
 	middleDown = true;
 }
@@ -1248,10 +1248,10 @@ OnMouseHelp(wxCommandEvent& WXUNUSED(event)) {
 void
 Vizplot::
 OnMiddleUp(wxMouseEvent& event) {
-	Trace trc(2,"OnMiddleUp");
+	T_(Trace trc(2,"OnMiddleUp");)
 	currentPos = event.GetPosition();
 	int dist = abs(startPos.x-currentPos.x) + abs(startPos.y-currentPos.y);
-	trc.dprint("current pos: ",currentPos.x,", ",currentPos.y,", dist = ",dist);
+	T_(trc.dprint("current pos: ",currentPos.x,", ",currentPos.y,", dist = ",dist);)
 	if (dist < 5) isDragging = false;
 	if (!isDragging) {
 		middleDown = false;
@@ -1263,20 +1263,20 @@ OnMiddleUp(wxMouseEvent& event) {
 void
 Vizplot::
 OnRightDown(wxMouseEvent& event) {
-	Trace trc(2,"OnRightDown");
+	T_(Trace trc(2,"OnRightDown");)
 	startPos = event.GetPosition();
-	trc.dprint("start pos: ",startPos.x,", ",startPos.y);
+	T_(trc.dprint("start pos: ",startPos.x,", ",startPos.y);)
 	//!! isDragging = true;
 	rightDown = true;
 }
 void
 Vizplot::
 OnRightUp(wxMouseEvent& event) {
-	Trace trc(2,"OnRightUp");
+	T_(Trace trc(2,"OnRightUp");)
 
 	currentPos = event.GetPosition();
 	int dist = abs(startPos.x-currentPos.x) + abs(startPos.y-currentPos.y);
-	trc.dprint("current pos: ",currentPos.x,", ",currentPos.y);
+	T_(trc.dprint("current pos: ",currentPos.x,", ",currentPos.y);)
 	if (dist < 5) isDragging = false;
 	if (isDragging) {
 		event.Skip();
@@ -1296,12 +1296,12 @@ OnRightUp(wxMouseEvent& event) {
 void
 Vizplot::
 OnMotion(wxMouseEvent& event) {
-	Trace trc(2,"OnMotion");
+	T_(Trace trc(2,"OnMotion");)
 	currentPos = event.GetPosition();
 	if (leftDown) {
 		if (currentPos != startPos) isDragging = true;
 		if (isDragging) {
-			trc.dprint("current pos: ",currentPos.x,", ",currentPos.y);
+			T_(trc.dprint("current pos: ",currentPos.x,", ",currentPos.y);)
 			Refresh();
 		} else {
 			event.Skip();
@@ -1309,7 +1309,7 @@ OnMotion(wxMouseEvent& event) {
 	} else {
 		// write the current coordinate into member "ibcoords"
 		ibcoords.Printf(" x = %f\n y = %f", p2x(event.GetX()), p2y(event.GetY()));
-		trc.dprint("ibcoords: ",ibcoords);
+		T_(trc.dprint("ibcoords: ",ibcoords);)
 		//!! event.Skip();
 	}
 }
@@ -1317,7 +1317,7 @@ OnMotion(wxMouseEvent& event) {
 void
 Vizplot::
 OnPaint(wxPaintEvent& event) {
-	Trace trc(2,"Vizplot::OnPaint ",this);
+	T_(Trace trc(2,"Vizplot::OnPaint ",this);)
 
 	// call the base class OnPaint
 	mpWindow::OnPaint(event);
@@ -1328,11 +1328,11 @@ OnPaint(wxPaintEvent& event) {
 	if (isDragging) {
 		// draw the temporary rectangle here using wxDC
 		// or wxGraphicContext
-		trc.dprint("drawing rectangle to current pos: ",currentPos.x,", ",currentPos.y);
+		T_(trc.dprint("drawing rectangle to current pos: ",currentPos.x,", ",currentPos.y);)
 		dc.DrawRectangle(startPos.x,startPos.y,currentPos.x-startPos.x,
 				currentPos.y-startPos.y);
 	}
-	trc.dprint("plot x dim: ",GetScrX());
+	T_(trc.dprint("plot x dim: ",GetScrX());)
 
 	// paint the frame::pset_spot...
 	VizFrame* frame = lowerpanel->vizframe;
@@ -1481,7 +1481,7 @@ ParamsDialog::
 ParamsDialog(VizFrame* parent) :
 	wxDialog(parent,wxID_ANY,"Select or type X and Y") {
 // create and display a dialog to get new (x,y) limits
-	Trace trc(2,"ParamsDialog");
+	T_(Trace trc(2,"ParamsDialog");)
 	vizframe = parent;
 	Vizplot* vp = vizframe->currentview;
 
@@ -1489,7 +1489,7 @@ ParamsDialog(VizFrame* parent) :
 	xsel = vp->xname;
 	ysels = vp->ynames;
 
-	trc.dprint("current x ",xsel,", y ",ysels);
+	T_(trc.dprint("current x ",xsel,", y ",ysels);)
 
 	wxBoxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
 
@@ -1541,7 +1541,7 @@ ParamsDialog(VizFrame* parent) :
 bool
 VizApp::
 OnInit() {
-	Trace trc(1,"VizApp::OnInit");
+	T_(Trace trc(1,"VizApp::OnInit");)
 
 	try {
 		// Create the main frame window...
@@ -1557,11 +1557,11 @@ OnInit() {
 
 // IMPLEMENT_APP_NO_MAIN(VizApp):
 	VizApp& wxGetApp() {
-	 	Trace trc(2,"wxGetApp");
+	 	T_(Trace trc(2,"wxGetApp");)
 	 	return *static_cast<VizApp*>(wxApp::GetInstance());
 	}
 	wxAppConsole *wxCreateApp() {
-		Trace trc(2,"wxCreateApp");
+		T_(Trace trc(2,"wxCreateApp");)
 		wxAppConsole::CheckBuildOptions(WX_BUILD_OPTIONS_SIGNATURE, "your program");
 		return new VizApp;
 	}
@@ -1575,7 +1575,7 @@ VizFrame::VizFrame(const wxString& title,
 	const wxPoint& pos, const wxSize& size, long style) :
 		wxFrame(nullptr, wxID_ANY, title, pos, size, style) {
 // VizFrame ctor
-	Trace trc(2,"VizFrame initial ctor");
+	T_(Trace trc(2,"VizFrame initial ctor");)
 	int cv; // return from addplot
 	frameno = number_of_frames++;
 
@@ -1644,11 +1644,11 @@ VizFrame::VizFrame(const wxString& title,
 	pset_spot = new Mark;
 	pset = new string;
 
-	trc.dprint("plotz: ",plotz);
-	trc.dprint("frame size: ",GetSize(),", pos ",GetPosition());
-	trc.dprint("topsizer: ",*topsizer);
+	T_(trc.dprint("plotz: ",plotz);)
+	T_(trc.dprint("frame size: ",GetSize(),", pos ",GetPosition());)
+	T_(trc.dprint("topsizer: ",*topsizer);)
 
-	trc.dprint("returning, now have ",cv+1," plots");
+	T_(trc.dprint("returning, now have ",cv+1," plots");)
 }	// VizFrame initial ctor
 
 // the zoom constructor creates a new VizFrame with a new plot size
@@ -1656,7 +1656,7 @@ VizFrame::VizFrame(Vizplot* vizplot, VizFrame* p, const wxString& title,
 	const wxPoint& pos, const wxSize& size, long style) :
 		wxFrame(nullptr, wxID_ANY, title, pos, size, style) {
 // VizFrame zoom ctor: take toplot,pset_spot,am_spot from the input Vizplot
-	Trace trc(2,"VizFrame zoom ctor");
+	T_(Trace trc(2,"VizFrame zoom ctor");)
 	int cv; // return from addplot
 	frameno = number_of_frames++;
 
@@ -1670,7 +1670,7 @@ VizFrame::VizFrame(Vizplot* vizplot, VizFrame* p, const wxString& title,
 
 	// take stuff from vizplot
 	toplot = vizplot->vizframe->toplot;
-	trc.dprint("toplot from vizplot: ",toplot);
+	T_(trc.dprint("toplot from vizplot: ",toplot);)
 
 	// create a top-level vertical Sizer
 	topsizer = new wxBoxSizer(wxVERTICAL);
@@ -1725,11 +1725,11 @@ VizFrame::VizFrame(Vizplot* vizplot, VizFrame* p, const wxString& title,
 	Show(true);
 	SetPosition(pos);		// XXX ??
 
-	trc.dprint("plotz: ",plotz);
-	trc.dprint("frame size: ",GetSize(),", pos ",GetPosition());
-	trc.dprint("topsizer: ",*topsizer);
+	T_(trc.dprint("plotz: ",plotz);)
+	T_(trc.dprint("frame size: ",GetSize(),", pos ",GetPosition());)
+	T_(trc.dprint("topsizer: ",*topsizer);)
 
-	trc.dprint("returning, now have ",cv+1," plots");
+	T_(trc.dprint("returning, now have ",cv+1," plots");)
 }	// VizFrame zoom ctor
 
 void
@@ -1738,7 +1738,7 @@ createControls() {
 // create all controls for this frame:
 //   menubar
 //   toolbar
-	Trace trc(2,"createControls");
+	T_(Trace trc(2,"createControls");)
 	wxPoint pos{wxDefaultPosition};
 	wxSize sz{wxDefaultSize};
 
@@ -1796,7 +1796,7 @@ createControls() {
 
 	SetMenuBar(menubar);
 
-	trc.dprint("menubar size: ",menubar->GetSize());
+	T_(trc.dprint("menubar size: ",menubar->GetSize());)
 	//------------------------------------------------------------------
 	// toolbar on the top
 	//------------------------------------------------------------------
@@ -1856,7 +1856,7 @@ createControls() {
 
 	// quit button lambda
 	cmdid = funBind(wxEVT_BUTTON, [this](wxCommandEvent& ev) {
-		Trace trc(2,"quit button lambda");
+		T_(Trace trc(2,"quit button lambda");)
 // #ifdef THREADS
 		Amviz& amviz{Amviz::instance()};
 		amviz.quit = true;
@@ -1871,7 +1871,7 @@ createControls() {
 	// toolbar->Realize();
 	// this->SetToolBar(toolbar);
 
-	trc.dprint("toolbar size: ",toolbar->GetSize());
+	T_(trc.dprint("toolbar size: ",toolbar->GetSize());)
 
 	// add the toolbar to the top sizer
 	//!! topsizer->Add(toolbar, 0, wxLEFT);
@@ -1885,7 +1885,7 @@ createControls() {
 void
 VizFrame::
 OnClose(wxCloseEvent& ev) {
-	Trace trc(2,"VizFrame::OnClose");
+	T_(Trace trc(2,"VizFrame::OnClose");)
 	Destroy();
 }
 
@@ -1900,7 +1900,7 @@ void
 VizFrame::
 OnFileOpen( wxCommandEvent& event ) {
 // open a dialog, get the user's plotfile choice
-	Trace trc(2,"OnFileOpen");
+	T_(Trace trc(2,"OnFileOpen");)
 	Specs& sp = specs();
 
 	FilterDialog filterdlg(this);
@@ -1921,7 +1921,7 @@ OnFileOpen( wxCommandEvent& event ) {
 		string fi = fn[i].ToStdString();
 		if (rsubstr(fi, 3) == ".uf") {
 			sp.ufname = fi;
-			trc.dprint("got uf filename: ",fi);
+			T_(trc.dprint("got uf filename: ",fi);)
 			Amviz& amviz{Amviz::instance()};
 			if (!amviz.error.empty()) {
 				amviz.error = "";
@@ -1936,7 +1936,7 @@ OnFileOpen( wxCommandEvent& event ) {
 		} else
 			filenames.push_back(fi);
 	}
-	trc.dprint("picked files: ",filenames);
+	T_(trc.dprint("picked files: ",filenames);)
 
     if (filenames.empty())
 	 	return;
@@ -1946,7 +1946,7 @@ OnFileOpen( wxCommandEvent& event ) {
 	string xnm = current->xname;
 	vector<string> ynms = current->ynames;
 	wxSize plotsize = current->GetSize();
-	trc.dprint("current size ",plotsize.x,", ",plotsize.y);
+	T_(trc.dprint("current size ",plotsize.x,", ",plotsize.y);)
 
 	// load the new file(s)
 	// XXX put all this stuff in a Viz member function so it doesn't need to be public?
@@ -1984,14 +1984,14 @@ VizFrame::
 OnFileAdd( wxCommandEvent& event) {
 // add curves from another plotfile; plot them all together
 // with the same parameters used for the current plot
-	Trace trc(2,"OnFileAdd");
+	T_(Trace trc(2,"OnFileAdd");)
 	Specs& sp = specs();
 
 	FilterDialog filterdlg(this);
 	if (filterdlg.ShowModal() == wxID_CANCEL)
 		return;
 	wxString filters = filterdlg.getfilters();
-	trc.dprint("got filters: ",filters);
+	T_(trc.dprint("got filters: ",filters);)
 	wxFileDialog dlg(this, "Add plot file(s)", "", "", filters, wxFD_MULTIPLE);
 	if (dlg.ShowModal() == wxID_CANCEL)
 		return;
@@ -2003,7 +2003,7 @@ OnFileAdd( wxCommandEvent& event) {
 		string fi = fn[i].ToStdString();
 		if (rsubstr(fi, 3) == ".uf") {
 			sp.ufname = fi;
-			trc.dprint("got uf filename: ",fi);
+			T_(trc.dprint("got uf filename: ",fi);)
 			Amviz& amviz{Amviz::instance()};
 			if (!amviz.error.empty()) {
 				amviz.error = "";
@@ -2018,7 +2018,7 @@ OnFileAdd( wxCommandEvent& event) {
 		} else
 			filenames.push_back(fi);
 	}
-	trc.dprint("picked files: ",filenames);
+	T_(trc.dprint("picked files: ",filenames);)
 
     if (filenames.empty())
 	 	return;
@@ -2058,7 +2058,7 @@ VizFrame::
 OnNewWindow( wxCommandEvent& event) {
 // open a new Vizplot window
 // XXX should this new window inherit toplot?
-	Trace trc(2,"OnNewWindow");
+	T_(Trace trc(2,"OnNewWindow");)
 
 	// Create a new (blank) VizFrame in a thread
 	std::thread new_thread(newframe);
@@ -2100,10 +2100,10 @@ OnMenuEditPref( wxCommandEvent& WXUNUSED(event) ) {
 vector<int>
 implist(const string& str) {
 // given a string like 1:5 or 1:2:5 convert to a vector of ints
-	Trace trc(2,"implist");
+	T_(Trace trc(2,"implist");)
 	vector<int> rval;
 	vector<string> toks = string2tok(str, ":");
-	trc.dprint("toks: ",toks);
+	T_(trc.dprint("toks: ",toks);)
 	if (toks.size() < 2)
 		return rval;
 	int incr{1};
@@ -2118,7 +2118,7 @@ implist(const string& str) {
 		flaps::error("invalid range: ",str);
 		return rval;
 	}
-	trc.dprint("first ",first,", incr ",incr,", last ",last);
+	T_(trc.dprint("first ",first,", incr ",incr,", last ",last);)
 
 	for (int i=first; i<=last; i+=incr)
 		rval.push_back(i);
@@ -2129,12 +2129,12 @@ vector<int>
 intList(const string& list) {
 // parse a string of 1b ints like 1:2:5,7,8 into a vector
 // of 0b ints: {0,2,4,6,7}
-	Trace trc(2,"intList");
+	T_(Trace trc(2,"intList");)
 	vector<int> rval;
 
 	// split the list into comma-separated tokens
 	vector<string> toks = string2tok(list, ",");
-	trc.dprint("comma-separated tokens: ",toks);
+	T_(trc.dprint("comma-separated tokens: ",toks);)
 
 	// check each one for colons (1 or 2)
 	for (auto& tok : toks) {
@@ -2156,7 +2156,7 @@ void
 VizFrame::
 OnCurvesSelect(wxCommandEvent& event) {
 // pop up a dialog for selecting which curves to plot
-	Trace trc(2,"OnCurvesSelect");
+	T_(Trace trc(2,"OnCurvesSelect");)
 	Viz& viz{Viz::instance()};
 	Vizplot* m_plot = plot();
 
@@ -2212,8 +2212,8 @@ OnCurvesSelect(wxCommandEvent& event) {
 	vector<string> excludes = string2tok(exclstr, " ,");
 
 	vector<int> sel = cdlg.getChecklist();
-	trc.dprint("got sel: ",sel);
-	trc.dprint("got includes \"",includes,"\", excludes \"",excludes,"\"");
+	T_(trc.dprint("got sel: ",sel);)
+	T_(trc.dprint("got includes \"",includes,"\", excludes \"",excludes,"\"");)
 
 	// set up this->toplot according to the 3 answers
 	// includes and excludes may be wildcard - test with fnmatch()
@@ -2230,7 +2230,7 @@ OnCurvesSelect(wxCommandEvent& event) {
 			for (auto& excl : excludes)
 				if (flaps::wildcard(excl, sid)) be = true;
 		}
-		trc.dprint("result: include ",bi,", exclude ",be);
+		T_(trc.dprint("result: include ",bi,", exclude ",be);)
 		if ((contains(sel, i) || bi) && !be)
 			newtoplot.push_back(i);
 	}
@@ -2241,7 +2241,7 @@ OnCurvesSelect(wxCommandEvent& event) {
 		message(msg);
 		return;
 	} else {
-		trc.dprint("new toplot: ",newtoplot);
+		T_(trc.dprint("new toplot: ",newtoplot);)
 		this->toplot = newtoplot;
 	}
 
@@ -2252,14 +2252,14 @@ OnCurvesSelect(wxCommandEvent& event) {
 	leftpanel->legendbox->Scroll(0,0);
 	m_plot->UpdateAll();
 	Refresh();
-	trc.dprint("after choosing curves ",topsizer->GetItemCount()," in topsizer");
+	T_(trc.dprint("after choosing curves ",topsizer->GetItemCount()," in topsizer");)
 }
 
 string
 VizFrame::
 getParChoice(const string& current, const string& axis) {
 // popup a dialog with all parameter names to get the choice of one
-	Trace trc(2, "getParChoice");
+	T_(Trace trc(2, "getParChoice");)
 	string rval;
 
 	Viz& viz{Viz::instance()};
@@ -2273,7 +2273,7 @@ getParChoice(const string& current, const string& axis) {
 		vastr("Choose ",axis), par_names);
 
 	// checkmark the parameter which is the current name
-	trc.dprint("current ",axis,": ",current);
+	T_(trc.dprint("current ",axis,": ",current);)
 	if (!current.empty()) {
 		for (size_t i=0; i<parnames.size(); i++) {
 			if (parnames[i] == current) {
@@ -2285,13 +2285,13 @@ getParChoice(const string& current, const string& axis) {
 
 	// show the dialog, get selection
 	int stat = pardlg.ShowModal();
-	trc.dprint("dialog returned ",stat);
+	T_(trc.dprint("dialog returned ",stat);)
 	if (stat == wxID_CANCEL)
 		return rval;
 	int sel = pardlg.GetSelection();
 
 	rval = parnames[sel];
-	trc.dprint("returning selection ",sel,": ",rval);
+	T_(trc.dprint("returning selection ",sel,": ",rval);)
 	return rval;
 }
 
@@ -2299,7 +2299,7 @@ vector<string>
 VizFrame::
 getYParChoice(const vector<string>& current) {
 // popup a dialog with all parameter names to get the choice of one or more Y
-	Trace trc(2, "getYParChoice");
+	T_(Trace trc(2, "getYParChoice");)
 	vector<string> rval;
 
 	Viz& viz{Viz::instance()};
@@ -2316,7 +2316,7 @@ getYParChoice(const vector<string>& current) {
 
 #ifdef NEVER // don't check current
 	// checkmark the current parameters
-	trc.dprint("current Y: ",current);
+	T_(trc.dprint("current Y: ",current);)
 	for (auto yname : current) {
 		int i = find(parnames.begin(), parnames.end(), yname) - parnames.begin();
 		sels.push_back(i);
@@ -2326,14 +2326,14 @@ getYParChoice(const vector<string>& current) {
 
 	// show the dialog, get selections
 	int stat = pardlg.ShowModal();
-	trc.dprint("dialog returned ",stat);
+	T_(trc.dprint("dialog returned ",stat);)
 	if (stat == wxID_CANCEL)
 		return rval;
 	sels = pardlg.GetSelections();
 
 	for (auto i : sels)
 		rval.push_back(parnames[i]);
-	trc.dprint("returning selections: ",rval);
+	T_(trc.dprint("returning selections: ",rval);)
 	return rval;
 }
 
@@ -2346,7 +2346,7 @@ OnParamsSelect(wxCommandEvent& event) {
 // - viz was started with no x,y parameters or plotfiles/aids
 // In either case the plot window (Vizplot) is up but the Vizplot
 // is incomplete so we just need to complete it.
-	Trace trc(2,"OnParamsSelect");
+	T_(Trace trc(2,"OnParamsSelect");)
 
 	// pop up...
 	ParamsDialog dlg(this);
@@ -2369,7 +2369,7 @@ OnParamsSelect(wxCommandEvent& event) {
 	}
 	// ... or create a new one
 	wxSize plotsize = current->GetSize();
-	trc.dprint("current size ",plotsize.x,", ",plotsize.y);
+	T_(trc.dprint("current size ",plotsize.x,", ",plotsize.y);)
 	Vizplot* vp = new Vizplot(lowerpanel, -1, wxDefaultPosition, plotsize);
 	// load data
 	vp->loadxy(xnm, ynms, this->toplot);
@@ -2428,7 +2428,7 @@ int
 VizFrame::
 addplot(Vizplot* p) {
 // Add p to the list of Vizplots (VizFrame::plotz) if it is not already there
-	Trace trc(2,"addplot");
+	T_(Trace trc(2,"addplot");)
 	bool found{false};
 	int rval{0};
 	// add2vector(p, plotz);
@@ -2454,9 +2454,9 @@ addplot(Vizplot* p) {
 	if (!found) {
 		plotz.push_back(p);
 		rval = plotz.size() - 1;
-		trc.dprint("added ",p,", now have ",plotz.size(),", lowerpanel: ",*lowersizer);
+		T_(trc.dprint("added ",p,", now have ",plotz.size(),", lowerpanel: ",*lowersizer);)
 	} else {
-		trc.dprint("x ",p->xname," y ",p->ynames[0]," already in plotz[",rval,"]");
+		T_(trc.dprint("x ",p->xname," y ",p->ynames[0]," already in plotz[",rval,"]");)
 	}
 	return rval;
 }
@@ -2465,7 +2465,7 @@ void
 VizFrame::
 OnViewSelect(wxCommandEvent& event) {
 // pop up a dialog for selecting which set of parameters to plot
-	Trace trc(2,"OnViewSelect");
+	T_(Trace trc(2,"OnViewSelect");)
 	ostringstream os;
 
 	// create a list of current views XXX maybe make plotz a map?
@@ -2480,7 +2480,7 @@ OnViewSelect(wxCommandEvent& event) {
 	wxSingleChoiceDialog viewdlg(this, "X-Y View", "choose", xy);
 	// mark the current pick
 	int current = currentidx();
-	trc.dprint("current idx ",current);
+	T_(trc.dprint("current idx ",current);)
 	if (current >= 0)
 		viewdlg.SetSelection(current);
 	// show the dialog, get selection
@@ -2488,7 +2488,7 @@ OnViewSelect(wxCommandEvent& event) {
 	if (stat == wxID_CANCEL)
 		return;
 	int sel = viewdlg.GetSelection();
-	trc.dprint("got sel ",sel);
+	T_(trc.dprint("got sel ",sel);)
 	Vizplot* vp = setcurrent(sel);
 	vp->UpdateAll();
 	Refresh();
@@ -2498,7 +2498,7 @@ void
 VizFrame::
 OnColor(wxCommandEvent& event) {
 // pop up a dialog for selecting how to color curves
-	Trace trc(2,"OnColor");
+	T_(Trace trc(2,"OnColor");)
 	Viz& viz{Viz::instance()};
 
 	// 3 possibilities:
@@ -2518,7 +2518,7 @@ OnColor(wxCommandEvent& event) {
 	if (stat == wxID_CANCEL)
 		return;
 	viz.colorby = colordlg.GetSelection();
-	trc.dprint("got colorby ",viz.colorby,", current: ",current);
+	T_(trc.dprint("got colorby ",viz.colorby,", current: ",current);)
 
 	// re-create legends if colorby has changed
 	if (viz.colorby != current) {
@@ -2531,7 +2531,7 @@ void
 VizFrame::
 OnLegend(wxCommandEvent& event) {
 // toggle between legend and parameter values on right panel
-	Trace trc(1,"OnLegend");
+	T_(Trace trc(1,"OnLegend");)
 	Vizplot* m_plot = plot();
 	m_plot->showLegend = !m_plot->showLegend;
 	if (m_plot->showLegend) {
@@ -2557,12 +2557,12 @@ OnMenuHelpHelp( wxCommandEvent& WXUNUSED(event) ) {
 void
 VizFrame::
 OnFit(wxCommandEvent& WXUNUSED(event)) {
-	Trace trc(2,"OnFit");
+	T_(Trace trc(2,"OnFit");)
 	Vizplot* m_plot = plot();
 	m_plot->Fit();
 	vector<double> bb(6,0.0);
 	m_plot->GetBoundingBox(bb.data());
-	trc.dprint("bounding box: ",bb);
+	T_(trc.dprint("bounding box: ",bb);)
 }
 
 void
@@ -2652,10 +2652,10 @@ void
 VizFrame::
 OnLimits( wxCommandEvent &WXUNUSED(event) ) {
 // handle limits button
-	Trace trc(2,"OnLimits");
+	T_(Trace trc(2,"OnLimits");)
 	Vizplot* mp = plot();
 
-	trc.dprint("plot: ",mp->xname,", ",mp->ynames[0]);
+	T_(trc.dprint("plot: ",mp->xname,", ",mp->ynames[0]);)
 	LimitsDialog dlg(this);
 	if (dlg.ShowModal() == wxID_CANCEL)
 		return;
@@ -2663,7 +2663,7 @@ OnLimits( wxCommandEvent &WXUNUSED(event) ) {
 	wxString xmaxstr = dlg.GetXmaxText();
 	wxString yminstr = dlg.GetYminText();
 	wxString ymaxstr = dlg.GetYmaxText();
-	trc.dprint("got [",xminstr,", ",xmaxstr,"], [",yminstr,", ",ymaxstr,"]");
+	T_(trc.dprint("got [",xminstr,", ",xmaxstr,"], [",yminstr,", ",ymaxstr,"]");)
 	mp->bbxmin = stod(xminstr.ToStdString());
 	mp->bbxmax = stod(xmaxstr.ToStdString());
 	mp->bbymin = stod(yminstr.ToStdString());
@@ -2735,10 +2735,10 @@ Plot(wxDC & dc, mpWindow & w) {
 // My override of mpFXYVector::Plot to
 //  - create a clipping region
 //  - draw both lines and dots
-	Trace trc(2,"myFXYVector::Plot");
+	T_(Trace trc(2,"myFXYVector::Plot");)
 
 	if (!m_visible) {
-		trc.dprint("quick return: not visible");
+		T_(trc.dprint("quick return: not visible");)
 		return;
 	}
 
@@ -2749,7 +2749,7 @@ Plot(wxDC & dc, mpWindow & w) {
 	int tly = w.GetMarginTop();
 	int width = w.GetScrX()-w.GetMarginRight() - tlx;
 	int height = w.GetScrY() - w.GetMarginBottom() - tly;
-	trc.dprint("clipping rect: ",tlx,", ",tly,", w ",width,", h ",height);
+	T_(trc.dprint("clipping rect: ",tlx,", ",tly,", w ",width,", h ",height);)
 	
 	wxRect plotBox(tlx, tly, width, height);
 	dc.SetClippingRegion(plotBox);
@@ -2786,7 +2786,7 @@ void
 myScroll::
 paintLegend(wxDC& dc, Vizplot* vp) {
 // write the current legend to dc
-	Trace trc(2,"paintLegend");
+	T_(Trace trc(2,"paintLegend");)
 
 	dc.Clear();
 	int width, height;
@@ -2829,7 +2829,7 @@ void
 myScroll::
 paintPset(wxDC& dc, VizFrame* vizframe) {
 // write the string "pset" to dc
-	Trace trc(2,"paintPset");
+	T_(Trace trc(2,"paintPset");)
 
 	dc.Clear();
 
@@ -2850,9 +2850,9 @@ main(int argc, char** argv) {
 	char* dbg = getenv("DEBUG");
 	if (dbg != nullptr) Trace::debug(std::stoi(dbg));
 	Ftmpdir ftmp;
-	Trace trc(1,"main");
+	T_(Trace trc(1,"main");)
 
-	trc.dprint("component sizes in pixels:\n",vizsizes);
+	T_(trc.dprint("component sizes in pixels:\n",vizsizes);)
 
 	Specs& sp = specs();
 	try {

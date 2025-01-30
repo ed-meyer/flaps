@@ -68,7 +68,7 @@ void
 Dlm::
 assemble (const Grid& grid, const Freev& freev) {
 // Create DLM gaf matrices from this Dlm
-	Trace trc(1,"Dlm::assemble");
+	T_(Trace trc(1,"Dlm::assemble");)
 
 	// default dlm nodes: all fem grid nodes
 	if (this->nodes.empty()) {
@@ -85,8 +85,8 @@ assemble (const Grid& grid, const Freev& freev) {
 		const Node* noden = findnode(this->nodes[n], grid.nodes());
 		vector<double> x0 = node0->coord();
 		vector<double> ds = noden->coord();
-		blas_axpy(3, -1.0, &x0[0], 1, &ds[0], 1);
-		this->semi_span = blas_snrm2(3, &ds[0], 1);
+		blas::axpy(3, -1.0, &x0[0], 1, &ds[0], 1);
+		this->semi_span = blas::snrm2(3, &ds[0], 1);
 	} else {
 		n = this->panels[1];  // # spanwise panels
 		throw runtime_error("spanwise panels not implemented yet");
@@ -144,14 +144,14 @@ assemble (const Grid& grid, const Freev& freev) {
 		vector<double> dXav(n*m);
 		computeInputMeshSegment(n, m, root, this->semi_span,
 			this->dihedral, this->sweep, this->chord, this->taper, Xi, Xo, Xr, dXav);
-		trc.dprint("Xi: ",Xi,", Xo: ",Xo,", Xr: ",Xr);
+		T_(trc.dprint("Xi: ",Xi,", Xo: ",Xo,", Xr: ",Xr);)
 
 		// compute conn (panel node numbers) and X (nodal coord)
 		this->conn = vector<int>(4*n*m, 0);
 		this->X = vector<double>(3*(n+1)*(m+1), 0.0);
 		computeSurfaceSegment(n, m, root, this->semi_span, this->dihedral,
 			this->sweep, this->chord, this->taper, this->X, this->conn);
-		trc.dprint("X: ",this->X,", conn: ",this->conn);
+		T_(trc.dprint("X: ",this->X,", conn: ",this->conn);)
 
 		// compute the structure-to-aero transform (nr,nc) where
 		// nr = 3*(m+1)*(n+1) and nc = retained().size(). It depends on
@@ -180,13 +180,13 @@ assemble (const Grid& grid, const Freev& freev) {
 				rf_p->value(rf);
 				double U{1.0};
 				double omega{rf*U/this->reflen};
-				trc.dprint("rf = ",rf,", omega = ",omega);
+				T_(trc.dprint("rf = ",rf,", omega = ",omega);)
 				int symm{1};
 				bool steadykernel{false};
 				double epstol{std::numeric_limits<double>::epsilon()};
 				computeInfluenceMatrix(D, omega, U, mach, np, Xi, Xo, Xr,
 					dXav, symm, steadykernel, epstol);
-				trc.dprintm(np,np,np,&D[0],"D matrix at rf=",rf);
+				T_(trc.dprintm(np,np,np,&D[0],"D matrix at rf=",rf);)
 				vector<complex<double>> w(np, complex<double>(0.0));
 
 				// get the downwash and normal wash
@@ -203,29 +203,29 @@ assemble (const Grid& grid, const Freev& freev) {
 					// XXX w = (p/U)*vwash + dwash
 					complex<double> ik(rsf, omega/U);
 					w = vector<complex<double>>(np*nc, complex<double>(0.0,0.0));
-					blas_copy(np*nc, &dwash[0], 1, (double*)&w[0], 2);
+					blas::copy(np*nc, &dwash[0], 1, (double*)&w[0], 2);
 					for (size_t i=0; i<w.size(); i++)
 						w[i] += ik*vwash[i];
 
 					// compute the Cp = D^{-1}w
 					vector<complex<double>> Cp = Dsolve(np, nc, D, w);
-					trc.dprint("Cp = ",Cp);
+					T_(trc.dprint("Cp = ",Cp);)
 
 					// compute the forces on each aero grid node: F (3,na,nc)
 					// where na = # aero nodes, nc = # gc
 					vector<complex<double>> forces(nr*nc, complex<double>(0.0));
 					nodal_forces(np, na, nc, &Cp[0], &this->X[0], &this->conn[0], &forces[0]);
-					trc.dprintm(nr,nc,nr,forces,"forces");
+					T_(trc.dprintm(nr,nc,nr,forces,"forces");)
 
 					// transform the forces to the FEM grid - first cast T to complex
 					//   Q = T' F:   (nc,nr)*(nr,nc)
 					vector<complex<double>> CT(nt, complex<double>(0.0));
-					blas_copy(nt, &this->T[0], 1, reinterpret_cast<double*>(&CT[0]), 2);
+					blas::copy(nt, &this->T[0], 1, reinterpret_cast<double*>(&CT[0]), 2);
 					Matrix* qi = new Matrix(vastr("gaf",++ordinal,".nodal"), "gaf", nc, nc, true);
 					complex<double>* Q = qi->celem();
 					complex<double> alpha(1.0), beta(0.0);
-					blas_cgemm("t","n",nc,nc,nr,alpha,&CT[0],nr,&forces[0],nr,beta,Q,nc);
-					trc.dprintm(nc,nc,nc,Q,"Q at rf =",rf);
+					blas::gemm("t","n",nc,nc,nr,alpha,&CT[0],nr,&forces[0],nr,beta,Q,nc);
+					T_(trc.dprintm(nc,nc,nc,Q,"Q at rf =",rf);)
 
 					// give the Matrix (qi) a Pz_const parameterization with "params"
 					qi->pz.push_back(new Pz_const(params,nc,nc));
@@ -298,7 +298,7 @@ transform(int m, int n, const vector<double>& X,
 //   freedoms  FEM freedoms
 // Output: T (nr,nc) nr: number of displacements at aero nodes: 3*(m+1)*(n+1)
 //                   nc: number of structural freedoms
-	Trace trc(1,"transform");
+	T_(Trace trc(1,"transform");)
 
 	assert(!freedoms.empty());
 
@@ -338,7 +338,7 @@ transform(int m, int n, const vector<double>& X,
 		}
 	}
 
-	trc.dprintm(nr,nc,nr,T,"aero transform");
+	T_(trc.dprintm(nr,nc,nr,T,"aero transform");)
 	return T;
 }
 
@@ -712,7 +712,7 @@ computeQuadDoubletCoeff(complex<double>& dinf, double omega, double U,
      b[1] = (xr[1] - xo[1]);
      b[2] = (xr[2] - xo[2]);
      //!! bnrm = sqrt(b(0)*b(0) + b(1)*b(1) + b(2)*b(2));
-	  bnrm = blas_snrm2(3, &b[0], 1);
+	  bnrm = blas::snrm2(3, &b[0], 1);
      binv = one/(bnrm*(bnrm - b[0]));
      
      vy =  a[2]*ainv - b[2]*binv;
@@ -1159,11 +1159,11 @@ getModeBCs(int np, int n, const double* mode, const double* X,
      // Compute the area in order to normalize the normal vector
 	  // (eem) the area is 1/2 the norm - doesn't matter here
      //!!  nrm = sqrt(normal(1)**2 + normal(2)**2 + normal(3)**2)
-	  double nrm = blas_snrm2(3, &normal[0], 1);
+	  double nrm = blas::snrm2(3, &normal[0], 1);
 
      // Set the normal displacement/velocity
      //!! vwash(i) = -(normal(1)*up(1) + normal(2)*up(2) + normal(3)*up(3))/nrm
-	  blas_dot(3, &normal[0], 1, &up[0], 1, vwash[i]);
+	  blas::dot(3, &normal[0], 1, &up[0], 1, vwash[i]);
 	  vwash[i] /= -nrm;
 
      // Compute d(mode)/dx
@@ -1210,7 +1210,7 @@ washes(int np, int n, int nc, const double* mode, const double* X,
   //!! real(kind=dtype) :: a(3), b(3), normal(3), nrm, dx
   //!! real(kind=dtype) :: up(3)
 
-	Trace trc(1,"washes");
+	T_(Trace trc(1,"washes");)
 
 	// for each mode...
 	for (int k=0; k<nc; k++) {
@@ -1228,7 +1228,7 @@ washes(int np, int n, int nc, const double* mode, const double* X,
 				             0.75*mode[IJK(i,co[1],k,3,n)] +
                          0.25*mode[IJK(i,co[3],k,3,n)] +
 				             0.75*mode[IJK(i,co[2],k,3,n)]);
-			trc.dprint("up: ",up[0],", ",up[1],", ",up[2]);
+			T_(trc.dprint("up: ",up[0],", ",up[1],", ",up[2]);)
 
 			// Compute the a/b vectors
 			for (int i=0; i<3; i++) {
@@ -1243,8 +1243,8 @@ washes(int np, int n, int nc, const double* mode, const double* X,
 
 			// Compute the area in order to normalize the normal vector
 			// (eem) the area is 1/2 the norm - doesn't matter here
-			double nrm = blas_snrm2(3, &normal[0], 1);
-			trc.dprint("nrm = ",nrm);
+			double nrm = blas::snrm2(3, &normal[0], 1);
+			T_(trc.dprint("nrm = ",nrm);)
 
 			// Set the normal displacement/velocity
 			vwash[IJ(j,k,np)] = -(normal[0]*up[0]+normal[1]*up[1]+normal[2]*up[2])/nrm;
@@ -1253,15 +1253,15 @@ washes(int np, int n, int nc, const double* mode, const double* X,
 			// First, compute the average step in x
 			double dx = 0.5*((X[IJ(0,co[1],3)] - X[IJ(0,co[0],3)]) +
 								  (X[IJ(0,co[2],3)] - X[IJ(0,co[3],3)]));
-			trc.dprint("dx = ",dx);
+			T_(trc.dprint("dx = ",dx);)
 			// Compute the derivative d(mode)/dx
 			dwash[IJ(j,k,np)] =
 				-((mode[IJK(2,co[1],k,3,n)] - mode[IJK(2,co[0],k,3,n)]) +
 				  (mode[IJK(2,co[2],k,3,n)] - mode[IJK(2,co[3],k,3,n)]))/(2.0*dx);
 		}
 	}
-	trc.dprintm(np,nc,np,vwash,"vwash");
-	trc.dprintm(np,nc,np,dwash,"dwash");
+	T_(trc.dprintm(np,nc,np,vwash,"vwash");)
+	T_(trc.dprintm(np,nc,np,dwash,"dwash");)
 }
 
 void
@@ -1275,7 +1275,7 @@ vzaero(vector<int>& node_numbers, vector<double>& coords,
 // X      (3,(n+1)*(m+1)) coordinates of each of the (m+1)*(n+1) nodes
 // T      (3,(n+1),(m+1),nc) transformation from the Fem grid to the aero
 //        grid, where nc is the number of Fem freedoms
-	Trace trc(1,"vzaero");
+	T_(Trace trc(1,"vzaero");)
 	int m{panels[0]};		// # chordwise panels
 	int n{panels[1]};		// # spanwise panels
 	int np = n*m;
@@ -1317,18 +1317,18 @@ vzaero(vector<int>& node_numbers, vector<double>& coords,
 	flaps::info("dlm grid nodes are rows ",oldnr+1," to ",newnr);
 	if (gct_nodal.empty()) {
 		gct_nodal = vector<double>(T.size(), 0.0);
-		blas_copy(T.size(), &T[0], 1, (double*)&gct_nodal[0], 2);
+		blas::copy(T.size(), &T[0], 1, (double*)&gct_nodal[0], 2);
 	} else {
 		vector<double> tmp(newnr*nc);
 		for (int j=0; j<nc; j++) {
-			blas_copy(oldnr, &gct_nodal[j*oldnr], 1, &tmp[j*newnr], 1);
+			blas::copy(oldnr, &gct_nodal[j*oldnr], 1, &tmp[j*newnr], 1);
 			// T is double so skip factor for tmp is 2
-			blas_copy(nrx, &T[j*nrx], 1, &tmp[IJ(oldnr,j,newnr)], 1);
+			blas::copy(nrx, &T[j*nrx], 1, &tmp[IJ(oldnr,j,newnr)], 1);
 		}
 		gct_nodal = tmp;
-		trc.dprint("gct_nodal is now (",newnr,",",nc,")");
+		T_(trc.dprint("gct_nodal is now (",newnr,",",nc,")");)
 	}
-	trc.dprint("coords are now ",coords.size());
-	int nr = gct_nodal.size()/nc;
-	trc.dprintm(nr,nc,nr,&gct_nodal[0],"vzaero new gct_nodal");
+	T_(trc.dprint("coords are now ",coords.size());)
+	T_(int nr = gct_nodal.size()/nc;)
+	T_(trc.dprintm(nr,nc,nr,&gct_nodal[0],"vzaero new gct_nodal");)
 }

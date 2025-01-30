@@ -88,10 +88,10 @@ OGLVersion() {
 }
 
 bool isWayland() {
-	Trace trc(2,"isWayland");
+	T_(Trace trc(2,"isWayland");)
 	// only works under MSW:
 	// wxDisplay display; // Get the primary display
-	// trc.dprint("display name: ",display.GetName());
+	// T_(trc.dprint("display name: ",display.GetName());)
 	//return display.GetName().Contains("Wayland");
 
 	// check WAYLAND_DISPLAY
@@ -102,11 +102,11 @@ bool isWayland() {
 }
 
 bool isWSL() {
-	Trace trc(2,"isWSL");
+	T_(Trace trc(2,"isWSL");)
 	struct stat buffer;
 	bool rval{false};
 	rval = (stat("/proc/sys/fs/binfmt_misc/WSLInterop", &buffer) == 0);
-	trc.dprint("running under WSL? ",rval);
+	T_(trc.dprint("running under WSL? ",rval);)
 	return rval;
 }
 
@@ -114,7 +114,7 @@ wxSize
 getDisplaySize() {
 // returns the size of the display in pixels by opening
 // the default X11 screen and getting its dimensions
-	Trace trc(2,"getDisplaySize");
+	T_(Trace trc(2,"getDisplaySize");)
 
     Display* display = XOpenDisplay(nullptr);
     if (!display) {
@@ -135,7 +135,7 @@ getDisplaySize() {
 
 FilterDialog::
 FilterDialog(wxWindow* parent) : wxDialog(parent,wxID_ANY,"Filter the file names?") {
-	Trace trc(2,"FilterDialog");
+	T_(Trace trc(2,"FilterDialog");)
 
 	wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
 	//SetSizer(vbox);
@@ -148,7 +148,7 @@ FilterDialog(wxWindow* parent) : wxDialog(parent,wxID_ANY,"Filter the file names
 		wxDefaultPosition,wxDefaultSize,style);
 #ifdef NEVER // get value in getfilters()
 	filterctrl->Bind(wxEVT_TEXT_ENTER, [&](wxCommandEvent& ev) {
-		Trace trc(2,"filter lambda");
+		T_(Trace trc(2,"filter lambda");)
 		wxString f = filterctrl->GetValue();
 	});
 #endif // NEVER // get value in getfilters()
@@ -161,10 +161,10 @@ FilterDialog(wxWindow* parent) : wxDialog(parent,wxID_ANY,"Filter the file names
 	okButton->SetDefault();
 #ifdef NEVER // get value in ?
 	okButton->Bind(wxEVT_BUTTON, [&](wxCommandEvent& ev) {
-		Trace trc(2,"ok lambda");
+		T_(Trace trc(2,"ok lambda");)
 		wxString f = filterctrl->GetValue();
 		filterstr = replace_char(f.ToStdString(), ',', '|');
-		trc.dprint("got filters: ",filterstr);
+		T_(trc.dprint("got filters: ",filterstr);)
 		ev.Skip();
 	});
 #endif // NEVER // get value in ?
@@ -181,7 +181,7 @@ regex
 wild2rx(const string& wild) {
 // convert a string possibly containing wild-cards (*) to
 // a regular-expression; allow non-escaped periods
-	Trace trc(2,"wild2rx");
+	T_(Trace trc(2,"wild2rx");)
 	int n = wild.size();
 	string rval;
 
@@ -195,25 +195,25 @@ wild2rx(const string& wild) {
 			rval += c;
 		}
 	}
-	trc.dprint("creating regex \"",rval,"\"");
+	T_(trc.dprint("creating regex \"",rval,"\"");)
 	return regex(rval);
 }
 // vector<string> specialization
 bool
 containsrx(const vector<regex>& v, const string& s) {
 // return true if "s" matches any regex in "v", false otherwise
-	Trace trc(2,"containsrx ");
-	trc.dprint("checking ",s," against ",v.size()," rx");
+	T_(Trace trc(2,"containsrx ");)
+	T_(trc.dprint("checking ",s," against ",v.size()," rx");)
 	for (auto& vi : v) {
-		trc.dprint("testing ",s);
+		T_(trc.dprint("testing ",s);)
 		// use search instead of match to catch, e.g. "1.b absgc1"
 		//!! if (regex_search(s, vi))
 		if (regex_match(s, vi)) {
-			trc.dprint("matches");
+			T_(trc.dprint("matches");)
 			return true;
 		}
 	}
-	trc.dprint("no match");
+	T_(trc.dprint("no match");)
 	return false;
 }
 
@@ -243,7 +243,7 @@ snooze(double nanosec) {
 string
 sizer2string(const wxBoxSizer& sizer) {
 // print some info about "sizer"
-	Trace trc(2,"sizer2string");
+	T_(Trace trc(2,"sizer2string");)
 	ostringstream os;
 	 
 	const wxSizerItemList& children = sizer.GetChildren();
@@ -253,7 +253,7 @@ sizer2string(const wxBoxSizer& sizer) {
 	for (const auto& ci : children) {
 		wxSize sz = ci->GetSize();
 		wxSize minsz = ci->GetMinSize();
-		trc.dprint(++i,") item size ",sz.x,", ",sz.y,", min ",minsz.x,", ",minsz.y);
+		T_(trc.dprint(++i,") item size ",sz.x,", ",sz.y,", min ",minsz.x,", ",minsz.y);)
 		os << "current size (" << sz.x << "," << sz.y << ") min size ("
 			<< minsz.x << "," << minsz.y << ")\n";
 		wxSizer* nested = ci->GetSizer();
@@ -279,9 +279,9 @@ printsizes(const string& title, wxWindow* t) {
 void
 //!! pngwrite(const string& file, unsigned char* pixels, int width, int height)
 pngwrite(const string& file, float* pixels, int width, int height) {
-	Trace trc(2,"pngwrite ",file);
+	T_(Trace trc(2,"pngwrite ",file);)
 
-	trc.dprint("width ",width,", height ",height);
+	T_(trc.dprint("width ",width,", height ",height);)
 
 	File thefile(file, "wb");
 	FILE* fp = thefile();

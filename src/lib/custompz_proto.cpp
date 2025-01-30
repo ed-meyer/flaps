@@ -37,19 +37,19 @@ using map_item = std::pair<std::string, CustomEval>;
 CustomEval
 CustomPz::
 find (const string& entrypt) {
-	Trace trc(1,"CustomPz::find", ": ",entrypt);
+	T_(Trace trc(1,"CustomPz::find", ": ",entrypt);)
       static std::map<string, CustomEval> functions {
 	};
 	if (functions.empty()) {
-		trc.dprint("returning nullptr: no map");
+		T_(trc.dprint("returning nullptr: no map");)
 		return nullptr;
 	}
 	auto k = functions.find(entrypt);
 	if (k == functions.end()) {
 		// throw runtime_error(vastr("function \"",entrypt,"\" has not been loaded"));
-		trc.dprint("returning nullptr: not in map");
+		T_(trc.dprint("returning nullptr: not in map");)
 		return nullptr;
 	}
-	trc.dprint("returning fcn pointer ",k->second," for ",entrypt);
+	T_(trc.dprint("returning fcn pointer ",k->second," for ",entrypt);)
 	return k->second;
 }

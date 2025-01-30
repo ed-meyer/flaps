@@ -38,18 +38,18 @@ load_df (vector<string>& blocks) {
 // DF functions; compile it and build a dynamic-load library, userdf.so,
 // made available to all subsequent processes via LD_PRELOAD
 // Returns: the name of the library on FTMP
-	Trace trc(1,"load_df");
+	T_(Trace trc(1,"load_df");)
 	string rval;
 
 	if (blocks.empty()) {
-		trc.dprint("quick return: no blocks");
+		T_(trc.dprint("quick return: no blocks");)
 		return rval;
 	}
 	// change to temp directory FTMP using RAII class Chdir
 	string ftmp = getftmp();
 	Chdir tmp(ftmp);
 
-	trc.dprint(blocks.size()," blocks\n",blocks);
+	T_(trc.dprint(blocks.size()," blocks\n",blocks);)
 	
 	// check read access for each block
 	for (auto& bi : blocks) {
@@ -70,7 +70,7 @@ load_df (vector<string>& blocks) {
 	os << "g++ -std=c++17 -ggdb3 -O0 -Wall -I" << froot
 		<< "/include -shared -fPIC -o " << rval
 		<< " userdf.cpp >" << out << " 2>&1";
-	trc.dprint("running \'", os.str(), "\' to include user code");
+	T_(trc.dprint("running \'", os.str(), "\' to include user code");)
 	int stat = system(os.str().c_str());
 
 	// if compilation failed throw an exception with it's output
@@ -85,7 +85,7 @@ load_df (vector<string>& blocks) {
 			while(ifs.get(c))
 				os << c;
 		}
-		trc.dprint("throwing exception: ",os.str());
+		T_(trc.dprint("throwing exception: ",os.str());)
 		throw runtime_error(os.str());
 	}
 
@@ -99,13 +99,13 @@ make_userdf(vector<string>& blocks) {
 // add user's source code to userdf.cpp by adding a line to it like
 // "#include block". userdf_string() will return an existing userdf.cpp
 // if there is one on the cwd; otherwise it will return a new one.
-	Trace trc(1,"make_userdf");
+	T_(Trace trc(1,"make_userdf");)
 	bool rval{true};
 	ostringstream os;
 
 	// get the prototype userdf.cpp
 	string input{userdf_string()};
-	trc.dprint("input: {\n",input,"\n}");
+	T_(trc.dprint("input: {\n",input,"\n}");)
 
 	// now write the new userdf.cpp including the source code
 	// with #include statements
@@ -147,7 +147,7 @@ static string
 userdf_string() {
 // If there is a userdf.cpp in the current directory, read it,
 // otherwise return the prototype userdf.cpp
-	Trace trc(1,"userdf_string");
+	T_(Trace trc(1,"userdf_string");)
 
 	ifstream in("userdf.cpp");
 	if (!in) {
@@ -189,7 +189,7 @@ userdf (const string& dfid, Qfcn& qs_fcn, Ffcn& fq_fcn, Interpfcn& interp_fcn) {
 		getline(in, line);
 		os << line << endl;
 	}
-	trc.dprint("returning existing userdf.cpp");
+	T_(trc.dprint("returning existing userdf.cpp");)
 	return os.str();
 }
 

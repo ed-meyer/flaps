@@ -28,8 +28,8 @@ get_NUBasis_d2funcs_di (NUBasis& basis, int i,
 NUBasis::
 NUBasis (const vector<double>& grid_pts) {
 // NUBasis constructor
-	Trace trc(2,"NUBasis constructor");
-	trc.dprint(grid_pts.size()," grid points");
+	T_(Trace trc(2,"NUBasis constructor");)
+	T_(trc.dprint(grid_pts.size()," grid points");)
   this->grid = grid_pts;
   int N = grid_pts.size();
  

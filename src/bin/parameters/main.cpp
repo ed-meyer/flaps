@@ -31,7 +31,7 @@ bool parser ();
 int
 main (int argc, char** argv) {
 	string progname{argv[0]};
-	Trace trc(1,progname,":main");
+	T_(Trace trc(1,progname,":main");)
 
 	// print program header
 	(void)version(progname);
@@ -58,7 +58,7 @@ main (int argc, char** argv) {
 //-------------------------------------------------------------------
 bool
 parser () {
-	Trace trc(2,"parser");
+	T_(Trace trc(2,"parser");)
 
 	// no Parsers - just get all Tok*
 	vector<Tok*> toks = flaps::lexer("");

@@ -36,7 +36,7 @@ Fem::
 freevibration() {
 // Do a free-vibration solution with the output nodal mass,
 // stiffness, and possibly gyro; return the (nr,nmodes) modes matrix
-	Trace trc(1,"freevibration");
+	T_(Trace trc(1,"freevibration");)
 
 	int nr = retained().size();
 
@@ -61,7 +61,7 @@ freevibration() {
 		flaps::warning(os.str());
 	} else {
 		// save nmodes eigenvectors
-		blas_copy(nr*nmodes(), &k[0], 1, &rval[0], 1);
+		blas::copy(nr*nmodes(), &k[0], 1, &rval[0], 1);
 		// ... and print the branch frequencies and eigenvector summary
 		vector<double> freqs;
 		for (int i=0; i<nmodes(); i++)
@@ -75,7 +75,7 @@ static
 void
 filter(vector<double>& T) {
 	double meps = sqrt(std::numeric_limits<double>::epsilon());
-	double eps = blas_snrm2(T.size(), &T[0], 1)*meps;
+	double eps = blas::snrm2(T.size(), &T[0], 1)*meps;
 	for (auto& t : T) {
 		if (std::abs(t) < eps)
 			t = 0.0;
@@ -87,7 +87,7 @@ modal_reduction(const vector<double>& T, const string& id) {
 // Reduce all output matrices with a triple-product: T'AT
 // where T is a modes matrix from, e.g. freevibration(), BMA, CMS
 // Output: all Fem matrices with ".id" appended to the mid
-	Trace trc(1,"modal_reduction");
+	T_(Trace trc(1,"modal_reduction");)
 
 	size_t n = this->retained().size();
 	size_t nmodes = T.size()/n;
@@ -121,7 +121,7 @@ modal_reduction(const vector<double>& T, const string& id) {
 	// save data necessary for modal animation
 	// post-multiply gct_nodal by T: gct = gct_nodal*T (nvz,n)*(n,nmodes)
 	vector<double> gct(nvz()*nmodes);
-	blas_sgemm("n","n",nvz(),nmodes,n,1.0,&gct_nodal_[0],nvz(),&T[0],n,0.0,&gct[0],nvz());
+	blas::gemm("n","n",nvz(),nmodes,n,1.0,&gct_nodal_[0],nvz(),&T[0],n,0.0,&gct[0],nvz());
 	// create & save matrices without vzid
 	vzmatrices(id, gct);
 
@@ -131,7 +131,7 @@ modal_reduction(const vector<double>& T, const string& id) {
 		string mid{makemid("stif")};
 		Matrix modalstif(mid, "stif", nmodes, nmodes, false);
 		lapack::triprod(n, nmodes, &T[0], stif_->elem(), modalstif.elem());
-		trc.dprintm(nmodes,nmodes,nmodes,modalstif.elem(), "modal stif");
+		T_(trc.dprintm(nmodes,nmodes,nmodes,modalstif.elem(), "modal stif");)
 		MM::exporter(mid, "modal stif", modalstif.elem(), nmodes,nmodes);
 		modalstif.store();
 	}
@@ -139,7 +139,7 @@ modal_reduction(const vector<double>& T, const string& id) {
 		string mid{makemid("mass")};
 		Matrix modalmass(mid, "mass", nmodes, nmodes, false);
 		lapack::triprod(n, nmodes, &T[0], mass_->elem(), modalmass.elem());
-		trc.dprintm(nmodes,nmodes,nmodes,modalmass.elem(),"modal mass");
+		T_(trc.dprintm(nmodes,nmodes,nmodes,modalmass.elem(),"modal mass");)
 		MM::exporter(mid, "modal mass", modalmass.elem(), nmodes,nmodes);
 		modalmass.store();
 	}
@@ -157,7 +157,7 @@ modal_reduction(const vector<double>& T, const string& id) {
 			pz->csize() = nmodes;
 			modaldlm->pz.push_back(pz);
 			modaldlms.push_back(modaldlm);
-			trc.dprintm(nmodes,nmodes,nmodes,modaldlm->celem(), mid);
+			T_(trc.dprintm(nmodes,nmodes,nmodes,modaldlm->celem(), mid);)
 			modaldlm->store();
 		}
 		// interpolate dlm aero
@@ -194,13 +194,13 @@ modal_reduction(const vector<double>& T, const string& id) {
 			ge.modal() = vector<double>(3*nmodes, 0.0);
 			// mergex(this->retained(), ckey, 1.0, T, rotations, ckey, 0.0, ge.modal());
 			blas::copy(this->retained(), ckey, 1.0, T, rotations, ckey, 0.0, ge.modal());
-			trc.dprintm(3,nmodes,3,ge.modal(),vastr("node",ge.node(),"modal"));
+			T_(trc.dprintm(3,nmodes,3,ge.modal(),vastr("node",ge.node(),"modal"));)
 		}
 		// do a triple-product on the full gyro
 		string mid{makemid("gyro")};
 		Matrix modalgyro(mid, "gyro", nmodes, nmodes, false);
 		lapack::triprod(n, nmodes, &T[0], gyro_->elem(), modalgyro.elem());
-		trc.dprintm(nmodes,nmodes,nmodes,modalgyro.elem(),"modal gyro");
+		T_(trc.dprintm(nmodes,nmodes,nmodes,modalgyro.elem(),"modal gyro");)
 		MM::exporter(mid, "modal gyro", modalgyro.elem(), nmodes,nmodes);
 
 		// Now that each gyro element has it's modal transform we must
@@ -221,7 +221,7 @@ modal_reduction(const vector<double>& T, const string& id) {
 		vector<double> TT(3*nmodes, 0.0);
 		vector<double> tmp(3*nmodes, 0.0);
 		blas::copy(this->retained(), ckey, 1.0, T, rotations, ckey, 0.0, tmp);
-		blas_sgemm("n","n",3,nmodes,3,1.0,&ge.T[0],3,&tmp[0],3,0.0,&TT[0],3);
+		blas::gemm("n","n",3,nmodes,3,1.0,&ge.T[0],3,&tmp[0],3,0.0,&TT[0],3);
 		// set relatively small elements in T to zero to reduce number of
 		// Ad necessary for nonlinear pgaf
 		filter(TT);

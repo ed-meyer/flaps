@@ -208,7 +208,7 @@ global (string const& preferences) {
 //   callgrind       run subsequent processes under callgrind
 //   time            visualize the output with kcachegrind
 //   massif          run subsequent processes under massif
-	Trace trc(1,"global");
+	T_(Trace trc(1,"global");)
 	size_t i;
 	ostringstream os;
 	string si_units{"SI"};
@@ -216,10 +216,10 @@ global (string const& preferences) {
 
 	// split the preferences string into Toks
 	vector<Tok*> opts = flaps::lexer(preferences);
-	trc.dprint("preferences: ",preferences);
+	T_(trc.dprint("preferences: ",preferences);)
 
 	for (i=0; i<opts.size(); i++) {
-		trc.dprint("got <", *opts[i]);
+		T_(trc.dprint("got <", *opts[i]);)
 		// split the option into tokens
 		vector<string> toks = string2tok(opts[i]->lhs, " ");
       if (opts[i]->compare("^o(utput)?$")) {
@@ -229,7 +229,7 @@ global (string const& preferences) {
 				throw runtime_error(os.str());
 			}
          freopen (opts[i]->svec[0].c_str(), "w", stdout);
-         trc.dprint("set Output = <",opts[i]->svec[0],">");
+         T_(trc.dprint("set Output = <",opts[i]->svec[0],">");)
       } else if (opts[i]->compare("^env(ironment)?$")) {
 			string env{opts[i]->svec[0]};
 			// strip quotes: might have PATH='$PATH:/tmp'
@@ -351,7 +351,7 @@ main(int argc, char **argv) {
 // settings "preferences_string"
 //   the first arg is taken as a preferences string, e.g.
 //      settings "a=b, c=d"
-	Trace trc(1,argv[0]);
+	T_(Trace trc(1,argv[0]);)
 
 	// test flaps::lexer
 	try {
@@ -359,7 +359,7 @@ main(int argc, char **argv) {
 		if (argc == 2) {
 			preferences = argv[1];
 			vector<Tok*> ol = flaps::lexer(preferences);
-			trc.dprint("got preferences<",ol,">");
+			T_(trc.dprint("got preferences<",ol,">");)
 			for (auto oi : ol) {
 				if (oi->is_char()) {
 					if (oi->svec.size() > 1) {

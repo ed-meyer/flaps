@@ -17,8 +17,8 @@
 #include <vector>
 
 #include "cmds.h"
-#include "trace.h"
 #include "text.h"
+#include "trace.h"
 
 using namespace std;
 using stridx = string::size_type;
@@ -27,7 +27,7 @@ using stridx = string::size_type;
 vector<pair<string,string> >
 lexcmds(const string& in) {
 // split a Flaps script "in" into commands and their arguments
-	Trace trc(1,"lexcmds");
+	T_(Trace trc(1,"lexcmds");)
 	char obrace{'{'};
 	// all lower-case char for commands, :0123... for aids
 	string lcchar("abcdefghijklmnopqrstuvwxyz:0123456789");

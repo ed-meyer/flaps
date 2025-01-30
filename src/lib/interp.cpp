@@ -40,10 +40,10 @@ bool corner::regd = Fio::register_class(corner::id(), corner::get);
 
 corner::
 corner (double xa, double ya, double ypa, double xb, double yb, double ypb) {
-	Trace trc(1,"corner constructor");
+	T_(Trace trc(1,"corner constructor");)
 	int n{4};
 
-	trc.dprint("between (x,y,yp) = (",xa,',',ya,',', ypa,") and (",xb,',',yb,',',ypb,')');
+	T_(trc.dprint("between (x,y,yp) = (",xa,',',ya,',', ypa,") and (",xb,',',yb,',',ypb,')');)
 
 	x0 = xa;
 	x1 = xb;
@@ -52,7 +52,7 @@ corner (double xa, double ya, double ypa, double xb, double yb, double ypb) {
 	// It is ok if the width is zero (x0 == x1) => sharp corner
 	// but if y0 != y1 we have a discontinuity!
 	if (x0 == x1) {
-		trc.dprint("returning sharp corner");
+		T_(trc.dprint("returning sharp corner");)
 		return;
 	}
 
@@ -90,7 +90,7 @@ corner (double xa, double ya, double ypa, double xb, double yb, double ypb) {
 	a[3+(3*n)] = 3.0*t1*t1;
 	b[3] = ypb;
 
-	trc.dprintm(4,4,4,a,"A = ");
+	T_(trc.dprintm(4,4,4,a,"A = ");)
 
 	vector<int> ipiv(n, 0);
 	vector<double> rowsf(n);
@@ -110,10 +110,10 @@ corner (double xa, double ya, double ypa, double xb, double yb, double ypb) {
 			xb << ',' << yb << ',' << ypb << ") sgesvx returned rcond " << rcond
 			<< ", info " << info << endl;
 		os << strArray(4,4,4,&a[0]) << endl;
-		trc.dprint("throwing exception: ",os.str());
+		T_(trc.dprint("throwing exception: ",os.str());)
 		throw runtime_error(os.str());
 	}
-	trc.dprint("rcond = ",rcond," c = ",c[0],", ",c[1],", ",c[2],", ",c[3]);
+	T_(trc.dprint("rcond = ",rcond," c = ",c[0],", ",c[1],", ",c[2],", ",c[3]);)
 }
 
 corner::
@@ -149,13 +149,13 @@ limits(double& min, double& max) const {
 double
 corner::
 eval(double x) const {
-	Trace trc(1,"corner::eval ",x);
+	T_(Trace trc(1,"corner::eval ",x);)
 	if (!this->contains(x))
 		throw runtime_error("corner::eval called with x out-of-range");
 
 	double t = x - x0;
 	double rval = ((c[3]*t + c[2])*t + c[1])*t + c[0];
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -216,17 +216,17 @@ limits(double& min, double& max) const {
 double
 plinear::
 eval(double xa) const {
-	Trace trc(1,"plinear::eval ",xa);
+	T_(Trace trc(1,"plinear::eval ",xa);)
 	size_t nm1{x.size()-1};
 	// check for extrapolation
 	if (xa < x[0]) {
 		double ya = y[0] + (xa-x[0])*(y[1]-y[0])/(x[1]-x[0]);
-		trc.dprint("returning extrapolation y(",xa,") = ",ya);
+		T_(trc.dprint("returning extrapolation y(",xa,") = ",ya);)
 		return ya;
 	}
 	if (xa > x[nm1]) {
 		double ya = y[nm1] + (xa-x[nm1])*(y[nm1]-y[nm1-1])/(x[nm1]-x[nm1-1]);
-		trc.dprint("returning extrapolation y(",xa,") = ",ya);
+		T_(trc.dprint("returning extrapolation y(",xa,") = ",ya);)
 		return ya;
 	}
 	// check each segment
@@ -235,7 +235,7 @@ eval(double xa) const {
 			double t = xa - x[i];
 			double yap = (y[i+1] - y[i])/(x[i+1] - x[i]);
 			double ya = y[i] + t*yap;
-			trc.dprint("returning ",ya);
+			T_(trc.dprint("returning ",ya);)
 			return ya;
 		}
 	}
@@ -245,18 +245,18 @@ eval(double xa) const {
 Ad
 plinear::
 eval(Ad const& xa) const {
-	Trace trc(2,"plinear::eval ",xa);
+	T_(Trace trc(2,"plinear::eval ",xa);)
 	size_t nm1{x.size()-1};
 	double xv{xa.value()};
 	// check for extrapolation
 	if (xv < x[0]) {
 		Ad ya = y[0] + (xa-x[0])*(y[1]-y[0])/(x[1]-x[0]);
-		trc.dprint("returning extrapolation y(",xa,") = ",ya);
+		T_(trc.dprint("returning extrapolation y(",xa,") = ",ya);)
 		return ya;
 	}
 	if (xv > x[nm1]) {
 		Ad ya = y[nm1] + (xa-x[nm1])*(y[nm1]-y[nm1-1])/(x[nm1]-x[nm1-1]);
-		trc.dprint("returning extrapolation y(",xa,") = ",ya);
+		T_(trc.dprint("returning extrapolation y(",xa,") = ",ya);)
 		return ya;
 	}
 	// check each segment
@@ -274,7 +274,7 @@ eval(Ad const& xa) const {
 double
 plinear::
 deriv(double xa) const {
-	Trace trc(1,"plinear::deriv ",xa);
+	T_(Trace trc(1,"plinear::deriv ",xa);)
 	size_t nm1{x.size()-1};
 	for (size_t i=0; i<nm1; i++) {
 		// should never be called with xa a breakpoint
@@ -282,7 +282,7 @@ deriv(double xa) const {
 			if (xa == x[i] || xa == x[i+1])
 				throw runtime_error(vastr("plinear::deriv(",xa,") called with breakpoint"));
 			double yap = (y[i+1] - y[i])/(x[i+1] - x[i]);
-			trc.dprint("returning ",yap);
+			T_(trc.dprint("returning ",yap);)
 			return yap;
 		}
 	}
@@ -311,11 +311,11 @@ spline (const int nsa, const double *x, const double *y, double rho) {
 //      0:   no smoothing
 //      >0   smoothing; values between 1-10 yield the best smoothing.
 //           values >10 approach a least-squares linear fit
-	Trace trc(1,"spline(rho) constructor");
+	T_(Trace trc(1,"spline(rho) constructor");)
 	int i;
 	ostringstream os;
 
-	trc.dprint("rho ", rho);
+	T_(trc.dprint("rho ", rho);)
 
 	int nint = nsa - 1;
 
@@ -338,7 +338,7 @@ spline (const int nsa, const double *x, const double *y, double rho) {
 			"the x-values are not strictly increasing:\n";
 		for (i=0; i<nsa; i++)
 			os << x[i] << "   " << y[i] << endl;
-		trc.dprint("throwing exception \"",os.str(),"\"");
+		T_(trc.dprint("throwing exception \"",os.str(),"\"");)
 		throw runtime_error(os.str());
 	}
 
@@ -346,7 +346,7 @@ spline (const int nsa, const double *x, const double *y, double rho) {
 		throw runtime_error(vastr("interpolation failed: ier = ", ier));
 	}
 
-	trc.dprintm(nint,4,nint,c,"coef");
+	T_(trc.dprintm(nint,4,nint,c,"coef");)
 
 	// Note: c0 may not be exactly the same as ybp if rho > 0
 	c0 = vector<double>(nsa);
@@ -366,8 +366,8 @@ spline (const int nsa, const double *x, const double *y, double rho) {
 spline::
 spline(const vector<double>& x, const vector<double>& y, double rho) {
 // spline(vector) constructor: just call pointer version
-	Trace trc(1,"spline(vector,vector) constructor");
-	trc.dprintvv(x,y,"input x,y");
+	T_(Trace trc(1,"spline(vector,vector) constructor");)
+	T_(trc.dprintvv(x,y,"input x,y");)
 	if (x.size() != y.size())
 		throw runtime_error(vastr("spline constructor called with ",
 				x.size()," x, but ", y.size(), "y"));
@@ -415,7 +415,7 @@ limits(double& min, double& max) const {
 double
 spline::
 eval (double t) const {
-	Trace trc(1,"spline::eval ",t);
+	T_(Trace trc(1,"spline::eval ",t);)
 	double d{0.0};
 	double rval{0.0};
 
@@ -425,43 +425,43 @@ eval (double t) const {
 	if (i < 0 || i >= nint) {
 		string exc{vastr("interval ", i, " is out of the range 0-", nint-1,
 			", t = ", t, ", x[", nint, "] = ", xbp[nint])};
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 
 	d = t - xbp[i];
 	rval = ((c3[i]*d + c2[i])*d + c1[i])*d + c0[i];
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
 Ad
 spline::
 eval (Ad const& t) const {
-	Trace trc(3,"eval<Ad>");
+	T_(Trace trc(3,"eval<Ad>");)
 	Ad rval;
 
-	trc.dprint("t = ",t);
+	T_(trc.dprint("t = ",t);)
 
 	int nint = xbp.size() - 1;
 	int i = interval(t.value());
 	if (i < 0 || i >= nint) {
 		string exc = vastr("interval ", i, " is out of the range 0-", nint-1,
 					", t = ", t, ", x[", nint, "] = ", xbp[nint]);
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 
 	Ad d = t - xbp[i];
 	rval = ((c3[i]*d + c2[i])*d + c1[i])*d + c0[i];
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
 double
 spline::
 deriv (double t) const {
-	Trace trc(1,"spline::deriv ",t);
+	T_(Trace trc(1,"spline::deriv ",t);)
 	// If t is out of range extrapolate using the fact that
 	// since this is a natural spline the second deriv at the endpoint is zero...
 	// Take advantage of the fact that we saved all nint+1 values
@@ -475,7 +475,7 @@ deriv (double t) const {
 	int i = interval(t);
 	double d = t - xbp[i];
 	double rval = (3.0*c3[i]*d + 2.0*c2[i])*d + c1[i];
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -510,7 +510,7 @@ vspline (vector<double> const& x, vector<vector<double> > const& y,
 //   f(t) = c0[i] + d*(c1[i] + d*(c2[i] + d*c3[i]))
 // where d = t-bp[i] and bp[i] <= t <= bp[i+1]
 // Note the coefficients are stored reversed from cubgcv
-	Trace trc(1,"vspline constructor");
+	T_(Trace trc(1,"vspline constructor");)
 	size_t i, j;
 
 	size_t nx = x.size();
@@ -521,7 +521,7 @@ vspline (vector<double> const& x, vector<vector<double> > const& y,
 	extrap = ext;
 	rho = rh;
 
-	trc.dprint("nx ",nx,", ny ",ny,", rho ",rho,", extrap ",ext);
+	T_(trc.dprint("nx ",nx,", ny ",ny,", rho ",rho,", extrap ",ext);)
 
 	// (nint,4) arrary of coeff
 	vector<double> c(nint*4, 0.0);
@@ -546,7 +546,7 @@ vspline (vector<double> const& x, vector<vector<double> > const& y,
 		double dt = bp[1] - bp[0];
 		for (j=0; j<ny; j++)
 			c1[0][j] = (y[1][j] - y[0][j])/dt;
-		trc.dprintm(nint,3,nint,c,"coefficients");
+		T_(trc.dprintm(nint,3,nint,c,"coefficients");)
 		return;
 	}
 
@@ -555,17 +555,17 @@ vspline (vector<double> const& x, vector<vector<double> > const& y,
 		for (i=0; i<nx; i++) {
 			yj[i] = y[i][j];
 		}
-		trc.dprintvv(x, yj, "x     y",j);
+		T_(trc.dprintvv(x, yj, "x     y",j);)
 
 		int ier = cubgcv (&x[0], &yj[0], nx, rho, &c[0]);
-		trc.dprint("cubgcv returned ",ier);
+		T_(trc.dprint("cubgcv returned ",ier);)
 
 		if (ier != 0) {
 			string exc = vastr("vspline interpolation failed: ier = ", ier);
-			trc.dprint("throwing exception: ",exc);
+			T_(trc.dprint("throwing exception: ",exc);)
 			throw runtime_error(exc);
 		}
-		trc.dprintm(nint,3,nint,c,"coefficients");
+		T_(trc.dprintm(nint,3,nint,c,"coefficients");)
 
 		// copy the coeff reversed from cubgcv
 		for (i=0; i<nint; i++) {
@@ -579,7 +579,7 @@ vspline (vector<double> const& x, vector<vector<double> > const& y,
 
 vspline::
 vspline (Receiver& s) {
-	Trace trc(2,"vspline Receiver constructor");
+	T_(Trace trc(2,"vspline Receiver constructor");)
 	s.serialize(bp);
 	s.serialize(yorig);
 	s.serialize(c0);
@@ -593,7 +593,7 @@ vspline (Receiver& s) {
 void
 vspline::
 put(Sender& s) const {
-	Trace trc(2,"vspline::put");
+	T_(Trace trc(2,"vspline::put");)
 	s.serialize(bp);
 	s.serialize(yorig);
 	s.serialize(c0);
@@ -621,11 +621,11 @@ limits(double& min, double& max) const {
 	max = bp[bp.size()-1];
 }
 
-// vspline has a different eval from the other interpolants: vector<complex<Ad>> arg
+// vspline has a different eval from the other interpolants: CAdvector arg
 bool
 vspline::
 eval (Ad const& t, vector<complex<Ad>>& result) const {
-	Trace trc(2,"vspline::eval", " at t = ",t);
+	T_(Trace trc(2,"vspline::eval", " at t = ",t);)
 	bool rval{true};
 	size_t nx = bp.size();
 	size_t nint = nx - 1;  // # of intervals
@@ -648,7 +648,7 @@ eval (Ad const& t, vector<complex<Ad>>& result) const {
 	if (tv > bp[nint]+eps) {
 		for (size_t i=0; i<result.size(); i++)
 			result[i] = complex<Ad>(yorig[nint][2*i], yorig[nint][2*i+1]);
-		trc.dprint("t is at its max: returning yorig[nint]");
+		T_(trc.dprint("t is at its max: returning yorig[nint]");)
 		return rval;
 	}
 	// if t is < min-eps (bp[0]) return the first breakpoint
@@ -656,7 +656,7 @@ eval (Ad const& t, vector<complex<Ad>>& result) const {
 	if (tv < bp[0]-eps) {
 		for (size_t i=0; i<result.size(); i++)
 			result[i] = complex<Ad>(yorig[0][2*i], yorig[0][2*i+1]);
-		trc.dprint("t is at its min: returning yorig[0]");
+		T_(trc.dprint("t is at its min: returning yorig[0]");)
 		return rval;
 	}
 
@@ -669,7 +669,7 @@ eval (Ad const& t, vector<complex<Ad>>& result) const {
 				iseg = 0;
 			if (iseg >= (int)nint)
 				iseg = nint-1;
-			trc.dprint("extrapolating: t ",t," bp ",bp[iseg]);
+			T_(trc.dprint("extrapolating: t ",t," bp ",bp[iseg]);)
 		} else {
 			string exc{vastr("interval ",iseg," is out of the range 0-",
 					nint-1,", t = ", t, ", x[", nint, "] = ", bp[nint])};
@@ -686,7 +686,7 @@ eval (Ad const& t, vector<complex<Ad>>& result) const {
 	ds[1] = d;
 	ds[2] = d*d;
 	ds[3] = ds[2]*d;
-	trc.dprint("evaluating vspline at t-bp = ",d);
+	T_(trc.dprint("evaluating vspline at t-bp = ",t," - ",bp[iseg]," = ",d);)
 	//!! Ad d2 = d*d;
 	//!! Ad d3 = d2*d;
 	vector<double> cr(4);
@@ -713,15 +713,22 @@ segment(double t) const {
 // Returns the (zero-based) interval that "t" is in
 // If t is below the range, returns 0.
 // If t is above the range, returns nint
+	T_(Trace trc(2,"vspline::segment");)
 	int nx = bp.size();
 	int nint = nx - 1;
-	if (t < bp[0])
+
+	if (t < bp[0]) {
+		T_(trc.dprint("t (",t,") < bp[0] (",bp[0],") returning -1");)
 		return -1;
+	}
+
 	for (int i=0; i<nint; i++) {
 		if (t <= bp[i+1]) {
+			T_(trc.dprint("returning ",i," bp ",bp[i+1]);)
 			return i;
 		}
 	}
+	T_(trc.dprint("t (",t,") is > bp[",nint,"]: returning ",nint);)
 	return nint;
 }
 
@@ -770,7 +777,7 @@ vspline2(const vector<double>& x, const vector<double>& y,
 
 vspline2::
 vspline2 (Receiver& s) {
-	Trace trc(2,"vspline2 Receiver constructor");
+	T_(Trace trc(2,"vspline2 Receiver constructor");)
 	// grids
 	s.serialize(x_basis.grid);
 	s.serialize(x_basis.xVals);
@@ -792,7 +799,7 @@ vspline2 (Receiver& s) {
 void
 vspline2::
 put(Sender& s) const {
-	Trace trc(2,"vspline2::put");
+	T_(Trace trc(2,"vspline2::put");)
 	// grid
 	s.serialize(x_basis.grid);
 	s.serialize(x_basis.xVals);
@@ -822,11 +829,11 @@ limits(double& min, double& max) const {
 // not implemented: need x & y limits
 }
 
-// vspline2 has a different eval from the other interpolants: vector<complex<Ad>> arg
+// vspline2 has a different eval from the other interpolants: vector<complex<Ad>>& arg
 bool
 vspline2::
 eval (vector<Ad> const& t, vector<complex<Ad>>& result) {
-	Trace trc(2,"vspline2::eval", " at t = ",t);
+	T_(Trace trc(2,"vspline2::eval", " at t = ",t);)
 	bool rval{true};
 	//!! size_t nr = result.rsize();
 	//!! size_t nc = result.csize();
@@ -895,7 +902,7 @@ vspline3(const vector<double>& x,
 
 vspline3::
 vspline3 (Receiver& s) {
-	Trace trc(2,"vspline3 Receiver constructor");
+	T_(Trace trc(2,"vspline3 Receiver constructor");)
 	// grids
 	s.serialize(x_basis.grid);
 	s.serialize(x_basis.xVals);
@@ -922,7 +929,7 @@ vspline3 (Receiver& s) {
 void
 vspline3::
 put(Sender& s) const {
-	Trace trc(2,"vspline3::put");
+	T_(Trace trc(2,"vspline3::put");)
 	// grid
 	s.serialize(x_basis.grid);
 	s.serialize(x_basis.xVals);
@@ -957,11 +964,11 @@ limits(double& min, double& max) const {
 // not implemented: need x & y limits
 }
 
-// vspline3 has a different eval from the other interpolants: vector<complex<Ad>> arg
+// vspline3 has a different eval from the other interpolants: vector<complex<Ad>>& arg
 bool
 vspline3::
 eval (vector<Ad> const& t, vector<complex<Ad>>& result) {
-	Trace trc(2,"vspline3::eval", " at t = ",t);
+	T_(Trace trc(2,"vspline3::eval", " at t = ",t);)
 	bool rval{true};
 	// sanity check
 	if (splines.size() != 2*result.size())
@@ -1040,12 +1047,12 @@ Interp*
 Interp::
 fetch(const string& iid) {
 // fetch an Interp named "iid", return nullptr if not available
-	Trace trc(1,"Interp::fetch ",iid);
+	T_(Trace trc(1,"Interp::fetch ",iid);)
 	Interp* rval{nullptr};
 	try {
 		rval = new Interp(iid);
 	} catch (runtime_error& s) {
-		trc.dprint("caught exception: ",s.what());
+		T_(trc.dprint("caught exception: ",s.what());)
 		return nullptr;
 	}
 	return rval;
@@ -1081,7 +1088,7 @@ add (vector<interpolant*> ts) {
 void
 Interp::
 limits(double& lo, double& hi) const {
-	Trace trc(1,"Interp::limits");
+	T_(Trace trc(1,"Interp::limits");)
 	double big{std::numeric_limits<double>::max()};
 	lo = big;
 	hi = -big;
@@ -1089,7 +1096,7 @@ limits(double& lo, double& hi) const {
 	double maxi;
 	for (auto ip : segments) {
 		ip->limits(mini, maxi);
-		trc.dprint(ip->vid()," segment limits: ",mini,":",maxi);
+		T_(trc.dprint(ip->vid()," segment limits: ",mini,":",maxi);)
 		lo = std::min(lo, mini);
 		hi = std::max(hi, maxi);
 	}
@@ -1110,7 +1117,7 @@ eval(double t) const {
 Ad
 Interp::
 eval(Ad const& t) const {
-	Trace trc(2,"Interp::eval ",segments.size()," segments");
+	T_(Trace trc(2,"Interp::eval ",segments.size()," segments");)
 	Ad rval{0.0};
 	// evaluate the first segment containing t
 	for (auto sp : segments) {
@@ -1122,7 +1129,7 @@ eval(Ad const& t) const {
 	this->limits(lo,hi);
 	string exc = vastr(this->iid()," called with ",t,
 			" which is out of the range ",lo," to ",hi);
-	trc.dprint("throwing exception: ",exc);
+	T_(trc.dprint("throwing exception: ",exc);)
 	throw std::range_error(exc);
 	return rval;
 }
@@ -1159,7 +1166,7 @@ void
 Interp::
 plot(const std::string& plotfile,  int nstep) {
 // plot each segment in an Interp, one curve per segment
-	Trace trc(1,"Interp::plot");
+	T_(Trace trc(1,"Interp::plot");)
 
 	// limits for each segment to ensure adjacent segment end
 	// points are included in a segment's curve
@@ -1373,7 +1380,7 @@ cubgcv (double const* x, double* f, int n, double rho, double* c) {
 		}
 	}
 	// replace f with the smoothed breakpoints (y)
-	blas_copy(n, &y[0], 1, f, 1);
+	blas::copy(n, &y[0], 1, f, 1);
 
 	return ier;
 }
@@ -2233,7 +2240,7 @@ test_discont() {
 
 int
 main (int argc, char **argv) {
-	Trace trc(1,"interp");
+	T_(Trace trc(1,"interp");)
 
 	test_sin(argc, argv);
 	test_discont();

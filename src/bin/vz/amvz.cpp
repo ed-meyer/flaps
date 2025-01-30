@@ -164,7 +164,7 @@ float spin_y = 0.0;
 
 void
 amvz() {
-	Trace trc(1,"amvz");
+	T_(Trace trc(1,"amvz");)
 	int argc = 1;
 	char* argv[3];
 	char prog[8];
@@ -208,7 +208,7 @@ MyFrame* Frame{nullptr};
 bool
 MyApp::
 OnInit() {
-	Trace trc(1,"OnInit");
+	T_(Trace trc(1,"OnInit");)
     // Create the main frame window...
 	Frame = new MyFrame(nullptr, wxT("Animated Mode Visualization"),
 			 wxDefaultPosition, wxSize(WindowSizeX,WindowSizeY));
@@ -992,7 +992,7 @@ world2screen(GLdouble worldx, GLdouble worldy,
 void
 FGLCanvas::
 display_node(double x, double y) {
-	Trace trc(1,"display_node");
+	T_(Trace trc(1,"display_node");)
 
 	if (Frame->isRunning()) {
 	// if (DispScale != 0.0) 
@@ -1001,7 +1001,7 @@ display_node(double x, double y) {
 	}
 
 	wxSize siz = GetClientSize();
-	trc.dprint("window width ", siz.GetWidth(),", height ",siz.GetHeight());
+	T_(trc.dprint("window width ", siz.GetWidth(),", height ",siz.GetHeight());)
 	double h = siz.GetHeight();
 	y = h - y;  // transform from wx to gl coord
 	GLdouble winx;
@@ -1017,7 +1017,7 @@ display_node(double x, double y) {
 		GLdouble worldz{coord[i+2]};
 		// transform this node's coords to screen
 		world2screen(worldx, worldy, worldz, winx, winy, winz);
-		trc.dprint("node ",i/3," world (",worldx,',',worldy, ',',worldz,") screen (", (int)winx, ',', (int)winy,',',(int)winz,")\n");
+		T_(trc.dprint("node ",i/3," world (",worldx,',',worldy, ',',worldz,") screen (", (int)winx, ',', (int)winy,',',(int)winz,")\n");)
 		// compute distance to mouse click
 		double dist = sqrt((winx-x)*(winx-x) + (winy-y)*(winy-y));
 		if (dist < mindist) {
@@ -1025,7 +1025,7 @@ display_node(double x, double y) {
 			mindist = dist;
 		}
 	}
-	trc.dprint("got alt-left at (", x, ", ", y,") placing ",node,"\n");
+	T_(trc.dprint("got alt-left at (", x, ", ", y,") placing ",node,"\n");)
 	string nodestr = vastr(node);
 	wxMessageBox(nodestr);
 }
@@ -1503,7 +1503,7 @@ video() {
 	wxSize siz = GetClientSize();
 	GLsizei width = siz.GetWidth();
 	GLsizei height = siz.GetHeight();
-	// trc.dprint("window width ", siz.GetWidth(),", height ",siz.GetHeight());
+	// T_(trc.dprint("window width ", siz.GetWidth(),", height ",siz.GetHeight());)
 
 	// start ffmpeg
 	int framerate{60};

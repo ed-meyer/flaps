@@ -20,6 +20,7 @@
 #include "df.h"
 #include "interp.h"
 #include "pset.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -36,7 +37,7 @@ Ad
 bldf (Ad gamma, Ad r) {
 // following the notation in meyer2016continuation (and nl2.fp):
 // in nl2.fp I define gamma = |q_j|/\delta
-	Trace trc(2,"bldf");
+	T_(Trace trc(2,"bldf");)
 	Ad rval{1.0};
 	if (gamma.value() > 1.0) {
 		Ad pi{flaps::pi};
@@ -49,7 +50,7 @@ bldf (Ad gamma, Ad r) {
 			throw runtime_error(vastr("bldf nan at gamma ",gamma.value()));
 		}
 	}
-	trc.dprint("gamma ",gamma,", ratio ",r,", returning ",rval);
+	T_(trc.dprint("gamma ",gamma,", ratio ",r,", returning ",rval);)
 	return rval;
 }
 
@@ -57,11 +58,11 @@ Ad
 df::
 blfcn(Ad const& gamma, Ad const& ratio, double smooth) {
 // gamma:   absgc/x0
-	Trace trc(1,"blfcn");
+	T_(Trace trc(1,"blfcn");)
 	Ad rval{0.0};
 	Ad pi(flaps::pi);
 
-	trc.dprint("gamma=",gamma,", ratio=",ratio,", smooth=",smooth);
+	T_(trc.dprint("gamma=",gamma,", ratio=",ratio,", smooth=",smooth);)
 
 	double g{gamma.value()};
 	// smoothing between [gm:gp]
@@ -89,22 +90,22 @@ blfcn(Ad const& gamma, Ad const& ratio, double smooth) {
 	} else if ((gm < g) && (g < gp)) {
 		vector<double> c(4);
 		Ad gam1(gp);
-		gam1.deriv(0,1.0); // make deriv(0) df/dgamma
+		gam1.der(0,1.0); // make der(0) df/dgamma
 		Ad ft1 = bldf (gam1, ratio);
 		c[0] = 1.0;
 		c[1] = 0.0;
-		c[2] = 3.0*ft1.value() - 2.0*smooth*ft1.deriv(0) - 3.0;
-		c[3] = 2.0*smooth*ft1.deriv(0) - 2.0*ft1.value() + 2.0;
-		trc.dprint("c0=",c[0],", c1=",c[1],", c2=",c[2],", c3=",c[3]);
+		c[2] = 3.0*ft1.value() - 2.0*smooth*ft1.der(0) - 3.0;
+		c[3] = 2.0*smooth*ft1.der(0) - 2.0*ft1.value() + 2.0;
+		T_(trc.dprint("c0=",c[0],", c1=",c[1],", c2=",c[2],", c3=",c[3]);)
 		Ad tad = (gamma - gm)/(2.0*smooth);
 		rval = c[3]*tad*tad*tad + c[2]*tad*tad
 						+ c[1]*tad + c[0];
 
-		trc.dprint("returning smoothed f{",tad,"} = ",rval);
+		T_(trc.dprint("returning smoothed f{",tad,"} = ",rval);)
 	} else {
 		rval = bldf(gamma, ratio);
 	}
-	trc.dprint("returning ",rval.value());
+	T_(trc.dprint("returning ",rval.value());)
 	return rval;
 }
 
@@ -124,7 +125,7 @@ bilinear(pset& plt, Ad const& x0, Ad const& ratio, int gcno) {
 // If x0 is zero:       return 1 regardless of abs(gcno)
 // if abs(gcno) <= x0:  return 1
 //    abs(gcno) >> x0:  approaches "ratio" asymtotically
-	Trace trc(2,"df::bilinear");
+	T_(Trace trc(2,"df::bilinear");)
 
 	Ad absgc = plt.absgcv(gcno);
 	Ad gamma = absgc/x0;
@@ -153,7 +154,7 @@ bilinear(pset& plt, Ad const& x0, Ad const& ratio, int gcno) {
 	}
 	rval = blfcn(gamma, ratio, blsmooth);
 
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -174,12 +175,12 @@ freeplay(Ad const& gap, Ad const& absgc, double smooth) {
 // If gap is zero then return 1 regardless of absgc
 // if absgc <= gap return 0
 //    absgc >> gap -> 1 asymtotically
-	Trace trc(2,"freeplay");
+	T_(Trace trc(2,"freeplay");)
 	double x = absgc.value();
 	double x0 =  gap.value();
 
 	if (x0 == 0.0) {
-		trc.dprint("quick return: zero gap");
+		T_(trc.dprint("quick return: zero gap");)
 		return Ad(1.0);
 	}
 
@@ -189,13 +190,13 @@ freeplay(Ad const& gap, Ad const& absgc, double smooth) {
 
 	Ad pi(flaps::pi);
 
-	trc.dprint("alpha=",alpha,", gap=",gap,", abs gc=",absgc);
+	T_(trc.dprint("alpha=",alpha,", gap=",gap,", abs gc=",absgc);)
 
 	double x0p = x0 + alpha;
 	double x0m = x0 - alpha;
 
 	if (x <= x0m) {
-		trc.dprint("quick return: gc<",x0m);
+		T_(trc.dprint("quick return: gc<",x0m);)
 		return Ad(0.0);
 	}
 
@@ -226,13 +227,13 @@ freeplay(Ad const& gap, Ad const& absgc, double smooth) {
 		double dfx0p = -(dxi + cos(xi)*dxi)/pi;
 		corner c(x0m, 0.0, 0.0, x0p, fx0p, dfx0p);
 		Ad rval = c.eval(absgc);
-		trc.dprint("f(x0p) = ",fx0p,", returning smoothed ",rval);
+		T_(trc.dprint("f(x0p) = ",fx0p,", returning smoothed ",rval);)
 		return rval;
 #else
 		// it is more efficient to compute c0,c1,c2,c3 directly
 		vector<double> c(4);
 		Ad x0pad(x0p);
-		x0pad.deriv(0,1.0); // make deriv(0) df/dx
+		x0pad.der(0,1.0); // make der(0) df/dx
 		Ad gapad{gap.value()};  // zero derivs in case gap has derivs
 		Ad adxi = 2.0*asin(gapad/x0pad);
 		Ad ft1 = 1.0 - (adxi + sin(adxi))/pi;
@@ -240,14 +241,14 @@ freeplay(Ad const& gap, Ad const& absgc, double smooth) {
 		//!! 	- sin(2.0*asin(gap/x0pad)))/pi;
 		c[0] = 0.0;
 		c[1] = 0.0;
-		c[2] = 3.0*ft1.value() - 2.0*alpha*ft1.deriv(0);
-		c[3] = 2.0*alpha*ft1.deriv(0) - 2.0*ft1.value();
-		trc.dprint("c0=",c[0],", c1=",c[1],", c2=",c[2],", c3=",c[3]);
+		c[2] = 3.0*ft1.value() - 2.0*alpha*ft1.der(0);
+		c[3] = 2.0*alpha*ft1.der(0) - 2.0*ft1.value();
+		T_(trc.dprint("c0=",c[0],", c1=",c[1],", c2=",c[2],", c3=",c[3]);)
 		Ad tad = (absgc - gap + alpha)/(2.0*alpha);
 		Ad rval = c[3]*tad*tad*tad + c[2]*tad*tad
 						+ c[1]*tad + c[0];
 
-		trc.dprint("returning smoothed f(",tad,") = ",rval);
+		T_(trc.dprint("returning smoothed f(",tad,") = ",rval);)
 		return rval;
 #endif // CORNER : use Corner
 	}
@@ -257,7 +258,7 @@ freeplay(Ad const& gap, Ad const& absgc, double smooth) {
 	Ad xi = 2.0*asin(gap/absgc);
 	Ad rval = 1.0 - (xi + sin(xi))/pi;
 
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -313,11 +314,11 @@ df_iid(const string& dfid, const vector<double>& params) {
 // given a dfid which identifies a block of user-written code describing
 // a describing function, and a set of parameter/value pair, create a
 // string which can be used to identify a df interpolation
-	Trace trc(1,"df_iid");
+	T_(Trace trc(1,"df_iid");)
 	string rval{dfid};
 	for (auto& pi : params)
 		rval += vastr('@',pi);
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -335,11 +336,11 @@ dfval(pset& plt, const string& dfid, int gcno, const vector<double>& params) {
 // 'params' and 'plt'. A list of parameter values may be specified with
 // an initializer-list, like this:
 //   Ad fac = dfval(plt, dfid, gcno, {0.001, 2.0});
-	Trace trc(2,"dfval");
+	T_(Trace trc(2,"dfval");)
 	Ad absgc = plt.absgcv(gcno);
 	// get the interpolant id
 	string iid = df_iid(dfid, params);
-	trc.dprint("dfid ",dfid,", iid ",iid,", gc ",gcno,", absgc ",absgc);
+	T_(trc.dprint("dfid ",dfid,", iid ",iid,", gc ",gcno,", absgc ",absgc);)
 	// DF interpolations that have been seen are kept in a static vector
 	// so care must be taken when modifying the vector to make it thread-safe
 	static vector<Interp*> interps;
@@ -365,7 +366,7 @@ dfval(pset& plt, const string& dfid, int gcno, const vector<double>& params) {
 	// ... finally, it doesn't exist so build it
 	// guard the list of Interps while adding to it, and store the coefficients
 	if (theinterp == nullptr) {
-		trc.dprint("describing function '",iid,"' has not been built yet");
+		T_(trc.dprint("describing function '",iid,"' has not been built yet");)
 		// get pointers to the 3 user functions
 		//   1) vector<double> qs_fcn(vector<double>&)
 		//   2) double fq_fcn(double y,vector<double> params)
@@ -392,7 +393,7 @@ dfval(pset& plt, const string& dfid, int gcno, const vector<double>& params) {
 		absgc.value(hi);
 	// evaluate
 	Ad rval = theinterp->eval(absgc);
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -474,7 +475,7 @@ df_fft(const string& dfid, const vector<double>& params,
 // define a DF, and create a set of interpolation coefficients that are
 // a function of the abs value of a gc. The DF is also a function of
 // fixed parameters 'params'.
-	Trace trc(1,"df_fft");
+	T_(Trace trc(1,"df_fft");)
 
 	// 1) get the user's list of displacement magnitudes
 	vector<double> qs = qs_fcn(params);
@@ -487,7 +488,7 @@ df_fft(const string& dfid, const vector<double>& params,
 	int nc = ncoef/2 + 1;
 	vector<double> df;
 	for (auto qi : qs) {
-		trc.dprint("fft df_fq(",qi,"*sin(wt)");
+		T_(trc.dprint("fft df_fq(",qi,"*sin(wt)");)
 		// compute f(q) from 0 -> 2pi
 		double dt = 2.0*pi/ncoef;
 		for (size_t i=0; i<ncoef; i++) {
@@ -513,14 +514,14 @@ df_fft(const string& dfid, const vector<double>& params,
 		double t = 2.0*abs(in[3])/(qi*ncoef);
 #endif
 
-		trc.dprint("df(",qi,") = ",t);
+		T_(trc.dprint("df(",qi,") = ",t);)
 		df.push_back(t);
 	}
-	trc.dprintvv(qs, df, "q   df");
+	T_(trc.dprintvv(qs, df, "q   df");)
 
 	// 3) interpolate df as a function of qs
 	string iid{df_iid(dfid, params)};
-	trc.dprint("built df \'",dfid,"\'");
+	T_(trc.dprint("built df \'",dfid,"\'");)
 	return interp_fcn(iid, params, qs, df);
 }
 
@@ -571,7 +572,7 @@ df_build(const string& dfid, const vector<double>& params,
 // define a DF, and create a set of interpolation coefficients that are
 // a function of the abs value of a gc. The DF is also a function of
 // fixed parameters 'params'.
-	Trace trc(1,"df_build");
+	T_(Trace trc(1,"df_build");)
 
 	// 1) create a list of displacement magnitudes
 	vector<double> qs = qs_fcn(params);
@@ -582,7 +583,7 @@ df_build(const string& dfid, const vector<double>& params,
 	double pi{flaps::pi};
 	double b = pi*2.0;
 	for (auto qi : qs) {
-		trc.dprint("integrating df_fq(",qi,"*sin(wt)");
+		T_(trc.dprint("integrating df_fq(",qi,"*sin(wt)");)
 		// integrate f*sin(wt) from 0-2*pi
 		// double t = boost::math::quadrature::trapezoidal(myfcn(qi,params,fq_fcn), a, b);
 		double t = trapezoidal([&](double wt) {
@@ -592,14 +593,14 @@ df_build(const string& dfid, const vector<double>& params,
 		// scale by 1/pi*qi
 		if (qi > 0.0)
 			t *= 1.0/(pi*qi);
-		trc.dprint("df(",qi,") = ",t);
+		T_(trc.dprint("df(",qi,") = ",t);)
 		fs.push_back(t);
 	}
-	trc.dprintvv(qs, fs, "q   f");
+	T_(trc.dprintvv(qs, fs, "q   f");)
 
 	// 3) interpolate fs as a function of qs
 	string iid{df_iid(dfid, params)};
-	trc.dprint("built df \'",dfid,"\'");
+	T_(trc.dprint("built df \'",dfid,"\'");)
 	return interp_fcn(iid, params, qs, fs);
 }
 
@@ -660,7 +661,7 @@ double
 gap::
 df_fq(double y, const vector<double>& params) {
 // returns the factor which multiplies K to get force at displacement 'y'
-   Trace trc(1,"df_fs");
+   T_(Trace trc(1,"df_fs");)
 	double gap = params[0];
    double rval{0.0};
    if (abs(y) > gap) {
@@ -669,7 +670,7 @@ df_fq(double y, const vector<double>& params) {
       else
          rval = y+gap;
    }
-   trc.dprint("returning ",rval);
+   T_(trc.dprint("returning ",rval);)
    return rval;
 }
 
@@ -692,7 +693,7 @@ df_interp(const string& iid, const vector<double>& params,
    double yp0{0.0};
    double x1{gap*(1.0+width)};
    double y1 = sp->eval(x1);
-   double yp1 = sp->deriv(x1);
+   double yp1 = sp->der(x1);
    corner* cp = new corner(x0, y0, yp0, x1, y1, yp1);
    // first interpolant must be the corner
 	Interp* coef = new Interp(iid, "q", "f");
@@ -726,7 +727,7 @@ bilinear::
 df_fq(double y, const vector<double>& params) {
 // returns the factor which multiplies K to get force
 // at dimensionless time "wt"
-   Trace trc(1,"df_fq");
+   T_(Trace trc(1,"df_fq");)
    double rval = y;
    double delta = params[0];
    double ratio = params[1];
@@ -736,7 +737,7 @@ df_fq(double y, const vector<double>& params) {
       else
          rval = -delta + ratio*(y+delta);
    }
-   trc.dprint("returning ",rval);
+   T_(trc.dprint("returning ",rval);)
    return rval;
 }
 
@@ -758,7 +759,7 @@ df_interp(const string& iid, const vector<double>& params,
    double yp0{0.0};
    double x1{delta*(1.0+width)};
    double y1 = sp->eval(x1);
-   double yp1 = sp->deriv(x1);
+   double yp1 = sp->der(x1);
    corner* cp = new corner(x0, y0, yp0, x1, y1, yp1);
    // first interpolant must be the corner
    Interp* coef = new Interp(iid, "q", "f");
@@ -923,11 +924,11 @@ test_freeplay(double delta) {
 		//!! double err{0.0};
 		//!! NRC::fdapprox(1,delta,0.0,1.0,&der,gap_deriv,err);
 		df_dgap_fd.push_back(der);
-		df_dgap_ad.push_back(t.deriv(0));
+		df_dgap_ad.push_back(t.der(0));
 		// ... and also df/dq
 		//!! NRC::fdapprox(1,q,0.0,2.0*qmax,&der,q_deriv,err);
 		df_dq_fd.push_back(der);
-		df_dq_ad.push_back(t.deriv(1));
+		df_dq_ad.push_back(t.der(1));
 	}
 
 	string filename{vastr("freeplay",delta,".apf")};
@@ -988,11 +989,11 @@ test_bl(double ratio) {
 		//!! double err{0.0};
 		//!! NRC::fdapprox(1,delta,0.0,1.0,&der,gap_deriv,err);
 		df_dgap_fd.push_back(der);
-		df_dgamma_ad.push_back(t.deriv(0));
+		df_dgamma_ad.push_back(t.der(0));
 		// ... and also df/dq
 		//!! NRC::fdapprox(1,q,0.0,2.0*qmax,&der,q_deriv,err);
 		df_dq_fd.push_back(der);
-		df_dratio_ad.push_back(t.deriv(1));
+		df_dratio_ad.push_back(t.der(1));
 	}
 
 	string filename{vastr("bilinear",ratio,".apf")};
@@ -1012,7 +1013,7 @@ test_bl(double ratio) {
 
 int
 main (int argc, char** argv) {
-	Trace trc(1,"df");
+	T_(Trace trc(1,"df");)
 	double delta{0.001};
 	double ratio{2.0};
 	bool bl{false};

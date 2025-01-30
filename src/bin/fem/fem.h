@@ -61,7 +61,7 @@ public:
 	double norm() {
 		if (norm_ == 0.0)
 			for (auto& ni : nodes_)
-				norm_ = std::max(norm_, blas_snrm2(3,&ni.coord()[0],1));
+				norm_ = std::max(norm_, blas::snrm2(3,&ni.coord()[0],1));
 		return norm_;
 	}
 
@@ -598,8 +598,8 @@ void append(const std::vector<T>& from, std::vector<T>& to) {
 	std::vector<T> tmp{to};
 	size_t newsize = tmp.size() + from.size();
 	to = std::vector<T>(newsize, 0.0);
-	blas_copy(tmp.size(), &tmp[0], 1, &to[0], 1);
-	blas_copy(from.size(), &from[0], 1, &to[tmp.size()], 1);
+	blas::copy(tmp.size(), &tmp[0], 1, &to[0], 1);
+	blas::copy(from.size(), &from[0], 1, &to[tmp.size()], 1);
 	trc.dprint("returning ",to.size(),"-vector");
 }
 

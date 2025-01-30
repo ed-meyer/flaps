@@ -28,7 +28,6 @@
 #include "lti.h"
 #include "matrix.h"
 #include "text.h"
-#include "trace.h"
 
 // NASTRAN Output4
 namespace Output4 {

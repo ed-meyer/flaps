@@ -42,7 +42,7 @@ bool parser (string const& progname, Fem& model);
 int
 main (int argc, char** argv) {
 	string progname{argv[0]};
-	Trace trc(1,progname, ":main");
+	T_(Trace trc(1,progname, ":main");)
 	Fem& model = Fem::instance();
 	try {
 		parser(progname, model);
@@ -82,12 +82,12 @@ main (int argc, char** argv) {
 // local functions
 static double
 norm2(const vector<double>& x) {
-	return blas_snrm2(x.size(), &x[0], 1);
+	return blas::snrm2(x.size(), &x[0], 1);
 }
 
 bool
 parser (string const& progname, Fem& model) {
-	Trace trc(1,"parser");
+	T_(Trace trc(1,"parser");)
 	Freev freev;
 
 	vector<Tok*> unrec = flaps::lexer("", {
@@ -155,13 +155,13 @@ parse_orient(const Tok& p, vector<double>& orient, vector<Beam*> beams) {
 //   3) orient = beam_id(x,y,z)   relative to the beam with id "beam_id"
 // Output:
 //   orient  normalized to 1.0
-	Trace trc(2,"parse_orient");
-	trc.dprint("spec<",p,">");
+	T_(Trace trc(2,"parse_orient");)
+	T_(trc.dprint("spec<",p,">");)
 	// lambda to normalize
 	auto normalize = [&](vector<double> v) {
-		double nrm = blas_snrm2(3,&v[0],1);
+		double nrm = blas::snrm2(3,&v[0],1);
 		if (nrm > 0.0)
-			blas_scal(3, 1.0/nrm, &v[0], 1);
+			blas::scal(3, 1.0/nrm, &v[0], 1);
 	};
 	// initialize
 	orient = vector<double>(3, 0.0);
@@ -171,7 +171,7 @@ parse_orient(const Tok& p, vector<double>& orient, vector<Beam*> beams) {
 	auto idx = xyz.find(p.srhs[0]);
 	if (p.srhs.size() == 1 && idx != string::npos) {
 		orient[idx] = 1.0;
-		trc.dprint("returning: ",orient);
+		T_(trc.dprint("returning: ",orient);)
 		return true;
 	}
 
@@ -198,16 +198,16 @@ parse_orient(const Tok& p, vector<double>& orient, vector<Beam*> beams) {
 			if (id == bi->id()) {
 				vector<double> v{x,y,z};
 				orient = vector<double>(3,0.0);
-				blas_sgemv("t", 3, 3, 1.0, &bi->transform()[0], 3, &v[0],
+				blas::gemv("t", 3, 3, 1.0, &bi->transform()[0], 3, &v[0],
 					1, 0.0, &orient[0], 1);
 				normalize(orient);
-				trc.dprint("returning ",orient);
+				T_(trc.dprint("returning ",orient);)
 				return true;
 			}
 		}
 		throw runtime_error(vastr("beam id \"",id,"\" has not been defined"));
 	}
-	trc.dprint("returning false: spec not recognized");
+	T_(trc.dprint("returning false: spec not recognized");)
 	return false;
 }
 
@@ -220,7 +220,7 @@ nodes_f (const Tok& p) {
 // nodal data:
 //   nodes{1=(x,y,z), 2=(x,y,z), ...}
 //   nodes{1{x,y,z} : 21{x,y,z}, ...}
-	Trace trc(2,"nodes_f");
+	T_(Trace trc(2,"nodes_f");)
 
 	if (p.lopt.empty())
 		throw runtime_error("bad nodes option, should be nodes{n1=(x,y,z),...}");
@@ -256,7 +256,7 @@ nodes_f (const Tok& p) {
 	if (!unrec.empty())
 		throw runtime_error(vastr("unrecognized node option: ",unrec));
 
-	trc.dprint("structure nodes:\n",this->grid);
+	T_(trc.dprint("structure nodes:\n",this->grid);)
 	// sort the nodes by node number?
 
 	return true;	
@@ -265,7 +265,7 @@ nodes_f (const Tok& p) {
 Material
 parse_material(const Tok& p) {
 // material{x=(x,y,z), eix=d, eiz=d, gj=d, ea=d}
-	Trace trc(2,"parse_material");
+	T_(Trace trc(2,"parse_material");)
 	Material rval;
 	flaps::lexer(p.lopt, {
 		// global coord of a point on the local x axis:
@@ -279,7 +279,7 @@ parse_material(const Tok& p) {
 		// extension in local y direction
 		{"ea", [&](const Tok& p) { rval.ea = p.rvec[0]; return true; }},
 	});
-	trc.dprint("got ",rval);
+	T_(trc.dprint("got ",rval);)
 	return rval;
 }
 
@@ -299,7 +299,7 @@ parse_beam (const Tok& p, const Material& matl, Freev& freev) {
 //  beam{ 1{0}, 2{3:5}, 3:13 }
 // which is equivalent to
 //  beam{ 1{0}, 2{3,4,5}, 3{3,4,5}, ... 13{3,4,5} }
-	Trace trc(1,"parse_beam");
+	T_(Trace trc(1,"parse_beam");)
 	Nodedof node_dof1;
 	Nodedof node_dof2;
 	int ordinal{0};
@@ -343,7 +343,7 @@ parse_beam (const Tok& p, const Material& matl, Freev& freev) {
 	if (!unrec.empty())
 		throw runtime_error(vastr("unrecognized beam options: ",unrec));
 
-	trc.dprint("material properties:\n",matl,"new stif elements: ",rval);
+	T_(trc.dprint("material properties:\n",matl,"new stif elements: ",rval);)
 	return rval;
 }
 
@@ -356,7 +356,7 @@ beam_f (const Tok& p) {
 //  beam{ 1{0}, 2{3:5}, 3:13 }
 // which is equivalent to
 //  beam{ 1{0}, 2{3,4,5}, 3{3,4,5}, ... 13{3,4,5} }
-	Trace trc(1,"beam_f");
+	T_(Trace trc(1,"beam_f");)
 	Nodedof node_dof1;
 	Nodedof node_dof2;
 	int ordinal{0};
@@ -399,7 +399,7 @@ beam_f (const Tok& p) {
 	if (!unrec.empty())
 		throw runtime_error(vastr("unrecognized beam options: ",unrec));
 
-	trc.dprint("material properties:\n",matl,"new stif elements: ",new_elements);
+	T_(trc.dprint("material properties:\n",matl,"new stif elements: ",new_elements);)
 	// cout << "material properties:\n" << matl << "new stif elements: \n" << new_elements;
 	return true;
 }
@@ -413,7 +413,7 @@ Beam (Nodedof const& nodedof1, Nodedof const& nodedof2, Material const& matl, Gr
 // member; it is in the global coordinate system so it can be merged into
 // the output matrix using the freedoms_ member as the row/column keys
 // in blas::copy().
-	Trace trc(2,"Beam constructor");
+	T_(Trace trc(2,"Beam constructor");)
 	static vector<int> lastseen; // last dof seen
 	constexpr int n{12};	// size of the matrix before extracting retained dof:
 								// all 6 dof at each node
@@ -423,8 +423,8 @@ Beam (Nodedof const& nodedof1, Nodedof const& nodedof2, Material const& matl, Gr
 	node2_ = nodedof2.node;
 	vector<int> dof1 = nodedof1.dof;
 	vector<int> dof2 = nodedof2.dof;
-	trc.dprint("node 1: ",node1_,", dof ",dof1);
-	trc.dprint("node 2: ",node2_,", dof ",dof2);
+	T_(trc.dprint("node 1: ",node1_,", dof ",dof1);)
+	T_(trc.dprint("node 2: ",node2_,", dof ",dof2);)
 
 	// get the nodal coord for these 2 nodes from model.grid
 	vector<double> x1 = grid.find(node1_)->coord();
@@ -433,22 +433,22 @@ Beam (Nodedof const& nodedof1, Nodedof const& nodedof2, Material const& matl, Gr
 	// compute a local coordinate system (xbar,...) with ybar along the
 	// beam element.
 	vector<double> orient{{x2[0]-x1[0]}, {x2[1]-x1[1]}, {x2[2]-x1[2]}};
-	double l = blas_snrm2(3, &orient[0], 1); // the length of this beam element
+	double l = blas::snrm2(3, &orient[0], 1); // the length of this beam element
 	if (l < std::numeric_limits<double>::epsilon())
 		throw runtime_error(vastr("nodes ",node1_," and ",node2_," are coincident"));
 
-	trc.dprint("orientation: ",orient);
+	T_(trc.dprint("orientation: ",orient);)
 
 	// ybar (beam axis) is "orient" normalized to 1
 	vector<double> ybar{orient};
-	blas_scal(3, 1.0/l, &ybar[0], 1);
+	blas::scal(3, 1.0/l, &ybar[0], 1);
 
 	// xbar is matl.x normalized to 1
 	vector<double> xbar{matl.x};
-	double xnorm = blas_snrm2(3, &xbar[0], 1);
+	double xnorm = blas::snrm2(3, &xbar[0], 1);
 	if (xnorm == 0.0)
 		throw runtime_error("xbar is a zero vector");
-	blas_scal(3, 1.0/xnorm, &xbar[0], 1);
+	blas::scal(3, 1.0/xnorm, &xbar[0], 1);
 	// zbar is xbar X ybar
 	vector<double> zbar{0.0, 0.0, 1.0};
 	xprod(&xbar[0], &ybar[0], &zbar[0]);
@@ -535,18 +535,18 @@ Beam (Nodedof const& nodedof1, Nodedof const& nodedof2, Material const& matl, Gr
 			el[IJ(i,j,n)] = el[IJ(j,i,n)];
 
 	// scale the entire matrix by EIx/l^3
-	blas_scal(n*n, EIx/(l*l*l), &el[0], 1);
+	blas::scal(n*n, EIx/(l*l*l), &el[0], 1);
 
-	trc.dprintm(n,n,n,el,"beam element in local ",node1_,"-",node2_);
+	T_(trc.dprintm(n,n,n,el,"beam element in local ",node1_,"-",node2_);)
 
 	// the beam is oriented along the local y axis (ybar); transform so that
 	// it is in "global" coordinates; the transformation to global
 	// coordinates is xbar, ybar and zbar as ROWS so we can use lapack::triprod
 	tlg_ = vector<double>(9,0.0);
-	blas_copy(3, &xbar[0], 1, &tlg_[0], 3);
-	blas_copy(3, &ybar[0], 1, &tlg_[1], 3);
-	blas_copy(3, &zbar[0], 1, &tlg_[2], 3);
-	trc.dprintm(3,3,3,tlg_,"transformation from local to Fem");
+	blas::copy(3, &xbar[0], 1, &tlg_[0], 3);
+	blas::copy(3, &ybar[0], 1, &tlg_[1], 3);
+	blas::copy(3, &zbar[0], 1, &tlg_[2], 3);
+	T_(trc.dprintm(3,3,3,tlg_,"transformation from local to Fem");)
 
 	if (!is_identity(tlg_)) {
 		// copy the (3,3) tlg_ into a (12,12) transformation matrix T
@@ -560,7 +560,7 @@ Beam (Nodedof const& nodedof1, Nodedof const& nodedof2, Material const& matl, Gr
 				T[IJ(i+9,j+9,n)] = tlg_[IJ(i,j,3)];
 			}
 		}
-		trc.dprintm(n,n,n,T,"beam",node1_,"-",node2_," transformation matrix");
+		T_(trc.dprintm(n,n,n,T,"beam",node1_,"-",node2_," transformation matrix");)
 		
 		// transform the element in local to global: T'*el*T -> el
 		vector<double> te(n*n,0.0);
@@ -568,7 +568,7 @@ Beam (Nodedof const& nodedof1, Nodedof const& nodedof2, Material const& matl, Gr
 		el = te;
 	}
 
-	trc.dprintm(n,n,n,el,"beam element in global ",node1_,"-",node2_);
+	T_(trc.dprintm(n,n,n,el,"beam element in global ",node1_,"-",node2_);)
 
 	// the retained dof for this beam element: dof1 + dof2
 	for (auto i: dof1)
@@ -586,8 +586,8 @@ Beam (Nodedof const& nodedof1, Nodedof const& nodedof2, Material const& matl, Gr
 	data_ = vector<double>(mr*mr,0.0);
 	blas::copy(all,all,1.0,el,freedoms_,freedoms_,0.0,data_);
 
-	trc.dprint("all dof: ",all,", retain: ",freedoms_);
-	trc.dprintm(mr,mr,mr,data_,"retained beam element");
+	T_(trc.dprint("all dof: ",all,", retain: ",freedoms_);)
+	T_(trc.dprintm(mr,mr,mr,data_,"retained beam element");)
 }
 
 bool
@@ -596,7 +596,7 @@ parse_conmass (const Tok& p, const Freev& ret,
 // parse concentrated-mass specs
 // conmass{mass=w, moi=(Ixx,Iyy,Izz), cg=c, orient=(x,y,z)), node=(first:last),...}
 // where w is the mass (Kg) and I is the moment of inertia (Kg-m^2)
-	Trace trc(2,"parse_conmass");
+	T_(Trace trc(2,"parse_conmass");)
 	double totalmass{0.0};
 	double mass{0.0};
 	vector<double> totalmoi;
@@ -622,7 +622,7 @@ parse_conmass (const Tok& p, const Freev& ret,
 	// create a Mass element for each node in "nodes" with "mass", "moi",
 	// "cg", and "orient"
 
-	trc.dprint(nodes.size()," nodes: ",nodes);
+	T_(trc.dprint(nodes.size()," nodes: ",nodes);)
 	if (nodes.empty())
 		throw runtime_error("the nodes where conmasses are attached must be specified");
 
@@ -636,7 +636,7 @@ parse_conmass (const Tok& p, const Freev& ret,
 	// XXX need retained's?
 	if (ret.empty())
 		throw runtime_error("retained freedoms have not been defined");
-	trc.dprint("retained freedoms: ",ret);
+	T_(trc.dprint("retained freedoms: ",ret);)
 
 	//  if totalmass specified instead of mass (per node), compute mass
 	if (totalmass > 0.0) {
@@ -668,8 +668,8 @@ parse_conmass (const Tok& p, const Freev& ret,
 		// create a new Mass & add it to masses
 		Mass* me = new Mass(node,mass,moi,cgpar,cg,orient,rc);
 		masses.push_back(me);
-		trc.dprint("now have ",masses.size()," mass elements");
-		trc.dprint(*me);
+		T_(trc.dprint("now have ",masses.size()," mass elements");)
+		T_(trc.dprint(*me);)
 	}
 	return true;
 }
@@ -679,14 +679,14 @@ makeT(const vector<double>& orient) {
 // given the orientation of the local x axis (xbar), and a point
 // on the xbar-ybar plane, create a transformation T such that
 //   vglobal = T' * vlocal
-	Trace trc(2,"makeT");
+	T_(Trace trc(2,"makeT");)
 	vector<double> rval(9,0.0);
 	vector<double> xbar{orient};
 	// normalize xbar
-	double xn = blas_snrm2(3, &xbar[0], 1);
+	double xn = blas::snrm2(3, &xbar[0], 1);
 	if (xn == 0.0)
 		throw runtime_error("zero-length orient");
-	blas_scal(3, 1.0/xn, &xbar[0], 1);
+	blas::scal(3, 1.0/xn, &xbar[0], 1);
 
 	// svd xbar to get 2 vectors orthogonal to it
 	vector<double> u(9,0.0), s(3,0.0), A{xbar};
@@ -701,12 +701,12 @@ makeT(const vector<double>& orient) {
 	vector<double> tx{0.0,xbar[2],-xbar[1],-xbar[2],0.0,xbar[0],xbar[1],-xbar[0],0.0};
 
 	vector<double> txy(3,0.0);  // t X vec1
-	blas_sgemv("n", 3,3,1.0,&tx[0],3,&vec1[0],1,0.0,&txy[0],1);
+	blas::gemv("n", 3,3,1.0,&tx[0],3,&vec1[0],1,0.0,&txy[0],1);
 
 	// xbar,ybar,zbar are the rows of T
-	blas_copy(3, &xbar[0], 1, &rval[0], 3);
-	blas_copy(3, &vec1[0], 1, &rval[1], 3);
-	blas_copy(3, &txy[0], 1, &rval[2], 3);
+	blas::copy(3, &xbar[0], 1, &rval[0], 3);
+	blas::copy(3, &vec1[0], 1, &rval[1], 3);
+	blas::copy(3, &txy[0], 1, &rval[2], 3);
 	return rval;
 }
 
@@ -746,7 +746,7 @@ conmass(double mass, const vector<double>& moi, const vector<double>& cgv,
 			vector<double> axis(3,0.0);
 			axis[j] = 1.0;
 			xprod(&axis[0], &cgv[0], &prod[0]);
-			blas_axpy(3, mass, &prod[0], 1, &elem[IJ(0,j+3,6)], 1);
+			blas::axpy(3, mass, &prod[0], 1, &elem[IJ(0,j+3,6)], 1);
 			// lower-triangle
 			for (int i=0; i<3; i++) {
 				elem[IJ(j+3,i,6)] = elem[IJ(i,j+3,6)];
@@ -763,7 +763,7 @@ bool
 Fem::
 dlm_f (const Tok& tok) {
 // parse dlm options: dlm{ac=d,panels=d,...}
-	Trace trc(1,"dlm_f");
+	T_(Trace trc(1,"dlm_f");)
 	Dlm de;
 	// parse the options with lambda handlers
 	vector<Tok*> unrec = flaps::lexer(tok.lopt, {
@@ -784,7 +784,7 @@ dlm_f (const Tok& tok) {
 	
 	if (!unrec.empty())
 		throw runtime_error(vastr(unrec.size()," unrecognized dlm specs: ", unrec));
-	trc.dprint("got Dlm\n",de);
+	T_(trc.dprint("got Dlm\n",de);)
 
 	// copy this Dlm to the Fem
 	this->dlm = new Dlm(de);
@@ -799,7 +799,7 @@ guyan(const vector<double>& elem) {
 //   T = |       I       |
 //       | -k22^{-1} k21 |
 // but only return the lower (6,6) portion:  -k22^{-1}k21
-	Trace trc(1,"guyan");
+	T_(Trace trc(1,"guyan");)
 	vector<double> k22(36, 0.0);
 	vector<double> k21(36, 0.0);
 	for (int i=0; i<6; i++) {
@@ -818,9 +818,9 @@ guyan(const vector<double>& elem) {
 			rval[IJ(i,j,6)] = -k21[IJ(i,j,6)];
 		}
 	}
-	trc.dprintm(6,6,6,&k22[0],"k22");
-	trc.dprintm(6,6,6,&k21[0],"k21");
-	trc.dprintm(6,6,6,&rval[0],"T");
+	T_(trc.dprintm(6,6,6,&k22[0],"k22");)
+	T_(trc.dprintm(6,6,6,&k21[0],"k21");)
+	T_(trc.dprintm(6,6,6,&rval[0],"T");)
 	return rval;
 }
 #endif // NEVER // unused?
@@ -831,13 +831,13 @@ get_rotations(int node) {
 // returns a vector of all rotational dof at "node"; if a dof is
 // missing set it to Freedom(0,0) so the return vector is always
 // 3 Freedoms
-	Trace trc(1,"get_rotations");
+	T_(Trace trc(1,"get_rotations");)
 	vector<Freedom> rval(3, Freedom());
 	for (auto& fp : retained()) {
 		if (fp.node() == node && fp.dof() > 3)
 			rval[fp.dof()-4] = fp;
 	}
-	trc.dprint("returning ",rval);
+	T_(trc.dprint("returning ",rval);)
 	return rval;
 }
 
@@ -848,7 +848,7 @@ assemble() {
 // assemble all element matrices for the gyro, pgaf, and dlm,
 // into single flaps matrices with mid "id_stif", "id_mass", etc
 // Store them with tag '_nodal'
-	Trace trc(1,"Fem::assemble");
+	T_(Trace trc(1,"Fem::assemble");)
 
 	// assemble substructure stif matrices
 	for (auto ss : substructures_)
@@ -865,7 +865,7 @@ assemble() {
 
 	size_t n = retained_.size();
 
-	trc.dprint("gross matrices retained freedoms:\n",this->retained());
+	T_(trc.dprint("gross matrices retained freedoms:\n",this->retained());)
 	cout << "Model nodes and freedoms\n" << this->retained() << endl;
 
 	this->stif_ = new Matrix(mid("stif.nodal"), "beam fem", n, n, false);
@@ -886,7 +886,7 @@ assemble() {
 			this->retained(), this->retained(), 1.0, this->stif_->data());
 	// store the nodal stif matrix
 	this->stif_->store();
-	trc.dprintm(n,n,n,this->stif_->data(),"nodal stif matrix");
+	T_(trc.dprintm(n,n,n,this->stif_->data(),"nodal stif matrix");)
 	cout << "  Created nodal stiffness matrix \"" << *stif_ << "\"\n";
 
 	// assemble the mass matrix
@@ -939,7 +939,7 @@ assemble() {
 		}
 	}
 	this->mass_->store();
-	trc.dprintm(n,n,n,this->mass_->data(),"nodal mass matrix");
+	T_(trc.dprintm(n,n,n,this->mass_->data(),"nodal mass matrix");)
 	cout << "  Created nodal mass matrix \"" << *mass_ << "\"\n";
 
 	// Gyro matrix XXX make this an assemble()?
@@ -951,7 +951,7 @@ assemble() {
 			ge.rc = vector<int>(3,0);
 			int node = ge.node();
 			for (int j=0; j<3; j++) {
-				if (blas_snrm2(3, &ge.elem[3*j], 1) != 0.0) {
+				if (blas::snrm2(3, &ge.elem[3*j], 1) != 0.0) {
 					auto idx = std::find(this->retained().begin(), this->retained().end(),
 						Freedom(node,j+4));
 					if (idx != this->retained().end())
@@ -973,7 +973,7 @@ assemble() {
 				}
 			}
 		}
-		trc.dprintm(n,n,n,this->gyro_->data(),"gyro matrix");
+		T_(trc.dprintm(n,n,n,this->gyro_->data(),"gyro matrix");)
 
 		// create a CustomPz function to evaluate the gyro terms if
 		// this any elements have amom_name
@@ -1006,7 +1006,7 @@ assemble() {
 			// orient is the local x axis (xbar) - compute ybar and zbar
 			// to create a local to model transform: vglobal = T'*vlocal
 			gaf.T = makeT(gaf.orient);
-			trc.dprint("pgaf element:\n",gaf);
+			T_(trc.dprint("pgaf element:\n",gaf);)
 		}
 
 		// create a cpp file which will evaluate the prop gaf...
@@ -1129,7 +1129,7 @@ make_gyrofcn(string& entrypt, string const& prefix) {
 // create a custom gyro function to evaluate the gyro matrix
 // in a CustomPz. Create the file on the cwd, return both
 // the full path and the entry point name "entrypt"
-	Trace trc(1,"make_gyrofcn");
+	T_(Trace trc(1,"make_gyrofcn");)
 	if (prefix.empty())
 		entrypt = mid("gyrofcn");
 	else
@@ -1465,7 +1465,7 @@ gyro_node_f (const Tok& p) {
  *      kg-m^2/sec = N-m-s or lbf-in-s
  *   The angular displacements are assumed to be in radians.
  */
-	Trace trc(1,"gyro_node_f");
+	T_(Trace trc(1,"gyro_node_f");)
 	
 	static double amom{1.0};
 	static string amom_s;
@@ -1500,7 +1500,7 @@ gyro_node_f (const Tok& p) {
 	// the orientation vector normalized to 1 and scaled by the angular
 	// momentum, unless the element has an amom parameter in which case it is 1
 	vector<double> h{orient};
-	double length = blas_snrm2(3, &orient[0], 1);
+	double length = blas::snrm2(3, &orient[0], 1);
 	if (length + 1.0 == 1.0)
 		throw runtime_error(vastr("the orientation point for node ",
 					node, " is zero"));
@@ -1532,7 +1532,7 @@ gyro_node_f (const Tok& p) {
 	vector<int> rc(3,0);
 #ifdef NEVER // move to Fem::assemble - no retained yet
 	for (int j=0; j<3; j++) {
-		if (blas_snrm2(3, &el[3*j], 1) != 0.0) {
+		if (blas::snrm2(3, &el[3*j], 1) != 0.0) {
 			auto idx = std::find(this->retained().begin(), this->retained().end(),
 				Freedom(node,j+4));
 			if (idx != this->retained().end())
@@ -1544,7 +1544,7 @@ gyro_node_f (const Tok& p) {
 	// Create the gyro element without modal transform
 	vector<double> modal;
 	Gyro_elem np(node, amom_s, amom, el, rc, modal);
-	trc.dprint("got gyro element:\n",np);
+	T_(trc.dprint("got gyro element:\n",np);)
 	this->gyro_elements.push_back(np);
 	return true;
 }
@@ -1574,7 +1574,7 @@ bool
 Fem::
 pgaf_node_f (const Tok& p) {
 // create a pgaf element from user specs
-	Trace trc(1,"pgaf_node_f");
+	T_(Trace trc(1,"pgaf_node_f");)
 	Pgaf_elem np;
 	// radius, beta, lbar, and custom are the only options
 	// radius, beta, and lbar are parameter names, static so "persistent"
@@ -1643,7 +1643,7 @@ pgaf_node_f (const Tok& p) {
 	// put it on the vector of pgaf elements
 	this->pgaf_elements.push_back(np);
 
-	trc.dprint("created pgaf element:\n",np);
+	T_(trc.dprint("created pgaf element:\n",np);)
 
 	return true;
 }

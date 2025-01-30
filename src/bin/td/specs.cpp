@@ -26,9 +26,9 @@ is_flutmat (string const& desc) {
  * e.g. "mass", "stif", etc.
  * Returns the matched description if found, empty string otherwise
  *------------------------------------------------------------------*/
-	Trace trc(1,"is_flutmat");
+	T_(Trace trc(1,"is_flutmat");)
 
-	trc.dprint("is ",desc," a flutter matrix?");
+	T_(trc.dprint("is ",desc," a flutter matrix?");)
 
 	// These are the (only) options for flutter matrices
 	static vector<string> valid;
@@ -46,7 +46,7 @@ is_flutmat (string const& desc) {
 	if (find(valid.begin(), valid.end(), desc) != valid.end()) {
 		return true;
 	}
-	trc.dprint("returning false: ",desc," is not a flut matrix");
+	T_(trc.dprint("returning false: ",desc," is not a flut matrix");)
 	return false;
 }
 
@@ -122,7 +122,7 @@ debug_f(const Tok& opt) {
  * will set the debug level to 3 for the start process
  *
  */
-	Trace trc(1,"debug");
+	T_(Trace trc(1,"debug");)
 
 	// the rhs may be followed by {n}: the debug level (default 2)
 	int level{2};
@@ -155,7 +155,7 @@ indep_f(const Tok& opt) {
 
 	if (opt.svec.empty()) {
 		string exc = vastr("no independent parameters specified in ",opt);
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 
@@ -216,7 +216,7 @@ matrix_f (const Tok& opt) {
 // treat matrix input options, e.g. "mass=KHH", add the matrix to Matrix::collection,
 // so it is accessible with, e.g.
 //   Matrix* mass = Matrix::get_desc("mass");
-	Trace trc(1,"matrix ",opt);
+	T_(Trace trc(1,"matrix ",opt);)
 	ostringstream os;
 	
 	// Check for a standard matrix name (e.g. mass= )
@@ -229,10 +229,10 @@ matrix_f (const Tok& opt) {
 			throw runtime_error(vastr("matrix \"",opt.svec[0],"\" is not available"));
 		mp->desc(descrip);
 		Matrix::insert(mp);
-		trc.dprint("returning true: got ",mp->summary());
+		T_(trc.dprint("returning true: got ",mp->summary());)
 		return true;
 	}
-	trc.dprint("returning false: not a flutter matrix");
+	T_(trc.dprint("returning false: not a flutter matrix");)
 	return false;
 }
 
@@ -247,15 +247,15 @@ plot_f(const Tok& opt) {
  *                at each corrector iteration
  *   homotopy     plot any homotopy curve (usually from normalModes)
  */
-	Trace trc(1,"plot");
+	T_(Trace trc(1,"plot");)
 	ostringstream os;
 
-	trc.dprint(opt.svec.size()," rhs");
+	T_(trc.dprint(opt.svec.size()," rhs");)
 
 	string rhs;
 	vector<string> toplot;
 	for (auto& rhs : opt.svec) {
-		trc.dprint("got plot \"",rhs,"\"");
+		T_(trc.dprint("got plot \"",rhs,"\"");)
 
 
 		// All special rhs's tried - must be a parameter. Create
@@ -268,7 +268,7 @@ plot_f(const Tok& opt) {
 			os.str("");
 			os << "bad plot parameter definition (" << rhs
 				<< "): " << s;
-			trc.dprint("throwing exception: ",os.str());
+			T_(trc.dprint("throwing exception: ",os.str());)
 			throw runtime_error(os.str());
 		}
 	}
@@ -276,7 +276,7 @@ plot_f(const Tok& opt) {
 	// if the user specified parameters to plot make them the default
 	if (!toplot.empty()) {
 		Settings::defaults.set("toplot", toplot);
-		trc.dprint("now have ",toplot.size()," plot parameters");
+		T_(trc.dprint("now have ",toplot.size()," plot parameters");)
 	}
 
 	return true;
@@ -310,7 +310,7 @@ toprint_f(const Tok& opt) {
  * be added to the list of parameters to print in the solution
  * summary
  *------------------------------------------------------------------*/
-	Trace trc(1,"toprint");
+	T_(Trace trc(1,"toprint");)
 	size_t i;
 	ostringstream os;
 
@@ -345,7 +345,7 @@ toprint_f(const Tok& opt) {
 
 			toprint.push_back(rhs);
 
-			trc.dprint(rhs," will be printed");
+			T_(trc.dprint(rhs," will be printed");)
 		}
 	}
 
@@ -374,10 +374,10 @@ param_f(const Tok& opt) {
 // XXX Allow the user to say something like "alt=Fixed" instead
 // of specifying a value - this means to take the parameter value
 // from a previous analysis
-	Trace trc(1,"param");
+	T_(Trace trc(1,"param");)
 	ostringstream os;
 
-	trc.dprint("opt<",opt,"> ",opt.svec.size()," rhs");
+	T_(trc.dprint("opt<",opt,"> ",opt.svec.size()," rhs");)
 
 	Par* par(nullptr);
 	try {
@@ -400,7 +400,7 @@ param_f(const Tok& opt) {
 			par->set_aux();
 	} catch (runtime_error& s) {
 		string exc = vastr("illegal parameter definition: ",s.what());
-		trc.dprint("throwing exception: ",exc);
+		T_(trc.dprint("throwing exception: ",exc);)
 		throw runtime_error(exc);
 	}
 
@@ -415,7 +415,7 @@ param_f(const Tok& opt) {
 
 	par = gpset::get().add(par);
 
-	trc.dprint("got parameter ",par->longsummary());
+	T_(trc.dprint("got parameter ",par->longsummary());)
 	return true;
 }
 /*------------------------------------------------------------------
@@ -425,10 +425,10 @@ param_f(const Tok& opt) {
 static void
 invert(vector<double>& P) {
 // invert an (n,n) matrix, return it in the input P
-	Trace trc(1,"invert");
+	T_(Trace trc(1,"invert");)
 
 	int n = sqrt(P.size());
-	trc.dprintm(n,n,n,P,"inverting");
+	T_(trc.dprintm(n,n,n,P,"inverting");)
 	vector<double> I(n*n, 0.0);
 	for (int i=0; i<n; i++)
 		I[i*(n+1)] = 1.0;
@@ -449,12 +449,12 @@ invert(vector<double>& P) {
 		&rcond, ferr.data(), berr.data());
 	if (info != 0)
 		throw runtime_error(vastr("failed to invert M+rho/2*R2: dgesv info ",info));
-	trc.dprint("rcond ",rcond);
-	trc.dprintm(n,n,n,x,"inverted");
+	T_(trc.dprint("rcond ",rcond);)
+	T_(trc.dprintm(n,n,n,x,"inverted");)
 	// check by multiplying x*P
 	blas_sgemm("n", "n", n, n, n, 1.0, psave.data(), n,
 			x.data(), n, 0.0, pf.data(), n);
-	trc.dprintm(n,n,n,pf,"P*x");
+	T_(trc.dprintm(n,n,n,pf,"P*x");)
 	P = x;
 }
 

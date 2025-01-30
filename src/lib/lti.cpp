@@ -8,7 +8,9 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
+#include "config.h"
 #include "lti.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -17,16 +19,18 @@ namespace LTI {
 void
 evalgains(pset& plt, const vector<string>& gains, const vector<string>& phases,
 		vector<double> td, vector<complex<Ad>>& g) {
-	Trace trc(2,"evalgains");
+	T_(Trace trc(2,"evalgains");)
 	Ad sigma = plt.parval("sigma");
 	Ad freq = plt.parval("freq");
 	for (size_t i=0; i<gains.size(); i++) {
 		Ad gain = plt.par_or_double(gains[i]);
 		Ad phase = plt.par_or_double(phases[i]);
 		double tdi = td[i];
-		complex<Ad> ex = complex<Ad>(-sigma*tdi, phase - freq*tdi);
+		Ad ar(-sigma*tdi);
+		Ad ai(phase - freq*tdi);
+		complex<Ad> ex{ar,ai};
 		g[i] = gain*exp(ex);
-		trc.dprint("g[",i,"] = ",g[i]);
+		T_(trc.dprint("g[",i,"] = ",g[i]);)
 	}
 }
 
@@ -51,7 +55,7 @@ eval (pset& plt, int nr, int nc, vector<complex<Ad>>& result,
 // Evaluate an LTI, putting the matrix into "result"
 	complex<Ad> zero(Ad(0.0),Ad(0.0));
 	complex<Ad> t;
-	Trace trc(1,"LTI::eval");
+	T_(Trace trc(1,"LTI::eval");)
 
 	// read K and psi
 	Matrix K(stifname);
@@ -77,18 +81,19 @@ eval (pset& plt, int nr, int nc, vector<complex<Ad>>& result,
 	Ad freq = plt.parval("freq");
 	complex<Ad> s(sigma,freq);
 
-	trc.dprint("s = ",s);
+	T_(trc.dprint("s = ",s);)
 
 	// (2,2) block: \prod_{k=1}^{n_t} A - sI
 	// Do this first since if psi and KE were not specified we are done
 	// XXX what does this mean?
+	// CAdvector work(ns*ns);
 	vector<complex<Ad>> work(ns*ns);
 	A.eval(plt, work);
-	trc.dprintm(ns,ns,ns,work,"A");
+	T_(trc.dprintm(ns,ns,ns,work,"A");)
 	// first mult by internal time delays...
 	for (auto& td : Atd) {
 		complex<Ad> ct = exp(-s*td.deltat);
-		trc.dprint("internal td: ",ct);
+		T_(trc.dprint("internal td: ",ct);)
 		for (size_t k=0; k<td.elem.size(); k++) {
 			int i = td.elem[k].row;
 			int j = td.elem[k].col;
@@ -100,7 +105,7 @@ eval (pset& plt, int nr, int nc, vector<complex<Ad>>& result,
 	for (int j=0; j<ns; j++)
 		work[IJ(j,j,ns)] -= s;
 		//!! result[IJ(ne+j,ne+j,nr)] -= s;
-	trc.dprintm(ns,ns,ns,work,"td*A - sI");
+	T_(trc.dprintm(ns,ns,ns,work,"td*A - sI");)
 	// ... and insert into result
 	for (int j=0; j<ns; j++) {
 		for (int i=0; i<ns; i++) {
@@ -113,6 +118,7 @@ eval (pset& plt, int nr, int nc, vector<complex<Ad>>& result,
 		//!! return true;
 
 	// S:
+	//CAdvector S(ni);
 	vector<complex<Ad>> S(ni);
 	for (int i=0; i<ni; i++) {
 		if (Sidx[i] == 0)
@@ -122,21 +128,25 @@ eval (pset& plt, int nr, int nc, vector<complex<Ad>>& result,
 		else
 			S[i] = s*s;
 	}
-	trc.dprintm(ni,1,ni,S,"S");
+	T_(trc.dprintm(ni,1,ni,S,"S");)
 	// G, H: input and output gain and time delays
+	// CAdvector G(ni);
 	vector<complex<Ad>> G(ni);
 	evalgains(plt, igains, iphases, itd, G);
+	// CAdvector H(no);
 	vector<complex<Ad>> H(no);
 	evalgains(plt, ogains, ophases, otd, H);
 	// change sign on H XXX or do this when (1,1) and (1,2) blocks created?
 	for (int i=0; i<no; i++)
 		H[i] *= -1.0;
-	trc.dprintm(ni,1,ni,G,"G");
-	trc.dprintm(no,1,no,H,"H");
+	T_(trc.dprintm(ni,1,ni,G,"G");)
+	T_(trc.dprintm(no,1,no,H,"H");)
 
 	// evaluate KE -> ke
 	//!! KE->eval(plt, ke);
+	// CAdvector ke(ne*no);
 	vector<complex<Ad>> ke(ne*no);
+	// CAdvector wk(ne*ne);
 	vector<complex<Ad>> wk(ne*ne);
 	K.eval(plt, wk);
 	for (int j=0; j<no; j++) {
@@ -145,13 +155,14 @@ eval (pset& plt, int nr, int nc, vector<complex<Ad>>& result,
 		for (int i=0; i<ne; i++)
 			ke[IJ(i,j,ne)] = sf*wk[IJ(i,col,ne)];
 	}
-	trc.dprintm(ne,no,ne,ke,"KE");
+	T_(trc.dprintm(ne,no,ne,ke,"KE");)
 
 	double dmax{0.0};
 	for (auto& d : D.data())
 		dmax = std::max(abs(d), dmax);
 	if (dmax > 0.0) {
 		// (1,1) block: -KE*H*D*G*S*Psi
+		// CAdvector HDGS(no*ni);
 		vector<complex<Ad>> HDGS(no*ni);
 		double* dp = D.elem();
 		for (int i=0; i<no; i++) {
@@ -159,6 +170,7 @@ eval (pset& plt, int nr, int nc, vector<complex<Ad>>& result,
 				HDGS[IJ(i,j,no)] = H[i]*dp[IJ(i,j,no)]*G[j]*S[j];
 			}
 		}
+		// CAdvector KEHDGS(ne*ni);
 		vector<complex<Ad>> KEHDGS(ne*ni);
 		// ftn_cgemm("n", "n", ne, ni, no, Complex(1.0), ke->gm, ne,
 		// 		&HDGS[0], no, Complex(0.0), &KEHDGS[0], ne);
@@ -188,14 +200,15 @@ eval (pset& plt, int nr, int nc, vector<complex<Ad>>& result,
 	}
 
 	// (1,2) block: -KE*H*C
-	vector<complex<Ad>> HC(no*ns, zero);
+	// CAdvector HC(no*ns);
+	vector<complex<Ad>> HC(no*ns);
 	double* cp = C.elem();
 	for (int i=0; i<no; i++) {
 		for (int j=0; j<ns; j++) {
 			HC[IJ(i,j,no)] = H[i]*cp[IJ(i,j,no)];
 		}
 	}
-	trc.dprintm(no,ns,no,HC,"HC");
+	T_(trc.dprintm(no,ns,no,HC,"HC");)
 	// vector<ADs> KEHC(ne*ns, zero);
 	//ftn_cgemm("n", "n", ne, ns, no, Complex(1.0), ke->gm, ne,
 	//		&HC[0], no, Complex(0.0), &KEHC[0], ne);
@@ -212,24 +225,26 @@ eval (pset& plt, int nr, int nc, vector<complex<Ad>>& result,
 		}
 	}
 
-	trc.dprintm(ni,ne,ni,psip,"psi");
+	T_(trc.dprintm(ni,ne,ni,psip,"psi");)
 
 	// (2,1) block: B*G*S*Psi: (ns,ni)(ni,ni)(ni,ni)(ni,ne) = (ns,ne)
-	vector<complex<Ad>> GSPsi(ni*ne, zero);	// (ni,ni)(ni,ni)(ni,ne)
+	// CAdvector GSPsi(ni*ne);	// (ni,ni)(ni,ni)(ni,ne)
+	vector<complex<Ad>> GSPsi(ni*ne);
 	for (int i=0; i<ni; i++) {
-		trc.dprint("S[",i,"] = ",S[i]);
+		T_(trc.dprint("S[",i,"] = ",S[i]);)
 		for (int j=0; j<ne; j++) {
 			GSPsi[IJ(i,j,ni)] = G[i]*S[i]*psip[IJ(i,j,ni)];
 		}
 	}
-	trc.dprintm(ni,ne,ni,GSPsi,"GSPsi");
+	T_(trc.dprintm(ni,ne,ni,GSPsi,"GSPsi");)
 	//vector<ADs> BGSPsi(ns*ne, zero);
 	// multRC(ns, ne, ni, &B[0], &GSPsi[0], &BGSPsi[0]);
 	// for (j=0; j<ne; j++) {
 	// 	ftn_ccopy (ns, &BGSPsi[IJ(0,j,ns)], 1, &result[IJ(ne,j,nr)], 1);
 	// }
 	double* bp = B.elem();
-	vector<complex<Ad>> BGSPsi(ns*ne, zero);
+	// CAdvector BGSPsi(ns*ne);
+	vector<complex<Ad>> BGSPsi(ns*ne);
 	for (int i=0; i<ns; i++) {
 		for (int j=0; j<ne; j++) {
 			t = zero;
@@ -240,7 +255,7 @@ eval (pset& plt, int nr, int nc, vector<complex<Ad>>& result,
 			BGSPsi[IJ(i,j,ns)] = t;
 		}
 	}
-	trc.dprintm(ns,ne,ns,BGSPsi,"BGSPsi");
+	T_(trc.dprintm(ns,ne,ns,BGSPsi,"BGSPsi");)
 	// insert into result
 	for (int i=0; i<ns; i++) {
 		for (int j=0; j<ne; j++)
@@ -249,7 +264,7 @@ eval (pset& plt, int nr, int nc, vector<complex<Ad>>& result,
 
 	// Scale the last ns columns
 	// scaleX(ne, ns, result);
-	trc.dprintm(nr,nc,nr,result,"LTI::result");
+	T_(trc.dprintm(nr,nc,nr,result,"LTI::result");)
 
 	return true;
 }

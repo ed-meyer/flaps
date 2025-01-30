@@ -23,7 +23,6 @@
 #include <typeinfo>
 
 #include "message.h"
-#include "trace.h"
 
 // namespace Custom contains functions for maintaining pointers to
 // custom functions

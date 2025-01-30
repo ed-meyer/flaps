@@ -20,6 +20,7 @@
 #include "matrix.h"
 #include "specs.h"
 #include "pset.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -71,7 +72,7 @@ parser () {
  *   summary
  *   deriv(s)?=(0,par_name,...)
  *------------------------------------------------------------------*/
-	Trace trc(2,"parser");
+	T_(Trace trc(2,"parser");)
 	vector<pair<string,Specs>> rval;
 
 	// each Tok is a matrix name with optional specs
@@ -104,7 +105,7 @@ parser () {
 			if (!unrec.empty())
 				flaps::warning(unrec.size()," options were not recognized: ",unrec);
 			rval.push_back({p.lhs,sp});
-			trc.dprint("specs for ",p.lhs,":\n",sp);
+			T_(trc.dprint("specs for ",p.lhs,":\n",sp);)
 			return true;
 		}},
 	});

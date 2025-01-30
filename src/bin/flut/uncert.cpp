@@ -14,6 +14,7 @@
 #include "interval.h"
 #include "lapack.h"
 #include "uncert.h"
+#include "trace.h"
 
 using namespace std;
 //!! int dgefa_(double *a, int *lda, int *n, int * ipvt, int *info);
@@ -35,7 +36,7 @@ Uncert::
 Uncert (const Flutcurve& curve, const vector<string>& uncnames,
 	const vector<double>& factors, const vector<string>& constpar) {
 // Uncert constructor
-	Trace trc(2,"Uncert::constructor");
+	T_(Trace trc(2,"Uncert::constructor");)
 	// create a copy of curve.params to use for constructing hi & lo
 	pset altpl(curve.params);
 	altpl.desc("altpl");
@@ -98,7 +99,7 @@ update(vector<Interval>& xu, double coord) {
 // curves hi and lo with corresponding parameters
 // Note the size of the Ivar in unc is different from those in hi & lo,
 // but the params are the same
-	Trace trc(2,"Uncert::update");
+	T_(Trace trc(2,"Uncert::update");)
 #ifdef NEVER // interval scheme
 	unc->update(xu);
 	for (auto& pi : unc->params) {
@@ -120,7 +121,7 @@ update(vector<Interval>& xu, double coord) {
 	for (size_t i=0; i<lo_par.size(); i++) {
 		double x = xu[i].lower()*lo_scale[i];
 		lo_par[i]->value(x);
-		trc.dprint("set ",lo_par[i]->name,".lower to ",x);
+		T_(trc.dprint("set ",lo_par[i]->name,".lower to ",x);)
 	}
 	// coord
 	Par* coordp = lo->params.findp("coord");
@@ -132,7 +133,7 @@ update(vector<Interval>& xu, double coord) {
 	for (size_t i=0; i<hi_par.size(); i++) {
 		double x = xu[i].upper()*hi_scale[i];
 		hi_par[i]->value(x);
-		trc.dprint("set ",lo_par[i]->name,".upper to ",x);
+		T_(trc.dprint("set ",lo_par[i]->name,".upper to ",x);)
 	}
 	// coord
 	coordp = hi->params.findp("coord");
@@ -152,7 +153,7 @@ update(vector<Interval>& xu, double coord) {
 vector<Interval>
 Uncert::
 compute_f(Point& pt) {
-	Trace trc(1,"compute_f");
+	T_(Trace trc(1,"compute_f");)
 	// update curve lo and compute the function...
 	lo->update(pt);
 	size_t nx = pt.x.size();
@@ -171,7 +172,7 @@ compute_f(Point& pt) {
 	for (size_t i=0; i<nf; i++)
 		rval[i] = Interval(flo[i], fhi[i]);
 
-	trc.dprint("f_u width ",vector_width(rval),rval);
+	T_(trc.dprint("f_u width ",vector_width(rval),rval);)
 	return rval;
 }
 
@@ -180,7 +181,7 @@ Uncert::
 eval(Point& pt) {
 // estimate the uncertainty at "pt" due to given uncertainties in
 // certain parameters (uncpar)
-	Trace trc(2,"Uncert::eval coord ",pt.coord);
+	T_(Trace trc(2,"Uncert::eval coord ",pt.coord);)
 	Flutcurve* curve{pt.fcv};
 	size_t nx = curve->get_nx();
 	size_t nf;
@@ -192,17 +193,17 @@ eval(Point& pt) {
 	//!! curve->fcnjac(pt.x, fx, jac, pt.tangent, 0.0, nf);
 	curve->fcnjac(pt.x, fx, jac, nf);
 	SVD jsvd(nf,nx,&jac[0]);
-	trc.dprint("rcond = ",jsvd.rcond);
+	T_(trc.dprint("rcond = ",jsvd.rcond);)
 	// LU factorize the Jacobian
 	if (abs(pt.coord) == 1)
-		trc.dprintm(nx,nx,nx,&jac[0],"jacobian on curve");
+		T_(trc.dprintm(nx,nx,nx,&jac[0],"jacobian on curve");)
 #ifdef NEVER // use svd inverse
 	int info;
 	int n{nx};
 	dgefa_(&jac[0],&n,&n,&ipiv[0],&info);
-	trc.dprint("dgefa info ",info);
+	T_(trc.dprint("dgefa info ",info);)
 	if (abs(pt->coord) == 1)
-		trc.dprintm(nx,nx,nx,&jac[0],"jacobian factors");
+		T_(trc.dprintm(nx,nx,nx,&jac[0],"jacobian factors");)
 #endif // NEVER : use svd inverse
 
 #ifdef NEVER // use compute_f
@@ -217,7 +218,7 @@ eval(Point& pt) {
 		//!! tanu[idx] = tan[i];
 		xu[idx] = pt->x[i];
 	}
-	//!! trc.dprintm(nxu,1,nxu,tanu,"tanu: curve tangent in unc coords:");
+	//!! T_(trc.dprintm(nxu,1,nxu,tanu,"tanu: curve tangent in unc coords:");)
 
 	// set th uncert parameters in xu to the (fixed) values in curve->params
 	for (auto nm : uncpar) {
@@ -227,14 +228,14 @@ eval(Point& pt) {
 		double scale = unc->ivar_scale()[idx];
 		xu[idx] = cp->value()/scale;
 	}
-	trc.dprint("unc ivar xu",xu);
+	T_(trc.dprint("unc ivar xu",xu);)
 
 	// compute the jacobian in the unc cs to get df/d(uncpar)
 	size_t nfu;
 	fx.resize(nxu);
 	vector<double> jac_u(nxu*nxu, 0.0);
 	unc->fcnjac(xu, fx, jac_u, nfu);
-	trc.dprint("nf = ",nf,", nfu = ",nfu);
+	T_(trc.dprint("nf = ",nf,", nfu = ",nfu);)
 
 	// Now extract each uncpar column, create an Interval vector as
 	//    f_u = {[-delta*f', delta*f']}
@@ -248,7 +249,7 @@ eval(Point& pt) {
 	for (size_t k=0; k<uncpar.size(); k++) {
 		int j = unc->ivar_index(uncpar[k]);
 		double delta = abs(uncfac[k]*xu[j]);
-		trc.dprint("delta ",k," = ",delta);
+		T_(trc.dprint("delta ",k," = ",delta);)
 		for (size_t i=0; i<nfu; i++) {
 			double df = delta*jac_u[IJ(i,j,nfu)];
 			f_u[i] += Interval(-df, df);
@@ -256,22 +257,22 @@ eval(Point& pt) {
 		}
 	}
 	fwidth = sqrt(fwidth);
-	trc.dprint("f_u width ",fwidth,f_u);
+	T_(trc.dprint("f_u width ",fwidth,f_u);)
 #endif // NEVER : use compute_f
 
 	vector<Interval> f_u = compute_f(pt);
 
 	// solve J*h = f_u
 	vector<Interval> h = jsvd.solve(f_u);
-	trc.dprint("h width ",vector_width(h),h);
+	T_(trc.dprint("h width ",vector_width(h),h);)
 	//!! dgesl_(&jac[0], &n, &n, &ipiv[0], &f_u[0]);
-	//!! trc.dprint("h width ",vector_width(f_u),f_u);
+	//!! T_(trc.dprint("h width ",vector_width(f_u),f_u);)
 	// add the uncertainty h to x to form x_u
 	vector<Interval> x_u(nx, Interval(0.0));
 	for (size_t i=0; i<nx; i++)
 		x_u[i] = pt.x[i] + h[i];
 		//!! x_u[i] = pt->x[i] + f_u[i];
-	trc.dprint("x_u", x_u);
+	T_(trc.dprint("x_u", x_u);)
 	// update the hi and lo curves with x_u
 	this->update(x_u, pt.coord);
 	// then add the parameters to the solns

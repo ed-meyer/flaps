@@ -41,7 +41,7 @@ NRC::
 root(double x0, double x1, double tol, Rootfcn fcn) {
 // Ridders' method for finding a root of a function known to
 // lie between x0 and x1; from Ref. 1 section 9.2
-	Trace trc(1,"NRC::root");
+	T_(Trace trc(1,"NRC::root");)
 	auto takesign = [](double a, double b) { return (b >= 0.0 ? abs(a) : -abs(a)); };
 	double fl = fcn(x0);
 	double fh = fcn(x1);
@@ -63,7 +63,7 @@ root(double x0, double x1, double tol, Rootfcn fcn) {
 		if (s == 0.0) return rval;
 		double xnew = xm + (xm-xl)*((fl >= fh ? 1.0 : -1.0)*fm/s);
 		if (abs(xnew-rval) <= tol) {
-			trc.dprint("returning ",rval,", ",j+1," iterations, f=",fm);
+			T_(trc.dprint("returning ",rval,", ",j+1," iterations, f=",fm);)
 			return rval;
 		}
 		rval = xnew;
@@ -84,7 +84,7 @@ root(double x0, double x1, double tol, Rootfcn fcn) {
 		} else
 			throw runtime_error("internal error in NRC::root");
 		if (abs(xh-xl) < tol) {
-			trc.dprint("returning ",rval,", ",j+1," iterations");
+			T_(trc.dprint("returning ",rval,", ",j+1," iterations");)
 			return rval;
 		}
 	}
@@ -127,7 +127,7 @@ fdapprox (int n, double x, double xmin, double xmax,
 // estimate and the previous estimate does not add significantly to
 // the largest of MAXY and the abs of the input value of y.
 //------------------------------------------------------------------
-	Trace trc(2,"NRC::fdapprox");
+	T_(Trace trc(2,"NRC::fdapprox");)
 	bool rval{true};
 	double big{std::numeric_limits<double>::max()};
 	int nred = 0;
@@ -138,7 +138,7 @@ fdapprox (int n, double x, double xmin, double xmax,
 	double* G[maxiter][maxiter];
 	double oldrelerr{0.0};
 
-	trc.dprint("n ",n,", x ",x,", [",xmin,':',xmax,"]");
+	T_(trc.dprint("n ",n,", x ",x,", [",xmin,':',xmax,"]");)
 
 	err = big;
 
@@ -163,14 +163,14 @@ fdapprox (int n, double x, double xmin, double xmax,
 	std::vector<double> fxplus(n, 0.0);
 	std::vector<double> fxminus(n, 0.0);
 	fcn(n, x, &fxminus[0]);
-	double fx1 = blas_snrm2(n, &fxminus[0], 1);
+	double fx1 = blas::snrm2(n, &fxminus[0], 1);
 	double hfac{64.0};  // increase h by hfac each step
 	for (int i=0; i<10; i++) {
 		fcn(n, x+h, &fxplus[0]);
-		double fx2 = blas_snrm2(n, &fxplus[0], 1);
+		double fx2 = blas::snrm2(n, &fxplus[0], 1);
 		double fxnorm = std::max(fx1, fx2);
 		double diff = diffNorm (n, &fxminus[0], &fxplus[0]);
-		trc.dprint("h ",h,", fxnorm ",fxnorm,", f(x+h)-f(x-h) ",diff);
+		T_(trc.dprint("h ",h,", fxnorm ",fxnorm,", f(x+h)-f(x-h) ",diff);)
 		if (diff > 0.01*std::max(fxnorm, 0.1))
 			break;
 		h *= hfac;
@@ -178,7 +178,7 @@ fdapprox (int n, double x, double xmin, double xmax,
 	// Following the advice on pg 189 of ref.:
 	// h = std::max(0.1*std::abs(x), sqrt(eps));
 	double hmin = std::max(eps*std::abs(x), macheps);
-	trc.dprint("using initial h = ",h,", hmin = ",hmin);
+	T_(trc.dprint("using initial h = ",h,", hmin = ",hmin);)
 
 
 	// try the algorithm with smaller initial h if the error
@@ -186,11 +186,11 @@ fdapprox (int n, double x, double xmin, double xmax,
 	while(h > hmin) {
 		double x0 = x;
 		if (x-h < xmin) {
-			trc.dprint("bumped into lower limit (",xmin,")");
+			T_(trc.dprint("bumped into lower limit (",xmin,")");)
 			x0 = xmin + h;
 		}
 		if (x+h > xmax) {
-			trc.dprint("bumped into upper limit(",xmax,")");
+			T_(trc.dprint("bumped into upper limit(",xmax,")");)
 			x0 = xmax - h;
 		}
 		eval (n, x0, h, fcn, G[0][0]);
@@ -203,45 +203,45 @@ fdapprox (int n, double x, double xmin, double xmax,
 				x0 = xmin + h;
 			if (x+h > xmax)
 				x0 = xmax - h;
-			trc.dprint("------------- iteration ",iter," h = ",h," ----------");
+			T_(trc.dprint("------------- iteration ",iter," h = ",h," ----------");)
 			if (G[0][iter] == nullptr)
 				G[0][iter] = new double[n];
 			eval (n, x0, h, fcn, G[0][iter]);
-			trc.dprint("G[0][",iter,"]\n",striter(G[0][iter],n));
+			T_(trc.dprint("G[0][",iter,"]\n",striter(G[0][iter],n));)
 			double fac = con*con;
 			double errt{0.0};
 			// fill in this row of the tableau
 			for (int j=1; j<=iter; j++) {
 				if (G[j][iter] == nullptr)
 					G[j][iter] = new double[n];
-				blas_copy (n, G[j-1][iter], 1, G[j][iter], 1);
-				blas_scal (n, fac, G[j][iter], 1);
+				blas::copy (n, G[j-1][iter], 1, G[j][iter], 1);
+				blas::scal (n, fac, G[j][iter], 1);
 				assert(G[j-1][iter-1]);
-				blas_axpy (n, -1.0, G[j-1][iter-1], 1, G[j][iter], 1);
-				blas_scal (n, 1.0/(fac-1.0), G[j][iter], 1);
+				blas::axpy (n, -1.0, G[j-1][iter-1], 1, G[j][iter], 1);
+				blas::scal (n, 1.0/(fac-1.0), G[j][iter], 1);
 				fac *= con*con;
-				trc.dprint("G[",j,"][",iter,"]\n",striter(G[j][iter],n));
+				T_(trc.dprint("G[",j,"][",iter,"]\n",striter(G[j][iter],n));)
 				double erra = diffNorm (n, G[j][iter], G[j-1][iter]);
 				double errb = diffNorm (n, G[j][iter], G[j-1][iter-1]);
-				trc.dprint("diff between g[",j,"][",iter, "] and g[",j-1,"][",iter,"] = ",erra);
-				trc.dprint("diff between g[",j,"][",iter, "] and g[",j-1,"][",iter-1,"] = ",errb);
+				T_(trc.dprint("diff between g[",j,"][",iter, "] and g[",j-1,"][",iter,"] = ",erra);)
+				T_(trc.dprint("diff between g[",j,"][",iter, "] and g[",j-1,"][",iter-1,"] = ",errb);)
 				errt = std::max(erra, errb);
 				if (errt <= err) {
-					trc.dprint("max diff (",errt,") is < ",err,": copy g[",iter, "][",j,"] to ans");
+					T_(trc.dprint("max diff (",errt,") is < ",err,": copy g[",iter, "][",j,"] to ans");)
 					err = errt;
-					blas_copy (n, G[j][iter], 1, &ans[0], 1);
+					blas::copy (n, G[j][iter], 1, &ans[0], 1);
 				}
 			}
 			errt = diffNorm (n, G[iter][iter], G[iter-1][iter-1]);
 			if (errt >= safe*err) {
-				trc.dprint("finished: rel diff between g[",iter,',',iter,"] and g[", iter-1,',',iter-1,"] = ",errt," > ",safe,'*',err);
+				T_(trc.dprint("finished: rel diff between g[",iter,',',iter,"] and g[", iter-1,',',iter-1,"] = ",errt," > ",safe,'*',err);)
 				break;
 			}
 		}
 
-		double anorm = blas_snrm2(n, &ans[0], 1);
+		double anorm = blas::snrm2(n, &ans[0], 1);
 		double relerr = err/std::max(eps, anorm);
-		trc.dprint("rel error ",relerr,", ",nred," reductions");
+		T_(trc.dprint("rel error ",relerr,", ",nred," reductions");)
 		// converged?
 		if (relerr < reltol || (std::abs(relerr-oldrelerr) < 0.001*relerr)) {
 			break;
@@ -249,25 +249,25 @@ fdapprox (int n, double x, double xmin, double xmax,
 			oldrelerr = relerr;
 			h /= 2.0;
 			nred++;
-			trc.dprint("reduce (",nred,") start interval to ",h);
+			T_(trc.dprint("reduce (",nred,") start interval to ",h);)
 		}
 	}
 
 	if (h <= hmin) {
 		rval = false;
-		trc.dprint("returning false: h (",h,") less than hmin (",hmin,")");
+		T_(trc.dprint("returning false: h (",h,") less than hmin (",hmin,")");)
 	}
 
 	// copy the last estimate to y
 	if (rval)
-		blas_copy (n, &ans[0], 1, y, 1);
+		blas::copy (n, &ans[0], 1, y, 1);
 
 	for (int i=0; i<maxiter; i++)
 		for (int j=0; j<maxiter; j++)
 			if (G[i][j] != nullptr)
 				delete[]  G[i][j];
 
-	trc.dprint("returning ",rval?"true":"false", ", iter ",iter+1);
+	T_(trc.dprint("returning ",rval?"true":"false", ", iter ",iter+1);)
 	return rval;
 }
 
@@ -276,9 +276,9 @@ eval (int n, double x, double h, Fdfcn fcn, double* y) {
 	std::vector<double> fxm(n, 0.0);
 	fcn(n, x-h, &fxm[0]);
 	fcn(n, x+h, y);
-	blas_axpy (n, -1.0, &fxm[0], 1, y, 1);
+	blas::axpy (n, -1.0, &fxm[0], 1, y, 1);
 	double t = 1.0/(2.0*h);
-	blas_scal (n, t, y, 1);
+	blas::scal (n, t, y, 1);
 }
 
 double

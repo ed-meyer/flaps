@@ -9,7 +9,6 @@
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
 #include "config.h"
-#include "Ad.h"
 #include "blas.h"
 #include "message.h"
 #include "text.h"
@@ -18,299 +17,124 @@
 
 using namespace std;
 
-
-// Specializations of templatized versions of the BLAS in blas.h
-
-template<>
-double
-blas_snrm2 (int n, double const* a, int inca) { return dnrm2_(&n, a, &inca); }
-
-template<>
-double
-blas_scnrm2 (int n, complex<double> const* a, int inca) { return dznrm2_(&n, a, &inca); }
-
-template<>
-int
-blas_sgemv<double> (char const* trans, int m, int n, double alpha, double const* a,
-		int lda, double const* x, int incx, double beta, double *y, int incy) {
-// specialization: sgemv(double)
-	dgemv_ (trans, &m, &n, &alpha, a, &lda, x, &incx, &beta, y, &incy);
-	return 0;
-}
-
-template<>
-int
-blas_cgemv<double> (char const* trans, int m, int n, complex<double> alpha,
-		complex<double> const* a, int lda, complex<double> const* x, int incx,
-		complex<double> beta, complex<double> *y, int incy) {
-// specialization: cgemv(complex<double>)
-	zgemv_ (trans, &m, &n, &alpha, a, &lda, x, &incx, &beta, y, &incy);
-	return 0;
-}
-
-int
-blas_sgemm (char const* transa, char const* transb, int m, int n, int k,
-		double alpha, double const* a, int lda, double const* b, int ldb,
-		double beta, double *c, int ldc) {
-	dgemm_(transa, transb, &m, &n, &k, &alpha, a, &lda, b, &ldb,
-			&beta, c, &ldc);
-	return 0;
-}
-
-int
-blas_cgemm (char const* transa, char const* transb, int m, int n, int k,
-		complex<double> alpha, complex<double> const* a, int lda,
-		complex<double> const* b, int ldb, complex<double> beta,
-		complex<double> *c, int ldc) {
-	zgemm_(transa, transb, &m, &n, &k, &alpha, a, &lda, b, &ldb,
-			&beta, c, &ldc);
-	return 0;
-}
-
 namespace blas {
 
-#ifdef NEVER // no specializations
-// specialization: dot (Ad,Ad)
+// dot specializations
 template<>
 void
-dot(int n, Ad const* x, int incx, Ad const* y, int incy, Ad& z) noexcept {
-// specialization: Ad = Ad * Ad
-	// initialize: zero z
-	int nd = Ad::ndata();
-	double* zd = z.data();
-	for (int i=0; i<nd; i++)
-		zd[i] = 0.0;
-		
+dot(int n, const double* x, int incx, const Ad* y, int incy, Ad& c) noexcept {
+// dot specialization for double*Ad (used by vspline)
+	c.zero();
 	int ix{0};
 	int iy{0};
+	int nderiv = Ad::nder();
 	for (int i=0; i<n; i++) {
-		double const* xd = x[ix].data();
-		double const* yd = y[iy].data();
-		zd[0] += xd[0]*yd[0];
-		// derivatives
-		for (int j=1; j<nd; j++)
-			zd[j] += xd[0]*yd[j] + xd[j]*yd[0];
-		ix += incx;
-		iy += incy;
-	}
-}
-
-// specialization: dot (double,Ad)
-template<>
-void
-dot(int n, double const* x, int incx, Ad const* y, int incy, Ad& z) noexcept {
-// specialization: Ad = double * Ad
-	// initialize: zero z
-	int nd = Ad::ndata();
-	double* zd = z.data();
-	for (int i=0; i<nd; i++)
-		zd[i] = 0.0;
-		
-	int ix{0};
-	int iy{0};
-	for (int i=0; i<n; i++) {
-		double const* yd = y[iy].data();
 		double xi = x[ix];
-		for (int j=0; j<nd; j++)
-			zd[j] += xi*yd[j];
+#ifdef NEVER // public der_
+		c.value(c.value() + xi*y[iy].value());
+#else // NEVER // public der_
+		c.data_[0] += xi*y[iy].data_[0];
+#endif // NEVER // public der_
+		for (int j=0; j<nderiv; j++)
+#ifdef NEVER // public der_
+			c.der(j, c.der(j)+xi*y[iy].der(j));
+#else // NEVER // public der_
+			c.data_[j+1] += xi*y[iy].data_[j+1];
+#endif // NEVER // public der_
 		ix += incx;
 		iy += incy;
 	}
 }
 
-// specialization dot (Ad,double)
+// axpy specializations
 template<>
 void
-dot(int n, Ad const* x, int incx, double const* y, int incy, Ad& z) noexcept {
-// commutative
-	return blas::dot(n,y,incy,x,incx,z);
-}
-
-// specialization dot (double,complex<Ad>)
-template<>
-void
-dot(int n, double const* x, int incx, complex<Ad> const* y, int incy, complex<Ad>& z) noexcept {
-// specialization: Ad = double * complex<Ad>
-	// initialize: zero z
-	int nd = Ad::ndata();
-	double* zrd = Ad::real(z).data();
-	double* zid = Ad::imag(z).data();
-	for (int i=0; i<nd; i++) {
-		zrd[i] = 0.0;
-		zid[i] = 0.0;
-	}
-		
+axpy(int n, const complex<Ad>& a, const complex<Ad>* x, int incx,
+	complex<Ad>* y, int incy) noexcept {
+// for complex<Ad> += complex<Ad>*complex<Ad>
+	complex<Ad> ax(0.0);
 	int ix{0};
 	int iy{0};
-	for (int i=0; i<n; i++) {
-		double const* yrd = Ad::real(y[iy]).data();
-		double const* yid = Ad::imag(y[iy]).data();
-		double xi = x[ix];
-		for (int j=0; j<nd; j++) {
-			zrd[j] += xi*yrd[j];
-			zid[j] += xi*yid[j];
-		}
+   Ad wk(0.0);
+   for (int i=0; i<n; i++) {
+      Ad::multcad(a, x[ix], ax, wk);
+      y[iy] += ax;
 		ix += incx;
 		iy += incy;
-	}
-}
-#endif // NEVER // no specializations
-
-// scal (complex<Ad>,complex<Ad>)
-template<>
-void
-scal(int n, complex<Ad> const& a, complex<Ad>* x, int incx) noexcept {
-// Reduced Ad copy constructor version of mixed-mode scal
-	int nd = Ad::ndata();
-	int ix{0};
-	double const* ard = Ad::real(a).data();
-	double const* aid = Ad::imag(a).data();
-	double arv = ard[0];
-	double aiv = aid[0];
-	for (int i=0; i<n; i++) {
-		double* xrd = Ad::real(x[ix]).data();
-		double* xid = Ad::imag(x[ix]).data();
-		double xrv = xrd[0];
-		double xiv = xid[0];
-		// x[i] := a*x[i] = (ar*xr - ai*xi, ai*xr + ar*xi)
-		//    x[i].real = ar*xr - ai*xi
-		//    x[i].imag = ai*xr + ar*xi
-		// derivatives:
-		for (int j=1; j<nd; j++) {
-			xrd[j] = (arv*xrd[j] + ard[j]*xrv) - (aiv*xid[j] + aid[j]*xiv);
-			xid[j] = (aiv*xrd[j] + aid[j]*xrv) + (arv*xid[j] + ard[j]*xiv);
-		}
-		xrd[0] = arv*xrv - aiv*xiv;
-		xid[0] = aiv*xrv + arv*xiv;
-		ix += incx;
-	}
+   }
 }
 
-// axpy (complex<Ad>,complex<Ad>)
+
+// nrm2 specializations
+double
+snrm2 (int n, double const* a, int inca) { return dnrm2_(&n, a, &inca); }
+double
+scnrm2 (int n, const complex<double>* a, int inca) { return dznrm2_(&n, a, &inca); }
+
+// amax specializations
+int
+isamax(int n, const double* x, int incx) { return idamax_(&n, x, &incx); }
+int
+icamax(int n, const complex<double>* x, int incx) { return izamax_(&n, x, &incx); }
+
+// gemv specializations
 template<>
 void
-axpy(int n, complex<Ad> const& a, complex<Ad> const* x, int incx,
-		complex<Ad>* y, int incy) noexcept {
-// Reduced Ad copy constructor version of mixed-mode axpy
-	int nd = Ad::ndata();
-	int ix{0};
-	int iy{0};
-	double const* ard = Ad::real(a).data();
-	double const* aid = Ad::imag(a).data();
-	double arv = ard[0];
-	double aiv = aid[0];
-	for (int i=0; i<n; i++) {
-		double const* xrd = Ad::real(x[ix]).data();
-		double const* xid = Ad::imag(x[ix]).data();
-		double* yrd = Ad::real(y[iy]).data();
-		double* yid = Ad::imag(y[iy]).data();
-		double xrv = xrd[0];
-		double xiv = xid[0];
-		// y[i] += a*x[i] = (ar*xr - ai*xi, ai*xr + ar*xi)
-		//    y[i].real = ar*xr - ai*xi
-		//    y[i].imag = ai*xr + ar*xi
-		for (int j=1; j<nd; j++) {
-			yrd[j] += (arv*xrd[j] + ard[j]*xrv) - (aiv*xid[j] + aid[j]*xiv);
-			yid[j] += (aiv*xrd[j] + aid[j]*xrv) + (arv*xid[j] + ard[j]*xiv);
-		}
-		yrd[0] += arv*xrv - aiv*xiv;
-		yid[0] += aiv*xrv + arv*xiv;
-		ix += incx;
-		iy += incy;
-	}
+gemv(const string& trans, int m, int n, const double& alpha, const double* a,
+		int lda, const double* x, int incx, const double& beta, double *y, int incy) {
+// specialization: gemv(double) call libblas fcn
+	dgemv_ (trans.c_str(), &m, &n, &alpha, a, &lda, x, &incx, &beta, y, &incy);
 }
 
-// cgemv (complex<Ad>, complex<Ad>)
 template<>
 void
-gemv(string const& trans, int m, int n, double const& alpha, complex<Ad> const* a,
-		int lda, complex<Ad> const* x, int incx, double const& beta,
-		complex<Ad>* y, int incy) {
-// specialization: gemv(double, complex<Ad>, complex<Ad>, double, complex<Ad>)
-// XXX alpha must be 1, beta must be zero
-// Reduced Ad copy constructor version of mixed-mode gemv
-	// limited version: no transpose, alpha, beta doubles 1 & 0
+gemv(const string& trans, int m, int n, const complex<double>& alpha,
+	const complex<double>* a, int lda,
+	const complex<double>* x, int incx,
+	const complex<double>& beta, complex<double>* y, int incy) {
+// specialization: gemv(complex<double>) call libblas fcn
+	zgemv_ (trans.c_str(), &m, &n, &alpha, a, &lda, x, &incx, &beta, y, &incy);
+}
+
+template<>
+void
+gemv(const string& trans, int m, int n, const double& alpha,
+	const complex<Ad>* a, int lda, const complex<Ad>* x, int incx,
+	const double& beta, complex<Ad>* y, int incy) {
+// specialization for flut: alpha=1, beta=0, complex<Ad>
 	if (trans != "n" && trans != "N")
-		flaps::error ("blas::gemv: transpose not implemented");
-		// throw runtime_error("blas::gemv: transpose not implemented");
+		throw std::runtime_error("transpose not implemented in blas::gemv");
 	if (alpha != 1.0 || beta != 0.0)
-		flaps::error ("blas::gemv: alpha!=1, beta!=0 not implemented");
-		// throw runtime_error("blas::gemv: alpha!=1, beta!=0 not implemented");
+		throw std::runtime_error("special gemv only for alpha=1, beta=0");
 
-	int nd = Ad::ndata();
-	int iy{0};
-	for (int i=0; i<m; i++) {
-		double* yrd = Ad::real(y[iy]).data();
-		double* yid = Ad::imag(y[iy]).data();
-		// initialize y[i]
-		for (int k=0; k<nd; k++) {
-			yrd[k] = 0.0;
-			yid[k] = 0.0;
-		}
-		int ix{0};
-		for (int j=0; j<n; j++) {
-			double const* ard = Ad::real(a[i+j*lda]).data();
-			double const* aid = Ad::imag(a[i+j*lda]).data();
-			double arv = ard[0];
-			double aiv = aid[0];
-			double const* xrd = Ad::real(x[ix]).data();
-			double const* xid = Ad::imag(x[ix]).data();
-			double xrv = xrd[0];
-			double xiv = xid[0];
-			// y[i] += a[i,j]*x[j] = (ar*xr - ai*xi, ai*xr + ar*xi)
-			//    y[i].real = ar*xr - ai*xi
-			//    y[i].imag = ai*xr + ar*xi
-			// derivatives:
-			for (int k=1; k<nd; k++) {
-				yrd[k] += (arv*xrd[k] + ard[k]*xrv) - (aiv*xid[k] + aid[k]*xiv);
-				yid[k] += (aiv*xrd[k] + aid[k]*xrv) + (arv*xid[k] + ard[k]*xiv);
-			}
-			// values:
-			yrd[0] += arv*xrv - aiv*xiv;
-			yid[0] += aiv*xrv + arv*xiv;
-			ix += incx;
-		}
-		iy += incy;
-	}
+	const complex<Ad>* ap = a; // column pointer
+	int jx{0};
+   for (int j=0; j<n; j++) {
+      blas::axpy(m, x[jx], ap, 1, y, incy);
+      ap += lda;
+		jx += incx;
+   }
 }
 
-// sgemv (double,Ad)
+// gemm double specialization: call libblas version (allows transposed matrices)
 template<>
 void
-gemv(string const& trans, int m, int n, double const& alpha, double const* a,
-		int lda, Ad const* x, int incx, double const& beta, Ad* y, int incy) {
-// zero Ad copy constructor version of mixed-mode gemv
-//   y = alpha*A*x + beta*y
-// A: (m,n) double in a (lda,n) array
-// x: (n) Ad
-// y: (m) Ad
-	// limited version: no transpose, alpha, beta doubles 1 & 0
-	if (trans != "n" && trans != "N")
-		flaps::error ("blas::gemv: transpose not implemented");
-		// throw runtime_error("blas::gemv: transpose not implemented");
-	if (alpha != 1.0 || beta != 0.0)
-		flaps::error("blas::gemv: alpha!=1, beta!=0 not implemented");
-		// throw runtime_error("blas::gemv: alpha!=1, beta!=0 not implemented");
+gemm(std::string const& transa, std::string const& transb, int m, int n, int p,
+	double const& alpha, double const* a, int lda,
+		double const* b, int ldb, double const& beta, double* c, int ldc) {
+	dgemm_(transa.c_str(), transb.c_str(), &m, &n, &p, &alpha, a, &lda, b, &ldb,
+			&beta, c, &ldc);
+}
 
-	int nd = Ad::ndata();
-	int iy{0};
-	for (int i=0; i<m; i++) {
-		double* yd = y[iy].data();
-		// initialize y[i]
-		for (int k=0; k<nd; k++)
-			yd[k] = 0.0;
-
-		int ix{0};
-		for (int j=0; j<n; j++) {
-			double aij = a[i+j*lda];
-			double const* xd = x[ix].data();
-			// y[i] += a[i,j]*x[j]
-			for (int k=0; k<nd; k++)
-				yd[k] += aij*xd[k];
-			ix += incx;
-		}
-		iy += incy;
-	}
+// gemm complex<double> specialization: call libblas version (allows transposed matrices)
+template<>
+void
+gemm(std::string const& transa, std::string const& transb, int m, int n, int p,
+	std::complex<double> const& alpha, std::complex<double> const* a, int lda,
+		std::complex<double> const* b, int ldb, std::complex<double> const& beta,
+		std::complex<double>* c, int ldc) {
+	zgemm_(transa.c_str(), transb.c_str(), &m, &n, &p, &alpha, a, &lda, b, &ldb,
+			&beta, c, &ldc);
 }
 
 void
@@ -359,6 +183,8 @@ real_rep (int m, int n, complex<double>* c, int ldc, double* r, int ldr) {
 
 #ifdef MAIN
 #undef MAIN
+
+#include "Ad.h"
 #include "tyme.h"
 
 void
@@ -367,35 +193,36 @@ init() {
 	// set nder parameter names as Ad parameters, then
 	// Ad constructors will use the number of parameters
 	// to allocate space for derivatives
+	T_(Trace trc(0,"init");)
 	vector<string> mypar;
 	for (int i=0; i<nder; i++) {
 		mypar.push_back(vastr("par", i+1));
 	}
 	Ad::initialize(mypar);
-	cerr << Ad::nder() << " automatic differentiation parameters: "
-		<< Ad::toString() << endl;
+	trc.dprint(Ad::nder(), " automatic differentiation parameters: ",
+		Ad::toString());
 }
 
 void
 test_dot(int n) {
-	Trace trc(1,"test_dot");
+	T_(Trace trc(0,"test_dot");)
 
 	vector<complex<Ad>> x(n);
 	vector<complex<Ad>> y(n);
 	Ad xv{2.0};
-	xv.deriv(0,1.0);
-	xv.deriv(1,0.0);
+	xv.der(0,1.0);
+	xv.der(1,0.0);
 	Ad yv{2.0};
-	yv.deriv(0,1.0);
-	yv.deriv(1,0.0);
+	yv.der(0,1.0);
+	yv.der(1,0.0);
 	complex<Ad> cxv{xv, xv};
 	complex<Ad> cyv{yv, yv};
 	for (int i=0; i<n; i++) {
 		x[i] = cxv;
 		y[i] = cyv;
 	}
-	trc.dprint("testing blas::dot(complex<Ad>) with x = ", x);
-	trc.dprint("testing blas::dot(complex<Ad>) with y = ", y);
+	T_(trc.dprint("testing blas::dot(complex<Ad>) with x = ", x);)
+	T_(trc.dprint("testing blas::dot(complex<Ad>) with y = ", y);)
 
 	complex<Ad> result;
 	{
@@ -403,45 +230,79 @@ test_dot(int n) {
 		blas::dot(n, &x[0], 1, &y[0], 1, result);
 		cerr << "blas::dot result: " << result << endl;
 	}
-
-	{
-		Tyme t("blas_dot");
-		blas_dot(n, &x[0], 1, &y[0], 1, result);
-		cerr << "blas_dot result: " << result << endl;
-	}
 }
 
 void
 test_axpy(int n) {
+	T_(Trace trc(0,"test_axpy");)
 
 	vector<complex<Ad>> x(n);
 	vector<complex<Ad>> y(n);
 	complex<Ad> a{Ad(2.0)};
-	Ad::real(a).deriv(0,1.0);	// a is par1
-	Ad::real(a).deriv(1,0.0);
+	Ad::real(a).der(0,1.0);	// a is par1
+	Ad::real(a).der(1,0.0);
 	complex<Ad> p{Ad(3.0), Ad(4.0)};
 	for (int i=0; i<n; i++) {
 		x[i] = p;
 	}
-	cerr << "testing blas::axpy(complex<Ad>) with a = " << a << endl;
-	cerr << " x = " << x << endl;
-	cerr << " y = " << y << endl;
+	T_(trc.dprint("testing blas::axpy(complex<Ad>) with a = ", a);)
+	T_(trc.dprint(" x = ", x);)
+	T_(trc.dprint(" y = ", y);)
 
 	blas::axpy(n, a, &x[0], 1, &y[0], 1);
-	cerr << "result: " << y << endl;
+	T_(trc.dprint("result: ", y);)
 
 	complex<Ad> zero{Ad(0.0)};
 	for (int i=0; i<n; i++)
 		y[i] = zero;
-	blas_axpy(n, a, &x[0], 1, &y[0], 1);
-	cerr << "blas_axpy result: " << y << endl;
+	blas::axpy(n, a, &x[0], 1, &y[0], 1);
+	T_(trc.dprint("blas::axpy result: ", y);)
+}
+
+void
+test_gemv(int n) {
+	T_(Trace trc(0,"test_gemv");)
+
+	vector<complex<Ad>> x(n);
+	vector<complex<Ad>> y(n);
+	vector<complex<Ad>> A(n*n);
+	for (int i=0; i<n; i++)
+		A[i+n*i] = 1.0;
+	complex<Ad> alpha{Ad(2.0)};
+	Ad::real(alpha).der(0,1.0);	// a is par1
+	Ad::real(alpha).der(1,0.0);
+	complex<Ad> p{Ad(3.0), Ad(4.0)};
+	for (int i=0; i<n; i++) {
+		x[i] = p;
+	}
+	double beta{3.0};
+
+	T_(trc.dprint("testing blas::gemv(complex<Ad>) with A = ", A);)
+	T_(trc.dprint(" alpha = ",alpha);)
+	T_(trc.dprint(" x = ", x);)
+	T_(trc.dprint(" beta = ",beta);)
+	T_(trc.dprint(" y = ", y);)
+
+	// save y for gemvx
+	vector<complex<Ad>> ys = y;
+
+	blas::gemv("n", n, n, alpha, A.data(), n, &x[0], 1, beta, &y[0], 1);
+	T_(trc.dprint("gemv: ", y);)
+
+	// re-do with gemvx
+	blas::gemv("n", n, n, alpha, A.data(), n, &x[0], 1, beta, &ys[0], 1);
+	T_(trc.dprint("gemvx: ", ys);)
 }
 
 int
 main(int argc, char** argv) {
-	Trace trc(1,"blas testing");
+	char* dbg = getenv("DEBUG");
+	if (dbg != nullptr) Trace::debug(std::stoi(dbg));
+	T_(Trace trc(0,"blas testing");)
+	// what to test:
 	bool axpy{false};
-	bool dot{true};
+	bool dot{false};
+	bool gemv{true};
 
 	int n{3};	// default n
 	if (argc > 1)
@@ -455,5 +316,8 @@ main(int argc, char** argv) {
 
 	if (dot)
 		test_dot(n);
+
+	if (gemv)
+		test_gemv(n);
 }
 #endif // MAIN

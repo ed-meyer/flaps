@@ -55,7 +55,7 @@ main(int argc, char** argv) {
 
 int
 dofile (const string& filename, bool sysh) {
-	Trace trc(1,"dofile ",filename);
+	T_(Trace trc(1,"dofile ",filename);)
 	int rval{0};
 	vector<string> lines;
 	string line;
@@ -63,7 +63,7 @@ dofile (const string& filename, bool sysh) {
 	ifstream ifs(filename);
 	if (!ifs) {
 		os << filename << " is not available";
-		trc.dprint("throwing exception: ",os.str());
+		T_(trc.dprint("throwing exception: ",os.str());)
 		throw runtime_error(os.str());
 	}
 	// read the file, put each line into lines
@@ -73,21 +73,21 @@ dofile (const string& filename, bool sysh) {
 			lines.push_back(line);
 	}
 	ifs.close();
-	trc.dprint("read ",lines.size(),"-line file");
-	trc.dprint("last line: \"",lines[lines.size()-1],"\"");
+	T_(trc.dprint("read ",lines.size(),"-line file");)
+	T_(trc.dprint("last line: \"",lines[lines.size()-1],"\"");)
 
 	// the make command
 	os.str("");
 	os << "make " << filename;
 	string make(os.str());
 	make[make.size()-1] = 'o';
-	trc.dprint("compiling with \"",make,"\"");
+	T_(trc.dprint("compiling with \"",make,"\"");)
 	// rm .o command
 	os.str("");
 	os << "rm -f " << filename;
 	string rmo(os.str());
 	rmo[rmo.size()-1] = 'o';
-	trc.dprint("rm .o file with \"",rmo,"\"");
+	T_(trc.dprint("rm .o file with \"",rmo,"\"");)
 
 	// regex re("#include [<\"]\([^\">]*\)[\">]");
 	//	re = regex(R"(#include[ \t]*[<\"]([^\">]*)[\">])");
@@ -109,7 +109,7 @@ dofile (const string& filename, bool sysh) {
 			smatch mch;
 			if (hfile.empty() && i >= k && regex_match(lines[i], mch, re)) {
 				hfile = mch[1];
-				trc.dprint("got include file ",hfile);
+				T_(trc.dprint("got include file ",hfile);)
 				k = i+1;
 				lineno = i;
 				goth = true;
@@ -121,16 +121,16 @@ dofile (const string& filename, bool sysh) {
 			break;
 		system(rmo.c_str());
 		int stat = system (make.c_str());
-		trc.dprint("make returned ",stat);
+		T_(trc.dprint("make returned ",stat);)
 		if (stat == 0) {
 			os.str("");
 			// compilation successful: comment out this include
 			lines[lineno] = os.str();
 			rval++;
-			trc.dprint(hfile," unused: replace line: ",lines[lineno]);
+			T_(trc.dprint(hfile," unused: replace line: ",lines[lineno]);)
 		}
 	}
-	trc.dprint(rval," unused include files");
+	T_(trc.dprint(rval," unused include files");)
 	return rval;
 }
 

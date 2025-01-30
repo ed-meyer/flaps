@@ -19,6 +19,7 @@
 #include "matrix.h"
 #include "settings.h"
 #include "specs.h"
+#include "trace.h"
 
 
 using namespace std;
@@ -77,7 +78,7 @@ parser () {
 //    6) plotting
 //    7) parameter definitions
 //------------------------------------------------------------------
-	Trace trc(1,"parser");
+	T_(Trace trc(1,"parser");)
 	Specs& sp = specs();
 	
 	// 1) get the units=uscs option first, reading all prefs from cin
@@ -175,7 +176,7 @@ parser () {
 		throw runtime_error(exc);
 	}
 
-	trc.dprint("returning ",rval->summary());
+	T_(trc.dprint("returning ",rval->summary());)
 	return rval;
 }
 
@@ -294,14 +295,14 @@ code_f (const Tok& opt, Matrix*& output_matrix,
  *       sizestr:   (string) name of a matrix which is the same size
  *                  as what the code expects
  */
-	Trace trc(1,"code_f");
+	T_(Trace trc(1,"code_f");)
 	ostringstream os;
 
 	if (opt.svec.empty())
 		throw runtime_error(vastr("option (",opt,") has no rhs"));
 
 	string filename = opt.svec[0];
-	trc.dprint("CustomPz code is in ",filename);
+	T_(trc.dprint("CustomPz code is in ",filename);)
 
 	// check the rhs options for "extra" and "size"
 	// The actual size of the output matrix is size+extra
@@ -371,7 +372,7 @@ vector<Matrix*>
 get_input(vector<tuple<string,string>>& input) {
 // Fetch input matrices and add Pz_const if the second of the tuple
 // is a set of param values
-	Trace trc(1,"get_input");
+	T_(Trace trc(1,"get_input");)
 	vector<Matrix*> rval;
 	for (auto& in : input) {
 		vector<Matrix*> mps = Matrix::fetch(get<0>(in));
@@ -388,7 +389,7 @@ get_input(vector<tuple<string,string>>& input) {
 		Matrix::insert(mp);
 
 	flaps::info ("Input matrix(s):\n", Matrix::inventory());
-	trc.dprint("now have input matrix list:\n",Matrix::inventory());
+	T_(trc.dprint("now have input matrix list:\n",Matrix::inventory());)
 
 	return rval;
 }
@@ -408,7 +409,7 @@ change_units(vector<Matrix*>& matrices, vector<double>& betas) {
 // or divided by 6894.757291467.
 // Reduced frequencies are scaled by 1/0.0254 m/in
 // Betas are also scaled by 1/0.0254 if not empty
-	Trace trc(1,"change_units");
+	T_(Trace trc(1,"change_units");)
 	double scale{1.45037737766e-4};
 	double rfscale = 1.0/0.0254;
 
@@ -432,11 +433,11 @@ change_units(vector<Matrix*>& matrices, vector<double>& betas) {
 					" is not a function of rf"));
 		// scale the matrix by 1.45037737766(-4)
 		vector<double>& mdata = mp->data();
-		blas_scal(mdata.size(), scale, &mdata[0], 1);
+		blas::scal(mdata.size(), scale, &mdata[0], 1);
 	}
 	// scale betas
 	if (!betas.empty())
-		blas_scal(betas.size(), 1.0/0.0254, betas.data(), 1);
+		blas::scal(betas.size(), 1.0/0.0254, betas.data(), 1);
 
 	flaps::info("units have been changed from USCS to SI: scaled by ",scale,
 			" (divided by 6894.757291467),");
@@ -492,7 +493,7 @@ plot_f (const Tok& opt, Matrix* output_matrix) {
 //   plot{..., indep=parname}
 // hold "parname" constant:
 //   plot{..., fixed=parname}
-	Trace trc(1,"plot_f");
+	T_(Trace trc(1,"plot_f");)
 	size_t i, j;
 	vector<int> rows, cols;
 	vector<Elem> elements;
@@ -579,7 +580,7 @@ plot_f (const Tok& opt, Matrix* output_matrix) {
 		}
 	}
 
-	trc.dprint("got ",elements.size()," plot elements");
+	T_(trc.dprint("got ",elements.size()," plot elements");)
 
 	// do the plotting
 	sp.output_matrix->plot(altpl, elements, indep_par, fixed_par, nstep);
@@ -622,7 +623,7 @@ param_f (const Tok& opt) {
 // Handle any options not yet recognized: the only legal possibility
 // is a parameter definition
 //------------------------------------------------------------------
-	Trace trc(1,"param_f");
+	T_(Trace trc(1,"param_f");)
 	ostringstream os;
 
 	Par* param{nullptr};
@@ -637,7 +638,7 @@ param_f (const Tok& opt) {
 			param = new Par(opt.lhs, {opt.srhs});
 		}
 	} catch (runtime_error& s) {
-		trc.dprint("not a parameter: return false");
+		T_(trc.dprint("not a parameter: return false");)
 		return false;
 	}
 	param->pref = true;
@@ -666,7 +667,7 @@ get_params (Matrix* mp, string const& options) {
  * The legal options for a matrix are:
  *  par=val    value of a parameter to be associated with this matrix
  *------------------------------------------------------------------*/
-	Trace trc(1,"get_params ", options);
+	T_(Trace trc(1,"get_params ", options);)
 	ostringstream os;
 
 	if (options.empty()) {
@@ -696,7 +697,7 @@ get_params (Matrix* mp, string const& options) {
 	//! Pz_const* op = new Pz_const(pnames, pvals, nr, nc);
 	Pz_const* op = new Pz_const(params, nr, nc);
 	mp->pz.push_back(op);
-	trc.dprint("added Pz_const to ",mp);
+	T_(trc.dprint("added Pz_const to ",mp);)
 	return;
 }
 

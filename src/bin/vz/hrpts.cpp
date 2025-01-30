@@ -33,10 +33,10 @@ hrpts (int first, int last, int n, const double* accels) {
 //    accels[first] is a peak
 //    first, last are 0-based
 //    last is < n-1
-	Trace trc(0,"hrpts");
+	T_(Trace trc(0,"hrpts");)
 	vector<int> rval;
 
-	trc.dprint("first ",first,", last ",last," ",n," accels");
+	T_(trc.dprint("first ",first,", last ",last," ",n," accels");)
 
 	if (first < 0) {
 		string exc{vastr("hr first point < 0: ",first)};
@@ -50,11 +50,11 @@ hrpts (int first, int last, int n, const double* accels) {
 	// sps is the average samples per stride: use it as a starting
 	// guess for where the end of the first stride is
 	int sps = samples_per_stride(first, last, accels);
-	trc.dprint("initial samples per stride = ",sps);
+	T_(trc.dprint("initial samples per stride = ",sps);)
 
 	// double t{times[first]};
 	// double tlast{times[last]};
-	// trc.dprint("time interval: ",t,':',tlast);
+	// T_(trc.dprint("time interval: ",t,':',tlast);)
 
 	double big{std::numeric_limits<double>::max()};
 
@@ -70,12 +70,12 @@ hrpts (int first, int last, int n, const double* accels) {
 			idx2 = n-1;   // ie last accel
 		vector<int> cand;
 		if (idx1 >= last) {
-			trc.dprint("quitting: idx1 > last");
+			T_(trc.dprint("quitting: idx1 > last");)
 			break;
 		}
 		// get possible peaks in the interval; watch out for consecutive
 		// points equal
-		trc.dprint("search for peak in ",idx1,':',idx2);
+		T_(trc.dprint("search for peak in ",idx1,':',idx2);)
 		for (int i=idx1+1; i<idx2; i++) {
 			double a1 = accels[i-1];
 			double a = accels[i];
@@ -85,7 +85,7 @@ hrpts (int first, int last, int n, const double* accels) {
 				for (int j=i-2; j>=0; j--) {
 					a1 = accels[j];
 					if (a1 != a) {
-						trc.dprint("moved index back from ",i-1," to ",j);
+						T_(trc.dprint("moved index back from ",i-1," to ",j);)
 						break;
 					}
 				}
@@ -95,12 +95,12 @@ hrpts (int first, int last, int n, const double* accels) {
 					a2 = accels[j];
 					if (a2 != a) {
 						skip = j - (i+1);
-						trc.dprint("moved index ahead from ",i+1," to ",j," skipping ",skip);
+						T_(trc.dprint("moved index ahead from ",i+1," to ",j," skipping ",skip);)
 						break;
 					}
 				}
 			}
-			trc.dprint(a1," < ",a," > ",a2);
+			T_(trc.dprint(a1," < ",a," > ",a2);)
 			if (a1 < a && a2 < a) {
 				cand.push_back(i);
 			}
@@ -108,7 +108,7 @@ hrpts (int first, int last, int n, const double* accels) {
 		}
 		if (cand.empty()) {
 			// rval.clear();
-			trc.dprintv(rval,"no candidate peaks found, returning ");
+			T_(trc.dprintv(rval,"no candidate peaks found, returning ");)
 			return rval;
 		}
 		// the largest peak is the end of the stride
@@ -121,15 +121,15 @@ hrpts (int first, int last, int n, const double* accels) {
 			}
 		}
 		rval.push_back(end);
-		trc.dprint("added ",end," to rval");
+		T_(trc.dprint("added ",end," to rval");)
 		// new sps...
 		sps = end - begin;
-		trc.dprint("new samples per stride = ",sps);
+		T_(trc.dprint("new samples per stride = ",sps);)
 		// ... and the start of the next stride
 		begin = end;
 	}
 	
-	trc.dprintv(rval, "returning");
+	T_(trc.dprintv(rval, "returning");)
 	return rval;
 }
 
@@ -137,7 +137,7 @@ double
 samples_per_stride(int first, int last, const double* accels) {
 // Compute the average number of samples per stride over the
 // interval between samples "first" and "last"
-	Trace trc(0,"samples_per_stride");
+	T_(Trace trc(0,"samples_per_stride");)
 	int n = last - first + 1;
 
 	double* in = (double*)fftw_malloc(n*sizeof(double));
@@ -149,7 +149,7 @@ samples_per_stride(int first, int last, const double* accels) {
 	int nc = n/2 + 1;
 	if (n%2 == 1)
 		nc++;
-	trc.dprint(n," points, ",nc," complex coef");
+	T_(trc.dprint(n," points, ",nc," complex coef");)
 
 	fftw_complex* out = (fftw_complex*)fftw_malloc(nc*sizeof(fftw_complex));
 	// vector<complex<double> > out(nc, complex<double>(0.0));
@@ -162,13 +162,13 @@ samples_per_stride(int first, int last, const double* accels) {
 	int imax{0};
 	for (int i=1; i<nc-1; i++) {
 		double absi = out[i][0]*out[i][0] + out[i][1]*out[i][1];
-		trc.dprint("coef ",i," = ",absi);
+		T_(trc.dprint("coef ",i," = ",absi);)
 		if (absi > cmax) {
 			cmax = absi;
 			imax = i;
 		}
 	}
-	trc.dprint("largest coef = ",cmax,", no. ",imax);
+	T_(trc.dprint("largest coef = ",cmax,", no. ",imax);)
 	// The motion is assumed to be biphasic so the number of strides
 	// is imax/2; imax may be odd in which case the number of strides
 	// is (imax-1)/2 + 0.5.
@@ -176,7 +176,7 @@ samples_per_stride(int first, int last, const double* accels) {
 
 	// samples per stride (average) is the total number of samples/nstride
 	int rval = (int)(double(n)/nstride);
-	trc.dprint(nstride, " strides, samples per stride = ",rval);
+	T_(trc.dprint(nstride, " strides, samples per stride = ",rval);)
 
 	// cleanup
 	fftw_destroy_plan(p);

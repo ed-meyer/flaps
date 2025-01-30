@@ -32,7 +32,7 @@ bool
 AmvizApp::
 OnInit() {
 // this OnInit will only be executed if AmvizApp is IMPLEMENT_APPed
-	Trace trc(1,"AmvizApp::OnInit");
+	T_(Trace trc(1,"AmvizApp::OnInit");)
 	// amviz_run creates the AmvizFrame then runs animate in a thread
 	amviz_run();
 	return true;
@@ -55,7 +55,7 @@ main(int argc, char** argv) {
 //!! #endif // NEVER // not needed if main.h included
 //!! feclearexcept(FE_DIVBYZERO|FE_OVERFLOW);	// turn off fp exceptions
 	// Trace::logfile("amviz.err");
-	Trace trc(1,"amviz main");
+	T_(Trace trc(1,"amviz main");)
 	// this will not create a new ftmp if FTMP is in the environment and
 	// the file exists and is accessible; it should not go inside the try{}
 	// space or it will get deleted prematurely

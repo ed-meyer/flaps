@@ -19,6 +19,7 @@
 #include "matrix.h"
 #include "message.h"
 #include "settings.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -30,14 +31,14 @@ static void doexp (const string& filename, vector<string>& matrices,
 //-------------------------------------------------------------------
 bool
 exporter (string const& options) {
-	Trace trc(2,"exporter");
+	T_(Trace trc(2,"exporter");)
 	string filename;
 	bool append{false};
 	string vzid;
 	vector<string> matrices;
 	vector<Par*> params;
 
-	trc.dprint("options: \"",options,"\"");
+	T_(trc.dprint("options: \"",options,"\"");)
 
 	// lambdas for Parsers
 	vector<Tok*> unrec = flaps::lexer(options, {
@@ -72,14 +73,14 @@ exporter (string const& options) {
 		throw runtime_error("no output file given");
 
 	// any parameters spec'd?
-	trc.dprint(params.size()," parameters specified");
+	T_(trc.dprint(params.size()," parameters specified");)
 	if (!params.empty()) {
 		pset& gp = gpset::get();
 		for (auto pp : params) {
 			Par* exist = gp.findp(pp->name);
 			if (exist != nullptr) {
 				exist->value(pp->value());
-				trc.dprint("set ",exist->name," to ",exist->value());
+				T_(trc.dprint("set ",exist->name," to ",exist->value());)
 			} else {
 				gp.add(pp);
 				flaps::info("added new parameter: ",*pp);
@@ -102,9 +103,9 @@ void
 evaluate(vector<Matrix*> ml) {
 // evaluate all matrices in "ml", putting the evaluated matrix into
 // the Matrix.data_ array. Use gpset as the pset
-	Trace trc(2,"evaluate");
+	T_(Trace trc(2,"evaluate");)
 	for (auto mp : ml) {
-		trc.dprint("working on ",mp->mid());
+		T_(trc.dprint("working on ",mp->mid());)
 		if (mp->pz.empty())
 			continue;
 		int nr = mp->rsize();
@@ -118,14 +119,14 @@ evaluate(vector<Matrix*> ml) {
 				double im = imag(result[i]).value();
 				cp[i] = complex(re,im);
 			}
-			trc.dprintm(nr,nc,nr,cp,mp->mid());
+			T_(trc.dprintm(nr,nc,nr,cp,mp->mid());)
 		} else {
 			double* rp = mp->elem();
 			for (int i=0; i<nr*nc; i++) {
 				double re = real(result[i]).value();
 				rp[i] = re;
 			}
-			trc.dprintm(nr,nc,nr,rp,mp->mid());
+			T_(trc.dprintm(nr,nc,nr,rp,mp->mid());)
 		}
 	}
 }

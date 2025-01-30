@@ -66,7 +66,6 @@ public:
 	Ad (Ad&& from) noexcept {
 		data_ = from.data_;
 		from.data_ = nullptr;
-		//!! std::copy_n (from.data_, Ad::ndata(), data_);
 	}
 	// assignment operator
 	Ad& operator=(Ad const& rhs) {
@@ -76,7 +75,6 @@ public:
 	// move assignment operator
 	Ad& operator=(Ad&& rhs) noexcept {
 		std::swap (data_, rhs.data_);
-		//!! std::copy_n (rhs.data_, Ad::ndata(), data_);
 		return *this;
 	}
 
@@ -91,6 +89,7 @@ public:
 	// value: return or set just the value, not derivatives
 	double value() const { return this->data_[0]; }
 	void value(double v) { data_[0] = v; }
+
 	// reference to the real or imag parts - not avail in std::complex
 	// cplusplus.github.io/LWG/issue 387: complex over-encapsulated
 	// XXX do this also for complex<double>?
@@ -113,8 +112,8 @@ public:
 	void zero() { std::fill_n(data_, Ad::ndata(), 0.0); }
 
 	// get/set derivative "der" 0b
-	double deriv(int der) const; // { return data_[der+1]; }
-	void deriv(int der, double v); // { data_[der+1] = v; }
+	double der(int d) const; // { return data_[der+1]; }
+	void der(int d, double v); // { data_[der+1] = v; }
 
 	// get a pointer to an Ad data array: 1 + nder doubles
 	double* data() { return data_; }
@@ -125,7 +124,7 @@ public:
 
 	// Assignment
 	Ad& operator=(double rhs) {
-		for (size_t i=0; i<Ad::ndata(); i++)
+		for (int i=0; i<Ad::ndata(); i++)
 			data_[i] = 0.0;
 		data_[0] = rhs;
 		return *this;
@@ -135,7 +134,7 @@ public:
 	// arithmetic assignment operators
 	// addition
 	inline Ad& operator+= (const Ad& rhs) {
-		for (size_t i=0; i<Ad::ndata(); i++)
+		for (int i=0; i<Ad::ndata(); i++)
 			data_[i] += rhs.data_[i];
 		return *this;
 	}
@@ -146,7 +145,7 @@ public:
 
 	// subtraction
 	inline Ad& operator-= (const Ad& rhs) {
-		for (size_t i=0; i<Ad::ndata(); i++)
+		for (int i=0; i<Ad::ndata(); i++)
 			data_[i] -= rhs.data_[i];
 		return *this;
 	}
@@ -159,15 +158,15 @@ public:
 	inline Ad& operator*= (const Ad& rhs) {
 		double a{data_[0]};
 		double b{rhs.data_[0]};
-		for (size_t i=1; i<Ad::ndata(); i++)
+		for (int i=1; i<Ad::ndata(); i++)
 			data_[i] *= b;
-		for (size_t i=1; i<Ad::ndata(); i++)
+		for (int i=1; i<Ad::ndata(); i++)
 			data_[i] += a*rhs.data_[i];
 		data_[0] = a*b;
 		return *this;
 	}
 	inline Ad& operator*= (double rhs) {
-		for (size_t i=0; i<Ad::ndata(); i++)
+		for (int i=0; i<Ad::ndata(); i++)
 			data_[i] *= rhs;
 		return *this;
 	}
@@ -178,13 +177,13 @@ public:
 		double a2 = a.data_[0];
 		double r = this->data_[0]/a2;
 		this->data_[0] = r;
-		for (size_t i=1; i<Ad::ndata(); i++)
+		for (int i=1; i<Ad::ndata(); i++)
 			this->data_[i] = (this->data_[i] - r*a.data_[i])/a2;
 		return *this;
 	}
 
 	inline Ad& operator/=(double a) {
-		for (size_t i=0; i<Ad::ndata(); i++)
+		for (int i=0; i<Ad::ndata(); i++)
 			this->data_[i] /= a;
 		return *this;
 	}
@@ -232,7 +231,7 @@ public:
 	operator-() const {
 		Ad rval(*this);
 		double* rp = rval.data();
-		for (size_t i=0; i<Ad::ndata(); i++)
+		for (int i=0; i<Ad::ndata(); i++)
 			rp[i] = -rp[i];
 		return rval;
 	}
@@ -241,11 +240,12 @@ public:
 	// used as autodiff derivatives and it may be called only once
 	// It will also reallocate the Ad members of each parameter in the
 	// stdpl, and set parameter derivatives to 1 in the Ad member.
+	static bool initialize_called;
 	static void initialize(const std::vector<std::string>& names);
 
-	static size_t nder();
+	static int nder();
 
-	static size_t ndata();
+	static int ndata();
 
 	// returns a const reference to the vector of AD parameter names
 	static std::vector<std::string> const& adnames();
@@ -256,9 +256,32 @@ public:
 	static int find(std::string const& name);
 
 	static std::string live();
-	static size_t nlive();
+	static int nlive();
+
+	// multiplication c = a*b for Ad and complex<Ad>
+   static void multad (const Ad& a, const Ad& b, Ad& c);
+   static void multcad(const std::complex<Ad>& a, const std::complex<Ad>& b,
+         std::complex<Ad>& c, Ad& wk);
 
 }; // class Ad ------------------------------------------------------------------
+
+// Specializations for complex<Ad> to get around the stdlib real() and
+// imag() member fcns which return an Ad value instead of a reference
+// implementations in Ad.cpp
+template<>
+template<>
+std::complex<Ad>::
+complex<Ad>(const std::complex<Ad>& z);
+
+template<>
+template<>
+std::complex<Ad>&
+std::complex<Ad>::operator*=(const std::complex<Ad>& rhs);
+
+template<>
+template<>
+std::complex<Ad>&
+std::complex<Ad>::operator+=(const std::complex<Ad>& rhs);
 
 
 // Non-member functions
