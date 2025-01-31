@@ -17,6 +17,7 @@
 
 
 #include "config.h"
+#include "trace.h"
 #include "xgout.h"
 
 #define HEIGHT	792

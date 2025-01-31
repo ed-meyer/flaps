@@ -16,6 +16,7 @@
 #include "plotcurve.h"
 #include "settings.h"
 #include "specs.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -100,7 +101,6 @@ Plotcurve(Curve* curve, const string& yname) : Curve(*curve) {
 		if (pp->has_conv()) {
 			double fac = pp->conv.factor;
 			if (fac != 1.0) {
-				// blas_scal(nv, fac, &pp->solns[0], 1);
 				for (auto& ap : pp->solns)
 					ap *= fac;
 				pp->conv = {};

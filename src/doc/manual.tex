@@ -227,7 +227,7 @@
 \Huge{Flaps Users' Manual}
 
 \vspace{1cm}
-\large{Version \input{Version}}
+\large{Version \input{../../Version}}
 
 \vspace{1cm}
 \Large{Edward E. Meyer}
@@ -7768,10 +7768,11 @@ I feel confident that it is the most appropriate and versatile method available.
 
 \subsection{Thesis}
 Computing flutter on the Darrieus wind turbine using the traditional
-V-g formulation (aka k-method) showed some strange behavior, probably
-due to the gyroscopics; that and the need to connect the dots led me
-to implement a continuation method so that I could try the p-k
-method \cite{hassig1971approximate} (aka British method).
+V-g formulation \footnote{I prefer call it a \emph{formulation} rather than a method;
+various methods can be used to solve the formulation}(also known as the k-method or
+American method) showed some strange behavior, probably due to the gyroscopics;
+that and the need to connect the dots led me to implement a continuation method so
+that I could try the p-k method \cite{hassig1971approximate} (also known as the British method).
 The p-k formulation proved to be
 much more realistic, without mode switching which I saw with V-g.
 In addition to these advantages I realized I could use the same code
@@ -7795,15 +7796,15 @@ analyses including finite-element modeling, stress, vibration, dynamic loads,
 and flutter. There was not much to maintain in the flutter code since it
 had few capabilities, mainly the solution of a complex eigenvalue problem,
 the result of a V-g formulation of the flutter equation.
-A V-g formulation assumes that adding structural damping is a close
-approximation to the true damping so that the problem becomes an
-eigenvalue problem, which has robust solution techniques;
+A V-g formulation (also known as the k-method or American method) assumes that
+adding small amounts of structural damping is a close approximation to the true damping so that the
+problem becomes an eigenvalue problem, which has robust solution techniques;
 unfortunately there is no reliable way to connect solutions so the
-engineer was reduced to manually ``connecting the dots''.
+engineer was reduced to manually ``connecting the dots''. Also this formulation can
+give unrealistic behavior at larger values of damping, as I discovered when writing
+my thesis.
 
-% The program would compute frequency and structural damping at a given
-% set of reduced frequencies and the engineer would connect the dots by hand.
-I was asked to develop the p-k flutter solution in ATLAS, which
+I was asked to implement the so-called p-k (or British) method in ATLAS, which
 gives the same flutter points but more accurate damping away from flutter.
 The only published p-k solution method at the time was to formulate
 the problem as a nonlinear eigenvalue problem and compute eigenvalues

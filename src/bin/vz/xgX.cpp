@@ -23,6 +23,7 @@
 #include "config.h"
 #include "message.h"
 #include "params.h"
+#include "trace.h"
 
 using namespace std;
 

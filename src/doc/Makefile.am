@@ -29,7 +29,7 @@ flaps.bib \
 manual.tex
 
 manual.pdf:	manual.tex
-#	cd figures && make
+	cd figures && make
 	pdflatex manual.tex
 	bibtex manual
 	makeindex manual.idx

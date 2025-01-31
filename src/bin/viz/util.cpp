@@ -249,10 +249,10 @@ sizer2string(const wxBoxSizer& sizer) {
 	const wxSizerItemList& children = sizer.GetChildren();
 	string orient = sizer.GetOrientation() == wxHORIZONTAL?"horizontal":"vertical";
 	os << children.size() << " " << orient <<  " items\n";
-	int i{0};
 	for (const auto& ci : children) {
 		wxSize sz = ci->GetSize();
 		wxSize minsz = ci->GetMinSize();
+		T_(int i{0};)
 		T_(trc.dprint(++i,") item size ",sz.x,", ",sz.y,", min ",minsz.x,", ",minsz.y);)
 		os << "current size (" << sz.x << "," << sz.y << ") min size ("
 			<< minsz.x << "," << minsz.y << ")\n";

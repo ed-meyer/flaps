@@ -1091,11 +1091,16 @@ pac_fjac (vector<double> const& x, vector<double>& f, vector<double>& jac) {
 	// Extract the dynamic matrix as a double vector, treat dynmatval as
 	// a (nrev,ncev) real double matrix; this will be inserted into the
 	// Jacobian as derivatives of f wrt linear eigenvector components
+#ifdef NEVER // use extract
 	std::vector<double> dynmatval(nrev*ncev);
 	for (size_t i=0; i<dynmat.size(); i++) {
 		dynmatval[2*i] = Ad::real(dynmat[i]).data()[0];
 		dynmatval[2*i+1] = Ad::imag(dynmat[i]).data()[0];
 	}
+#else // NEVER // use extract
+	std::vector<double> dynmatval(nrev*ncev);
+	extract(dynmat, "", dynmatval.data());
+#endif // NEVER // use extract
 
 	// insert the dynamic matrix (values, not derivatives) into the
 	// Jacobian in the columns corresponding to the eigenvector, i.e.

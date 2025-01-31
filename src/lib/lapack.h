@@ -289,6 +289,7 @@ void
 triprod(int n, int m, const Dtt* T, const Dta* A, Dta* tat) noexcept {
 // triple-product tat = T'AT with T(n,m), A(n,n), tat(m,m)
 // assuming Dta*Dtt = Dta e.g. double * complex -> complex
+#ifdef NEVER // use dot
 	auto IJ = [](int i, int j, int ld1) { return i + j*ld1; };
 	for (int i=0; i<m; i++) {
 		for (int j=0; j<m; j++) {
@@ -302,12 +303,24 @@ triprod(int n, int m, const Dtt* T, const Dta* A, Dta* tat) noexcept {
 			tat[IJ(i,j,m)] = taij;
 		}
 	}
+#else // NEVER // use dot
+	std::vector<Dta> at(n);
+	for (int i=0; i<m; i++) {
+		for (int j=0; j<m; j++) {
+			for (int k=0; k<n; k++)
+				blas::dot(n, &T[j*n], 1, &A[k], n, at[k]);
+			blas::dot(n, &T[i*n], 1, &at[0], 1, tat[i+j*m]);
+		}
+	}
+#endif // NEVER // use dot
 }
 
+#ifdef NEVER // no Ad specializations
 // specializations of triprod: double, complex<Ad>
 template<>
 void
 triprod(int n, int m, const double* T, const std::complex<Ad>* A, std::complex<Ad>* tat) noexcept;
+#endif // NEVER // no Ad specializations
 
 }	// namespace lapack
 

@@ -17,6 +17,7 @@
 #include "settings.h"
 #include "specs.h"
 #include "text.h"
+#include "trace.h"
 #undef Complex
 
 using namespace std;

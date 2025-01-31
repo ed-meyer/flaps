@@ -18,6 +18,7 @@
 #include "plotcurve.h"
 #include "settings.h"
 #include "specs.h"
+#include "trace.h"
 
 using namespace std;
 

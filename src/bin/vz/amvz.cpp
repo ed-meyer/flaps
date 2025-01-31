@@ -858,9 +858,9 @@ FGLCanvas::FGLCanvas(wxWindow *parent, wxWindowID id, const wxPoint& pos,
    // Set the default quat, initialize view matrix with it
 	Default_quat = airplane_quat;
 	m_gldata.quat = Default_quat;
-	float qn = 1.0/blas_snrm2(4, &m_gldata.quat[0], 1);
+	float qn = 1.0/blas::nrm2(4, &m_gldata.quat[0], 1);
 	if (abs(qn-1.0) > 8.0*std::numeric_limits<float>::epsilon()) {
-		blas_scal(4, qn, &m_gldata.quat[0], 1);
+		blas::scal(4, qn, &m_gldata.quat[0], 1);
 		cerr << "inital quat scaled by " << qn << ": " << m_gldata.quat << endl;
 	}
 	// Create a GL context (new with 3.0)

@@ -29,6 +29,7 @@
 #include "amvz.h"
 #include "exim.h"
 #include "plotcurve.h"
+#include "trace.h"
 
 #if !wxUSE_GLCANVAS
     #error "OpenGL required: set wxUSE_GLCANVAS to 1 and rebuild the library"
@@ -188,9 +189,9 @@ Amdata(const string& ufname) {
 	vector<complex<double>> disp(nr);
 	complex<double>* cele = &gct_[0];
 	for (size_t j=0; j<nc; j++) {
-		//!! blas_copy(nr, &cele[IJ(0,nc-j-1,nr)], 1, &disp[0], 1);
-		blas_copy(nr, &cele[IJ(0,j,nr)], 1, &disp[0], 1);
-		double disp_norm = blas_scnrm2(nr, &disp[0], 1);
+		//!! blas::copy(nr, &cele[IJ(0,nc-j-1,nr)], 1, &disp[0], 1);
+		blas::copy(nr, &cele[IJ(0,j,nr)], 1, &disp[0], 1);
+		double disp_norm = blas::scnrm2(nr, &disp[0], 1);
 		if (disp_norm == 0.0)
 			flaps::warning("mode ",nc-j," is zero");
 		nodal_disp_.push_back(disp);
@@ -269,7 +270,7 @@ add(const vector<complex<double>>& ev) {
 	complex<double>* gcxf = &gct_[0];
 	vector<complex<double>> disp(m);
 	T_(trc.dprint("eigenvector:",ev);)
-	blas_cgemv ("n", m, n, alpha, gcxf, m, &ev[0], 1, beta, &disp[0], 1);
+	blas::gemv ("n", m, n, alpha, gcxf, m, &ev[0], 1, beta, &disp[0], 1);
 	size_t rval = nodal_disp_.size();
 	picked_point_ = rval;     // default picked point
 	nodal_disp_.push_back(disp);
@@ -320,14 +321,14 @@ coord_displacements(int omegat, int phase, vector<double>& colorvalue) {
 
 	// normalize the complex nodal displacements to amplitude_*coord_norm_
 	// use the infinity norm and normalize colorvalues with it below
-	double dispnorm = abs(disp[blas_icamax(n3, &disp[0], 1)-1]);
+	double dispnorm = abs(disp[blas::icamax(n3, &disp[0], 1)-1]);
 	double eps{1.0e-6};
 	// return zero if tiny displacements
 	if (dispnorm*amplitude_ <= eps) {
 		return rval;
 	}
 	complex<double> ct = amplitude_*coord_norm_/dispnorm;
-	blas_scal(n3, ct, &disp[0], 1);
+	blas::scal(n3, ct, &disp[0], 1);
 
 	double omtp{(omegat + phase)*deg2rad};
 	double scr{cos(omtp)};
@@ -348,9 +349,9 @@ coord_displacements(int omegat, int phase, vector<double>& colorvalue) {
 		rval[k] = x + coords_[k];
 		rval[k+1] = y + coords_[k+1];
 		rval[k+2] = z + coords_[k+2];
-		// double normd = blas_scnrm2(3,&cd[0],1);
+		// double normd = blas::scnrm2(3,&cd[0],1);
 		double normd = sqrt(x*x+y*y+z*z);
-		int idx = blas_icamax(3,&cd[0],1)-1;
+		int idx = blas::icamax(3,&cd[0],1)-1;
 		// set a color value for this node
 		if (amd->colormode_ == "abs value") {
 			colorvalue[i] = normd;
@@ -369,7 +370,7 @@ coord_displacements(int omegat, int phase, vector<double>& colorvalue) {
 	// scale colorvalues so that the largest colorvalue over an
 	// oscillation cycle is 1.0. The largest (normalized) displacement 
 	// over a cycle is amplitude_*coord_norm_
-	blas_scal(nnodes(), 1.0/(amplitude_*coord_norm_), &colorvalue[0], 1);
+	blas::scal(nnodes(), 1.0/(amplitude_*coord_norm_), &colorvalue[0], 1);
 
 	// skewed color variation
 	if (amd->colorskew_ != 5) {

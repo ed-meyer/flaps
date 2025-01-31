@@ -37,6 +37,7 @@
 #include "specs.h"
 #include "settings.h"
 #include "text.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -280,7 +281,7 @@ static int dovz (int argc, char** argv);
 int
 main(int argc, char** argv) {
 	char* dbg = getenv("DEBUG");
-	if (dbg != nullptr) Trace::debug(std::stoi(dbg));
+	T_(if (dbg != nullptr) Trace::debug(std::stoi(dbg));)
 	T_(Trace trc(1,"main");)
 	Ftmpdir ftmp;   // create a temp directory if not already
 
