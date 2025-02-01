@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [[ -n $DEBUG ]]; then
+	set -x
+fi
+
+Usage() {
+	echo "Usage: wraptrace file ..." 1>&2
+	echo "   or: find . -name '*.cpp' -exec wraptrace {} \;"
+	exit 1
+}
+
+# find . -name '*.cpp' | while read file
+for file in $*
+do
+	cp $file /tmp/tmp
+	sed 's/\(Trace trc.*;\)/T_(\1)/' /tmp/tmp |
+		sed 's/\(trc\..*;\)/T_(\1)/' >$file
+done

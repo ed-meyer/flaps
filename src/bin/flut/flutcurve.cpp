@@ -1093,13 +1093,13 @@ pac_fjac (vector<double> const& x, vector<double>& f, vector<double>& jac) {
 	// Jacobian as derivatives of f wrt linear eigenvector components
 #ifdef NEVER // use extract
 	std::vector<double> dynmatval(nrev*ncev);
+	extract(dynmat, "", dynmatval.data());
+#else // NEVER // use extract
+	std::vector<double> dynmatval(nrev*ncev);
 	for (size_t i=0; i<dynmat.size(); i++) {
 		dynmatval[2*i] = Ad::real(dynmat[i]).data()[0];
 		dynmatval[2*i+1] = Ad::imag(dynmat[i]).data()[0];
 	}
-#else // NEVER // use extract
-	std::vector<double> dynmatval(nrev*ncev);
-	extract(dynmat, "", dynmatval.data());
 #endif // NEVER // use extract
 
 	// insert the dynamic matrix (values, not derivatives) into the
@@ -1211,25 +1211,29 @@ dmatrix (pset& plt, vector<complex<Ad>>& result,
 	complex<Ad>* wp = &work[0];
 	complex<Ad>* rp = &result[0];
 
+#ifdef NEVER // eval mass directly into result
 	// initialize result
 	for (size_t i=0; i<result.size(); i++) {
 		Ad::real(result[i]).zero();
 		Ad::imag(result[i]).zero();
 	}
+#endif // NEVER // eval mass directly into result
 
-	// Mass matrix: s^2M
+	// Mass matrix: s^2M Required
 	Matrix* cp = Matrix::find_desc("mass");
-	if (cp) {
-		ctmp = s*s;
-		cp->eval(plt, work);
-		blas::axpy(nsq, ctmp, wp, 1, rp, 1);
-	}
+	ctmp = s*s;
+#ifdef NEVER // eval mass directly into result
+	cp->eval(plt, work);
+	blas::axpy(nsq, ctmp, wp, 1, rp, 1);
+#else // NEVER // eval mass directly into result
+	cp->eval(plt, result);
+	blas::scal(nsq, ctmp, rp, 1);
+#endif // NEVER // eval mass directly into result
 
 	// Viscous damping matrix: s*V
 	cp = Matrix::find_desc("vdamp");
 	if (cp) {
 		cp->eval(plt, work);
-		// result.caxpy (s, work);
 		blas::axpy(nsq, s, wp, 1, rp, 1);
 	}
 
@@ -1245,8 +1249,12 @@ dmatrix (pset& plt, vector<complex<Ad>>& result,
 	cp = Matrix::find_desc("stif");
 	if (cp) {
 		cp->eval(plt, work);
-		complex<Ad> cdamp(1.0, sdamp);
-		blas::axpy(nsq, cdamp, wp, 1, rp, 1);
+		if (sdamp.value() != 0.0) {
+			complex<Ad> cdamp(1.0, sdamp);
+			blas::scal(nsq, cdamp, wp, 1);
+		}
+		for (int i=0; i<nsq; i++)
+			rp[i] += wp[i];
 	} else {
 		throw runtime_error("no stiffness matrix");
 	}
@@ -1256,8 +1264,10 @@ dmatrix (pset& plt, vector<complex<Ad>>& result,
 		cp = Matrix::find_desc("gaf");
 		if (cp) {
 			cp->eval(plt, work);
-			complex<Ad> scale(-dpress);
-			blas::axpy(nsq, scale, wp, 1, rp, 1);
+			dpress *= -1.0;
+			blas::scal(nsq, dpress, wp, 1);
+			for (int i=0; i<nsq; i++)
+				rp[i] += wp[i];
 		}
 	}
 
@@ -1265,8 +1275,13 @@ dmatrix (pset& plt, vector<complex<Ad>>& result,
 	cp = Matrix::find_desc("controls");
 	if (cp) {
 		cp->eval(plt, work);
+#ifdef NEVER // eval mass directly into result
 		complex<Ad> scale(1.0);
 		blas::axpy(nsq, scale, wp, 1, rp, 1);
+#else // NEVER // eval mass directly into result
+		for (int i=0; i<nsq; i++)
+			rp[i] += wp[i];
+#endif // NEVER // eval mass directly into result
 	}
 
 	// print the dynamic matrix once if settings printmatrices is true
