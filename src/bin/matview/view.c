@@ -201,7 +201,7 @@ VIEW thumb;
 
 	char color[16];
 
-	char *tmp;
+	const char *tmp;
 
 	double *dptr;
 	double *ptr;
@@ -1522,9 +1522,9 @@ double min, max;
 
 	static int showsave = -1;
 
-	char minstr[255];
-	char maxstr[255];
-	char cmd[255];
+	char minstr[512];
+	char maxstr[512];
+	char cmd[1024];
 
 	int changed = 0;
 	int show;

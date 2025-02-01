@@ -1355,7 +1355,7 @@ filecheck( fp, name )
 FILE *fp;
 char *name;
 {
-	char msg[1024];
+	char msg[2048];
 	char tmp[1024];
 
 	if ( fp == NULL )

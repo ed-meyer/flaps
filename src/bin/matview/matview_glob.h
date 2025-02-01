@@ -96,12 +96,12 @@ extern	char			*MATVIEW_MATFILE;
 
 extern	char			*MATVIEW_DIR;
 
-extern	char			*MV;
-extern	char			*MV_M;
-extern	char			*MV_G;
+extern	const char			*MV;
+extern	const char			*MV_M;
+extern	const char			*MV_G;
 
-extern	char			*PROGRESS_HEIGHT;
-extern	char			*PROGRESS_WIDTH;
+extern	const char			*PROGRESS_HEIGHT;
+extern	const char			*PROGRESS_WIDTH;
 
 extern	MATRIX			MAT;
 

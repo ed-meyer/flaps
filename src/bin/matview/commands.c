@@ -32,11 +32,7 @@
 
 
 /* ARGSUSED */
-int set_mat_name_proc( clientData, itp, argc, argv )
-ClientData clientData;
-Tcl_Interp *itp;
-int argc;
-char **argv;
+int set_mat_name_proc(ClientData clientData,Tcl_Interp* itp,int argc,char** argv )
 {
 	if ( argc != 2 )
 	{
@@ -63,12 +59,8 @@ char **argv;
 
 
 /* ARGSUSED */
-int get_mat_name_proc( clientData, itp, argc, argv )
-ClientData clientData;
-Tcl_Interp *itp;
-int argc;
-char **argv;
-{
+int
+get_mat_name_proc(ClientData clientData, Tcl_Interp* itp, int argc, char** argv ) {
 	Tcl_SetResult( itp, copy_str( MATVIEW_MATFILE
 		? MATVIEW_MATFILE : "" ), TCL_DYNAMIC );
 
@@ -77,12 +69,8 @@ char **argv;
 
 
 /* ARGSUSED */
-int reload_mat_proc( clientData, itp, argc, argv )
-ClientData clientData;
-Tcl_Interp *itp;
-int argc;
-char **argv;
-{
+int
+reload_mat_proc(ClientData clientData, Tcl_Interp* itp, int argc, char** argv ) {
 	load_mat( TRUE );
 
 	return( TCL_OK );
@@ -90,12 +78,8 @@ char **argv;
 
 
 /* ARGSUSED */
-int set_plane_choice_proc( clientData, itp, argc, argv )
-ClientData clientData;
-Tcl_Interp *itp;
-int argc;
-char **argv;
-{
+int
+set_plane_choice_proc (ClientData clientData, Tcl_Interp* itp, int argc, char** argv ) {
 	if ( argc != 2 )
 	{
 		Tcl_SetResult( itp, "usage: set_plane_choice < XY | YZ | XZ >",
@@ -126,12 +110,8 @@ char **argv;
 
 
 /* ARGSUSED */
-int set_color_range_proc( clientData, itp, argc, argv )
-ClientData clientData;
-Tcl_Interp *itp;
-int argc;
-char **argv;
-{
+int
+set_color_range_proc(ClientData clientData, Tcl_Interp* itp, int argc, char** argv ) {
 	void **args;
 
 	char *minstr;
@@ -181,12 +161,8 @@ char **argv;
 
 
 /* ARGSUSED */
-int set_color_function_proc( clientData, itp, argc, argv )
-ClientData clientData;
-Tcl_Interp *itp;
-int argc;
-char **argv;
-{
+int
+set_color_function_proc(ClientData clientData, Tcl_Interp* itp, int argc, char** argv ) {
 	static double last_t = -1.0;
 
 	void **args;
@@ -239,12 +215,8 @@ char **argv;
 
 
 /* ARGSUSED */
-int set_grid_proc( clientData, itp, argc, argv )
-ClientData clientData;
-Tcl_Interp *itp;
-int argc;
-char **argv;
-{
+int
+set_grid_proc(ClientData clientData, Tcl_Interp* itp, int argc, char** argv ) {
 	char *onoff;
 	char *tmp;
 
@@ -330,12 +302,8 @@ char **argv;
 
 
 /* ARGSUSED */
-int set_complex_view_proc( clientData, itp, argc, argv )
-ClientData clientData;
-Tcl_Interp *itp;
-int argc;
-char **argv;
-{
+int
+set_complex_view_proc(ClientData clientData, Tcl_Interp* itp, int argc, char** argv ) {
 	char *cv;
 
 	int changed;
@@ -381,12 +349,7 @@ char **argv;
 
 
 /* ARGSUSED */
-int get_complex_view_proc( clientData, itp, argc, argv )
-ClientData clientData;
-Tcl_Interp *itp;
-int argc;
-char **argv;
-{
+int get_complex_view_proc(ClientData clientData, Tcl_Interp* itp, int argc, char** argv ) {
 	char *tmp;
 
 	if ( COMPLEX_VIEW == COMPLEX_RE )
@@ -412,12 +375,8 @@ char **argv;
 
 
 /* ARGSUSED */
-int set_zero_color_proc( clientData, itp, argc, argv )
-ClientData clientData;
-Tcl_Interp *itp;
-int argc;
-char **argv;
-{
+int
+set_zero_color_proc(ClientData clientData, Tcl_Interp* itp, int argc, char** argv ) {
 	void **args;
 
 	char *color;
@@ -483,9 +442,7 @@ char **argv;
 
 
 void
-draw_color_graph( itp )
-Tcl_Interp *itp;
-{
+draw_color_graph( Tcl_Interp* itp ) {
 	char cmd[255];
 
 	double f;
@@ -541,10 +498,7 @@ Tcl_Interp *itp;
 
 
 void **
-make_args( str, V )
-char *str;
-VIEW V;
-{
+make_args( char* str, VIEW V ) {
 	void **tmp;
 
 	tmp = (void **) MALLOC( (unsigned) 2 * sizeof( void * ) );
@@ -2547,7 +2501,7 @@ char **argv;
 {
 	char fname[256];
 	char usage[256];
-	char cmd[256];
+	char cmd[512];
 
 	char *format;
 	char *orient;
@@ -2638,7 +2592,7 @@ char **argv;
 			( Tcl_Eval( itp, "setMsg {Print Cancelled.}" ),
 				update_progress( PRINT_VIEW, 0 ) ), TCL_OK );
 
-		snprintf( cmd, 255, "setMsg {Executing Print Command \"%s\"...}",
+		snprintf( cmd, 500, "setMsg {Executing Print Command \"%s\"...}",
 			pcmd );
 		Tcl_Eval( itp, cmd );
 
@@ -2646,7 +2600,7 @@ char **argv;
 			( Tcl_Eval( itp, "setMsg {Print Cancelled.}" ),
 				update_progress( PRINT_VIEW, 0 ) ), TCL_OK );
 
-		snprintf( cmd, 255, "%s %s", pcmd, fname );
+		snprintf( cmd, 500, "%s %s", pcmd, fname );
 
 		system( cmd );
 
@@ -2697,11 +2651,7 @@ char **argv;
 
 
 void
-prepare_print( orient, media, format )
-char *orient;
-char *media;
-char *format;
-{
+prepare_print( char* orient, char* media, char* format ) {
 	char cmd[256];
 
 	int save_grey;

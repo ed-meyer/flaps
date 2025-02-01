@@ -95,12 +95,12 @@ char			*MATVIEW_MATFILE;
 
 char			*MATVIEW_DIR;
 
-char			*MV;
-char			*MV_M;
-char			*MV_G;
+const char			*MV;
+const char			*MV_M;
+const char			*MV_G;
 
-char			*PROGRESS_HEIGHT;
-char			*PROGRESS_WIDTH;
+const char			*PROGRESS_HEIGHT;
+const char			*PROGRESS_WIDTH;
 
 MATRIX			MAT;
 

@@ -168,8 +168,8 @@ typedef struct grid_struct *GRID;
 
 struct win_struct
 {
-	char *toplevel;
-	char *canvas;
+	const char *toplevel;
+	const char *canvas;
 	char *htvar, *wtvar;
 	double scale;
 	int csx, csy;
@@ -208,13 +208,13 @@ struct view_struct
 	double *ftmp2;
 	int field_nelems;
 
-	char *image;
+	const char *image;
 	int wt, ht;
 
 	double scale;
 	int iscale;
 
-	char *progress_canvas;
+	const char *progress_canvas;
 	int progress_bar;
 
 	int need_reduction;

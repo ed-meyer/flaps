@@ -24,6 +24,7 @@
  * MatView was funded by the U.S. Department of Energy.
  */
 
+#include <unistd.h>	/* getuid */
 
 #include "matview.h"
 #include "matview_glob.h"
@@ -343,7 +344,7 @@ program_init()
 int
 read_args()
 {
-	char *argv_str;
+	const char *argv_str;
 
 	int i, j, k;
 	int do_usage;
@@ -352,7 +353,7 @@ read_args()
 	argv_str = GET_TCL_GLOBAL( interp, "argv" );
 
 	/* XXX gcc says arg 4 is an incompatible pointer */
-	if ( Tcl_SplitList( interp, argv_str, &Argc, &Argv ) == TCL_ERROR )
+	if ( Tcl_SplitList( interp, argv_str, &Argc, (CONST84 char***)&Argv ) == TCL_ERROR )
 		return( TCL_ERROR );
 
 	do_usage = 0;
@@ -896,7 +897,7 @@ window_init()
 
 	FILE *fptest;
 
-	char *tmp;
+	const char *tmp;
 
 	/* Create Interface - Run TCL Script */
 

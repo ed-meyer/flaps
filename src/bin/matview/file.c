@@ -33,11 +33,14 @@
 #include "mat.h"
 #endif
 
-int open_mat_file( file, line, mat, is_compressed );
-int read_mm_coordinate_pattern( mat, contflag, inst );
-int read_coordinate( mat, contflag, inst );
-int parse_format_spec( fmt, label, num, size, factor );
-int realloc_mat( nelems, has_values );
+int open_mat_file( char* file, char* line, FILE** mat, int* is_compressed );
+int read_coordinate( FILE* mat, int contflag, int inst );
+int read_mm_coordinate_pattern( FILE* mat, int contflag, int inst );
+int read_mm_coordinate_real( FILE* mat, int contflag, int inst );
+int read_mm_coordinate_complex( FILE* mat, int contflag, int inst );
+int read_mm_coordinate( FILE* mat, int has_values, int contflag, int inst );
+int parse_format_spec( char* fmt, char* label, int* num, int* size, int* factor );
+int realloc_mat( int nelems, int has_values );
 
 /* Pointer to first (header) line of currently open matrix file */
 char *firstline;
@@ -201,42 +204,25 @@ char *file;
 
 
 int
-read_mm_coordinate_pattern( mat, contflag, inst )
-FILE *mat;
-int contflag;
-int inst;
-{
+read_mm_coordinate_pattern( FILE* mat, int contflag, int inst ) {
 	return( read_mm_coordinate( mat, MATRIX_PATTERN, contflag, inst ) );
 }
 
 
 int
-read_mm_coordinate_real( mat, contflag, inst )
-FILE *mat;
-int contflag;
-int inst;
-{
+read_mm_coordinate_real( FILE* mat, int contflag, int inst ) {
 	return( read_mm_coordinate( mat, MATRIX_REAL, contflag, inst ) );
 }
 
 
 int
-read_mm_coordinate_complex( mat, contflag, inst )
-FILE *mat;
-int contflag;
-int inst;
-{
+read_mm_coordinate_complex( FILE* mat, int contflag, int inst ) {
 	return( read_mm_coordinate( mat, MATRIX_COMPLEX, contflag, inst ) );
 }
 
 
 int
-read_mm_coordinate( mat, has_values, contflag, inst )
-FILE *mat;
-int has_values;
-int contflag;
-int inst;
-{
+read_mm_coordinate( FILE* mat, int has_values, int contflag, int inst ) {
 	static int cnt;
 
 	TEMPLATE T;
@@ -1285,13 +1271,7 @@ int inst;
 
 
 int
-parse_format_spec( fmt, label, num, size, factor )
-char *fmt;
-char *label;
-int *num;
-int *size;
-int *factor;
-{
+parse_format_spec( char* fmt, char* label, int* num, int* size, int* factor ) {
 	char *ptr;
 
 	char type;
@@ -1448,11 +1428,7 @@ int *really_bogus;
 
 
 int
-read_coordinate( mat, contflag, inst )
-FILE *mat;
-int contflag;
-int inst;
-{
+read_coordinate( FILE* mat, int contflag, int inst ) {
 	static int has_values;
 	static int nelems;
 	static int cnt;
@@ -2286,12 +2262,11 @@ int inst;
 
 
 int
-open_mat_file( file, line, mat, is_compressed )
-char *file;
+open_mat_file( char* file, char* line, FILE** mat, int* is_compressed ) {
+/* char *file;
 char *line;
 FILE **mat;
-int *is_compressed;
-{
+int *is_compressed; */
 	char cmd[255];
 
 	char *uncompress;
@@ -2467,10 +2442,7 @@ int has_values;
 
 
 int
-realloc_mat( nelems, has_values )
-int nelems;
-int has_values;
-{
+realloc_mat( int nelems, int has_values ) {
 	TEMPLATE TSAVE;
 
 	COMPLEX CSAVE;
