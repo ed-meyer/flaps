@@ -282,8 +282,6 @@ eval(pset& plt, vector<complex<Ad>>& result) const {
 	T_(trc.dprint(this->pz.size()," pzs, samesize? ",samesize?"y":"n");)
 
 	// zero the result array
-	size_t nt = 2*result.size()*Ad::ndata();
-	//!! std::fill(result.begin(), result.end(), complex<Ad>(0.0));
 	// XXX need contiguous elements
 	for (size_t i=0; i<result.size(); i++) {
 		Ad::real(result[i]).zero();
@@ -363,7 +361,6 @@ eval(pset& plt, vector<complex<Ad>>& result) const {
 				this->pz[i]->eval(plt, work, m, n);
 			}
 			// ...then copy work to result a column at a time
-			T_(trc.dprint("copying ",n," columns, ",nt," doubles/column");)
 			for (size_t j=0; j<n; j++)
 				for (size_t i=0; i<m; i++)
 					result[IJ(i,j,nr)] = work[IJ(i,j,m)];

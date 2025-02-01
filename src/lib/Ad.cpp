@@ -40,6 +40,9 @@ static vector<string> Adparameters;
 
 bool Ad::initialize_called{false};
 
+int Ad::nder{0};
+int Ad::ndata{1};
+
 void
 Ad::
 initialize(const vector<string>& names) {
@@ -66,6 +69,9 @@ initialize(const vector<string>& names) {
 		throw runtime_error("Ad::initialize called with no parameter names");
 
 	Adparameters = names;
+	Ad::nder = names.size();
+	Ad::ndata = Ad::nder+1;
+
 	T_(trc.dprint("autodiff names:",Adparameters);)
 	initialize_called = true;
 }
@@ -77,11 +83,12 @@ realloc() {
 // only be neceesary once: right after calling Ad::initialize
 	double v{data_[0]};	// save only the value, not derivatives
 	delete[] data_;
-	data_ = new double[Ad::ndata()];
-	std::fill_n(data_, Ad::ndata(), 0.0);
+	data_ = new double[Ad::ndata];
+	std::fill_n(data_, Ad::ndata, 0.0);
 	data_[0] = v;	// restore value
 }
 
+#ifdef NEVER // use Ad::nder/ndata
 int
 Ad::
 nder() { return Adparameters.size(); }
@@ -92,6 +99,7 @@ ndata() {
 // Returns the number of double elements in a real variable, i.e.
 // the value and all derivative values
 	return Adparameters.size() + 1; }
+#endif // NEVER // use Ad::nder
 
 std::vector<std::string> const&
 Ad::
@@ -172,7 +180,7 @@ der(int d, double v) {
 std::ostream&
 operator<< (std::ostream& s, Ad const& a) {
 	s << a.data_[0];
-	for (int i=1; i<=Ad::nder(); i++) {
+	for (int i=1; i<=Ad::nder; i++) {
 		s << "[" << a.data_[i] << ']';
 	}
 	return s;
@@ -182,7 +190,7 @@ bool
 is_equal(Ad const& a, Ad const& b, int sigfig) {
 	double const* ad = a.data();
 	double const* bd = b.data();
-	for (int i=0; i<Ad::ndata(); i++) {
+	for (int i=0; i<Ad::ndata; i++) {
 		if (!is_equal(ad[i], bd[i], sigfig))
 			return false;
 	}
@@ -194,7 +202,7 @@ is_equal(Ad const& a, Ad const& b, int sigfig) {
 Ad
 abs (const Ad& x) {
 	Ad rval{x};
-	for (int i=0; i<Ad::ndata(); i++)
+	for (int i=0; i<Ad::ndata; i++)
 		rval.data_[i] = std::abs(rval.data_[i]);
 	return rval;
 }
@@ -205,7 +213,7 @@ acos (const Ad& x) {
 	double xv(x.value());
 	rval.value(acos(xv));
 	double d = sqrt(1.0 - xv*xv);
-	for (int i=0; i<Ad::nder(); i++)
+	for (int i=0; i<Ad::nder; i++)
 		rval.der(i,-x.der(i)/d);
 	return rval;
 }
@@ -218,7 +226,7 @@ asin (const Ad& x) {
 	// d/du asin u = 1/sqrt(1-u^2)
 	// watch out for 1-u^2 = 0
 	double d = sqrt(double(1.0) - xv*xv);
-	for (int i=0; i<Ad::nder(); i++)
+	for (int i=0; i<Ad::nder; i++)
 		rval.der(i,x.der(i)/d);
 	return rval;
 }
@@ -229,7 +237,7 @@ atan (Ad const& x) {
 	double xv(x.value());
 	rval.value(atan(xv));
 	double d = 1.0 + xv*xv;
-	for (int i=0; i<Ad::nder(); i++)
+	for (int i=0; i<Ad::nder; i++)
 		rval.der(i, x.der(i)/d);
 	return rval;
 }
@@ -241,7 +249,7 @@ atan2 (Ad const& a, Ad const& b) {
 	Ad rval;
 	rval.value(atan2(av,bv));
 	double d(av*av + bv*bv);
-	for (int i=0; i<Ad::nder(); i++)
+	for (int i=0; i<Ad::nder; i++)
 		rval.der(i, (a.der(i)*bv - av*b.der(i))/d);
 	return rval;
 }
@@ -252,7 +260,7 @@ cos (Ad const& x) {
 	double xv(x.value());
 	rval.value(cos(xv));
 	double sx{-sin(xv)};
-	for (int i=0; i<Ad::nder(); i++)
+	for (int i=0; i<Ad::nder; i++)
 		rval.der(i, x.der(i)*sx);
 	return rval;
 }
@@ -261,7 +269,7 @@ Ad
 exp (Ad const& x) {
 	Ad rval;
 	rval.value(exp(x.value()));
-	for (int i=0; i<Ad::nder(); i++)
+	for (int i=0; i<Ad::nder; i++)
 		rval.der(i, x.der(i)*rval.value());
 	return rval;
 }
@@ -270,7 +278,7 @@ Ad
 log (Ad const& x) {
 	Ad rval;
 	rval.value(log(x.value()));
-	for (int i=0; i<Ad::nder(); i++)
+	for (int i=0; i<Ad::nder; i++)
 		rval.der(i, x.der(i)/x.value());
 	return rval;
 }
@@ -280,7 +288,7 @@ log10 (const Ad& x) {
 	Ad rval;
 	rval.value(log10(x.value()));
 	double le = log10(exp(1.0));
-	for (int i=0; i<Ad::nder(); i++)
+	for (int i=0; i<Ad::nder; i++)
 		rval.der(i,le*x.der(i)/x.value());
 	return rval;
 }
@@ -312,7 +320,7 @@ pow (Ad const& x, Ad const& y) {
 	double lnu = 0.0;
 	if (u > 0.0)
 		lnu = log(u);
-	for (int i=0; i<Ad::nder(); i++)
+	for (int i=0; i<Ad::nder; i++)
 		rval.der(i, t*y.der(i)*lnu + dt*x.der(i));
 	return rval;
 }
@@ -323,7 +331,7 @@ sin (Ad const& x) {
 	double xv(x.value());
 	rval.value(sin(xv));
 	double cx{cos(xv)};
-	for (int i=0; i<Ad::nder(); i++)
+	for (int i=0; i<Ad::nder; i++)
 		rval.der(i, x.der(i)*cx);
 	return rval;
 }
@@ -337,10 +345,10 @@ sqrt (const Ad& x) {
 	double v(sqrt(xv));
 	rval.value(v);
 	if (v == 0.0) {
-		for (int i=0; i<Ad::nder(); i++)
+		for (int i=0; i<Ad::nder; i++)
 			rval.der(i, 0.0);
 	} else {
-		for (int i=0; i<Ad::nder(); i++)
+		for (int i=0; i<Ad::nder; i++)
 			rval.der(i, x.der(i)/(2.0*v));
 	}
 	return rval;
@@ -353,7 +361,7 @@ tan (Ad const& x) {
 	rval.value(tan(xv));
 	double sec = 1.0/cos(xv);
 	double t(sec*sec);
-	for (int i=0; i<Ad::nder(); i++)
+	for (int i=0; i<Ad::nder; i++)
 		rval.der(i, x.der(i)*t);
 	return rval;
 }
@@ -394,14 +402,14 @@ extract (const vector<Ad>& from, std::string const& name, double* val) {
 bool
 extract (const vector<Ad>& from, int idx, double* val) {
 // extract from "from" data element "idx" (0b): the value if idx==0,
-// the 1b derivative number (1-Ad::nder()) otherwise.
+// the 1b derivative number (1-Ad::nder) otherwise.
 	T_(Trace trc(2,"extract(Ad,int)");)
 
 	T_(trc.dprint("index ",idx);)
 
 	size_t n = from.size();
 
-	if (idx < 0 || idx >= (int)Ad::ndata())
+	if (idx < 0 || idx >= (int)Ad::ndata)
 		throw runtime_error(vastr("attempt to extract index ", idx));
 
 	for (size_t i=0; i<n; i++)
@@ -432,12 +440,12 @@ extract (const vector<complex<Ad>>& from, std::string const& name, complex<doubl
 bool
 extract (const vector<complex<Ad>>& from, int idx, complex<double>* val) {
 // extract from "from" data element "idx" (0b): the value if idx==0,
-// the 1b derivative number (1-Ad::nder()) otherwise.
+// the 1b derivative number (1-Ad::nder) otherwise.
 	T_(Trace trc(2,"extract(complex<Ad>,int)");)
 
 	T_(trc.dprint("index ",idx);)
 
-	if (idx < 0 || idx >= (int)Ad::ndata())
+	if (idx < 0 || idx >= (int)Ad::ndata)
 		throw runtime_error(vastr("attempt to extract idx(0b) ", idx));
 
 	complex<double>* vp = val;
@@ -465,7 +473,7 @@ multad (const Ad& a, const Ad& b, Ad& c) {
    double av = a.data_[0];
    double bv = b.data_[0];
    c.data_[0] = av*bv;
-   for (int i=1; i<Ad::ndata(); i++)
+   for (int i=1; i<Ad::ndata; i++)
       c.data_[i] = a.data_[i]*bv + b.data_[i]*av;
 }
 
@@ -606,7 +614,7 @@ relerrAd(const Ad& a, const Ad& b) {
 	double ei = t/max(max(am, bm), 0.1);
 	double rval = ei;
 
-	for (int i=0; i<Ad::nder(); i++) {
+	for (int i=0; i<Ad::nder; i++) {
 		double t = abs(a.deriv(i) - b.deriv(i));
 		double am = abs(a.deriv(i));
 		double bm = abs(b.deriv(i));
@@ -637,7 +645,7 @@ ad_fcn (const string& title, Ad (*fcn)(const Ad& a),
 	double amax = pi/2.0;
 	double del = (amax - amin)/(double)(nstep-1);
 	double norm, maxnorm = 0.0;
-	int nd = Ad::nder();
+	int nd = Ad::nder;
 	vector<double> der(nd, 1.0);
 
 	cerr << "------------------- check " << title << endl;
@@ -691,7 +699,7 @@ ad_fcn2(const string& title, Ad (*fcn)(const Ad& a, const Ad& b),
 	double amax = pi/2.0;
 	double norm, maxnorm = 0.0;
 	double del = (amax - amin)/(double)(nstep-1);
-	int nd = Ad::nder();
+	int nd = Ad::nder;
 	vector<double> der(nd, double(0.5));
 
 	cerr << "------------------- check " << title << endl;
@@ -735,7 +743,7 @@ xrand() {
 Ad
 random_Ad() {
 // return an Ad with random value and derivatives
-	int nd = Ad::nder();
+	int nd = Ad::nder;
 	Ad rval{xrand()};
 	for (int i=0; i<nd; i++)
 		rval.deriv(i, xrand());
@@ -901,7 +909,7 @@ main(int argc, char** argv) {
 		mypar.push_back(vastr("par", i+1));
 	}
 	Ad::initialize(mypar);
-	cerr << Ad::nder() << " automatic differentiation parameters: "
+	cerr << Ad::nder << " automatic differentiation parameters: "
 		<< Ad::toString() << endl;
 
 	// test the assignment op after initialize

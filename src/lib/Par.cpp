@@ -198,7 +198,6 @@ adrealloc() {
 // reallocate the advalue_ member of this parameter in order that
 // it have the current number of AD derivatives. If there
 // is currently an advalue_ transfer it's value to the new one.
-	T_(Trace trc(2,"adrealloc ",this->name," ",Ad::nder()," derivs");)
 	advalue_.realloc();
 }
 
@@ -244,7 +243,7 @@ deriv(size_t j) const {
 void
 Par::
 deriv(size_t j, double x) {
-// set my Ad derivative "j" (0-Ad::nder()-1) to "x"
+// set my Ad derivative "j" (0-Ad::nder-1) to "x"
 	advalue_.der(j,x);
 }
 

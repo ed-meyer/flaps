@@ -16,6 +16,9 @@ links:	FORCE
 #	jump/bin/mklinks
 #	papers/bin/mklinks
 
+diff:		FORCE
+	cd repo && git diff >gitdiff.$(Version)
+
 status:		FORCE
 	cd flaps && git status
 	cd jump && git status

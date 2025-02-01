@@ -47,20 +47,20 @@ public:
 	// constructors
 	// default
 	Ad() {
-		data_ = new double[Ad::ndata()];
-		std::fill_n(data_, Ad::ndata(), 0.0);
+		data_ = new double[Ad::ndata];
+		std::fill_n(data_, Ad::ndata, 0.0);
 	}
 	// a double
 	Ad(double a) {
-		data_ = new double[Ad::ndata()];
-		std::fill_n(data_, Ad::ndata(), 0.0);
+		data_ = new double[Ad::ndata];
+		std::fill_n(data_, Ad::ndata, 0.0);
 		data_[0] = a;
 	}
 
 	// copy constructor
 	Ad (Ad const& from) {
-		data_ = new double[Ad::ndata()];
-		std::copy_n (from.data_, Ad::ndata(), data_);
+		data_ = new double[Ad::ndata];
+		std::copy_n (from.data_, Ad::ndata, data_);
 	}
 	// move copy constructor
 	Ad (Ad&& from) noexcept {
@@ -69,7 +69,7 @@ public:
 	}
 	// assignment operator
 	Ad& operator=(Ad const& rhs) {
-		std::copy_n (rhs.data_, Ad::ndata(), data_);
+		std::copy_n (rhs.data_, Ad::ndata, data_);
 		return *this;
 	}
 	// move assignment operator
@@ -109,7 +109,7 @@ public:
 	static double mag(std::complex<Ad> const& x);
 
 	// zero values & derivatives of this Ad
-	void zero() { std::fill_n(data_, Ad::ndata(), 0.0); }
+	void zero() { std::fill_n(data_, Ad::ndata, 0.0); }
 
 	// get/set derivative "der" 0b
 	double der(int d) const; // { return data_[der+1]; }
@@ -124,7 +124,7 @@ public:
 
 	// Assignment
 	Ad& operator=(double rhs) {
-		for (int i=0; i<Ad::ndata(); i++)
+		for (int i=0; i<Ad::ndata; i++)
 			data_[i] = 0.0;
 		data_[0] = rhs;
 		return *this;
@@ -134,7 +134,7 @@ public:
 	// arithmetic assignment operators
 	// addition
 	inline Ad& operator+= (const Ad& rhs) {
-		for (int i=0; i<Ad::ndata(); i++)
+		for (int i=0; i<Ad::ndata; i++)
 			data_[i] += rhs.data_[i];
 		return *this;
 	}
@@ -145,7 +145,7 @@ public:
 
 	// subtraction
 	inline Ad& operator-= (const Ad& rhs) {
-		for (int i=0; i<Ad::ndata(); i++)
+		for (int i=0; i<Ad::ndata; i++)
 			data_[i] -= rhs.data_[i];
 		return *this;
 	}
@@ -158,15 +158,15 @@ public:
 	inline Ad& operator*= (const Ad& rhs) {
 		double a{data_[0]};
 		double b{rhs.data_[0]};
-		for (int i=1; i<Ad::ndata(); i++)
+		for (int i=1; i<Ad::ndata; i++)
 			data_[i] *= b;
-		for (int i=1; i<Ad::ndata(); i++)
+		for (int i=1; i<Ad::ndata; i++)
 			data_[i] += a*rhs.data_[i];
 		data_[0] = a*b;
 		return *this;
 	}
 	inline Ad& operator*= (double rhs) {
-		for (int i=0; i<Ad::ndata(); i++)
+		for (int i=0; i<Ad::ndata; i++)
 			data_[i] *= rhs;
 		return *this;
 	}
@@ -177,13 +177,13 @@ public:
 		double a2 = a.data_[0];
 		double r = this->data_[0]/a2;
 		this->data_[0] = r;
-		for (int i=1; i<Ad::ndata(); i++)
+		for (int i=1; i<Ad::ndata; i++)
 			this->data_[i] = (this->data_[i] - r*a.data_[i])/a2;
 		return *this;
 	}
 
 	inline Ad& operator/=(double a) {
-		for (int i=0; i<Ad::ndata(); i++)
+		for (int i=0; i<Ad::ndata; i++)
 			this->data_[i] /= a;
 		return *this;
 	}
@@ -231,7 +231,7 @@ public:
 	operator-() const {
 		Ad rval(*this);
 		double* rp = rval.data();
-		for (int i=0; i<Ad::ndata(); i++)
+		for (int i=0; i<Ad::ndata; i++)
 			rp[i] = -rp[i];
 		return rval;
 	}
@@ -243,9 +243,9 @@ public:
 	static bool initialize_called;
 	static void initialize(const std::vector<std::string>& names);
 
-	static int nder();
-
-	static int ndata();
+	// the number of Ad derivatives and the size of the data_ array
+	static int nder;
+	static int ndata;
 
 	// returns a const reference to the vector of AD parameter names
 	static std::vector<std::string> const& adnames();

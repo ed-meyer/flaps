@@ -27,20 +27,11 @@ dot(int n, const double* x, int incx, const Ad* y, int incy, Ad& c) noexcept {
 	c.zero();
 	int ix{0};
 	int iy{0};
-	int nderiv = Ad::nder();
 	for (int i=0; i<n; i++) {
 		double xi = x[ix];
-#ifdef NEVER // public der_
-		c.value(c.value() + xi*y[iy].value());
-#else // NEVER // public der_
 		c.data_[0] += xi*y[iy].data_[0];
-#endif // NEVER // public der_
-		for (int j=0; j<nderiv; j++)
-#ifdef NEVER // public der_
-			c.der(j, c.der(j)+xi*y[iy].der(j));
-#else // NEVER // public der_
-			c.data_[j+1] += xi*y[iy].data_[j+1];
-#endif // NEVER // public der_
+		for (int j=1; j<Ad::ndata; j++)
+			c.data_[j] += xi*y[iy].data_[j];
 		ix += incx;
 		iy += incy;
 	}
@@ -199,8 +190,6 @@ init() {
 		mypar.push_back(vastr("par", i+1));
 	}
 	Ad::initialize(mypar);
-	trc.dprint(Ad::nder(), " automatic differentiation parameters: ",
-		Ad::toString());
 }
 
 void
