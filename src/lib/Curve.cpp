@@ -37,6 +37,11 @@ Curve(const string& analysis_id, const string& curveid,
 		// delete all solns
 		params.clear_solns();
 	}
+	// any mvf parameters?
+	for (auto i : params.get_mvf())
+		mvfpar.push_back(i->name);
+	T_(trc.dprint("mvf parameters: ",mvfpar);)
+
 	// ...and set it's description to curveid
 	params.desc(curveid);
 	// evaluate params and check for constant Derived parameters
@@ -65,7 +70,8 @@ get(Receiver& s) {
 	s.serialize(rval->_aid);
 	s.serialize(rval->_cid);
 	s.serialize(rval->_vzid);
-	T_(trc.dprint("got aid \"",rval->_aid,"\", cid \"",rval->_cid,"\", vzid \"",rval->_vzid,"\"");)
+	s.serialize(rval->mvfpar);
+	T_(trc.dprint("got aid \"",rval->_aid,"\", cid \"",rval->_cid,"\", vzid \"",rval->_vzid,"\", mvfpar ",rval->mvfpar);)
 	Fio* op = pset::get(s);
 	pset* pp = dynamic_cast<pset*>(op);
 	if (pp == nullptr) {
@@ -89,6 +95,7 @@ put(Sender& s) const {
 	s.serialize(_aid);
 	s.serialize(_cid);
 	s.serialize(_vzid);
+	s.serialize(mvfpar);
 	params.put(s);
 	s.serialize(finished);
 	s.serialize(error);

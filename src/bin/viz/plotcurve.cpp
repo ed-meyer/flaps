@@ -434,6 +434,7 @@ getcids(string const& aid) {
 			string curveid = curve->cid();
 			// diffing curves? XXX needs work
 			if (!diffre.empty()) {
+#ifdef NEVER // diff needs work
 				for (auto& pat : diffre) {
 					if (regex_match(curveid, pat)) {
 						for (auto& yname : sp.ynames) {
@@ -442,6 +443,9 @@ getcids(string const& aid) {
 						}
 					}
 				}
+#else // NEVER // diff needs work
+				flaps::warning("curve diffing not implemented");
+#endif // NEVER // diff needs work
 			} else {
 				// create a new curve using the first y
 				rval.push_back(new Plotcurve(curve));

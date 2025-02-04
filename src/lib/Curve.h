@@ -23,7 +23,8 @@ class Curve : public Fio {
 	std::string _cid;
 	std::string _vzid;
 public:
-	pset params;         // a copy of the global parameter list
+	std::vector<std::string> mvfpar;
+	pset params;         // a copy of the global pset or from the plotfile
 	std::string finished;	// reason(s) for quitting
 	std::string error;	   // if tracking stopped early
 

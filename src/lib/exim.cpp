@@ -219,7 +219,6 @@ header (Ascii& in, string& mid, int& nr, int& nc,
 //------------------------------------------------------------------
 	T_(Trace trc(1,"header");)
 	string formatbuf;
-	int form;
 	string line;
 
 	// Ascii returns false on EOF
@@ -236,7 +235,7 @@ header (Ascii& in, string& mid, int& nr, int& nc,
 	// ... then convert
 	nc = stoi(toks[0]);
 	nr = stoi(toks[1]);
-	form = stoi(toks[2]);
+	T_(int form = stoi(toks[2]);)
 	dtype = stoi(toks[3]);
 	mid = stripwhitespace(toks[4]);
 	formatbuf = toks[5];
@@ -1842,13 +1841,13 @@ read_Matrix(int fd) {
 	// read as 8 unint8_t so we can just pick out the 2 bytes
 	vector<uint8_t> flags;
 	readdtype (fd, miUINT8, nbytes, flags);
-	uint8_t af_class;
+	T_(uint8_t af_class;)
 	uint8_t af_flags;
 	if (bigendian()) {
-		af_class = flags[3];
+		T_(af_class = flags[3];)
 		af_flags = flags[2];
 	} else {
-		af_class = flags[0];
+		T_(af_class = flags[0];)
 		af_flags = flags[1];
 	}
 	T_(trc.dprint("af class ",(int)af_class,", af flags ",(int)af_flags);)

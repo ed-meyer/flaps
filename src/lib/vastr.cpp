@@ -16,6 +16,17 @@ vastr() {
 	return "";
 }
 
+template<>
+std::ostream&
+operator<<(std::ostream& s, const std::vector<std::string>& x) {
+// specialization for vector<string>
+	s << "{\n";
+	for (auto& i : x)
+		s << "   " << i << std::endl;
+	s << "}\n";
+	return s;
+}
+
 #ifdef MAIN
 #include <iostream>
 using namespace std;

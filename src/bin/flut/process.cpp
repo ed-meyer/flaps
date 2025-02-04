@@ -279,7 +279,7 @@ pre_process(string const& prog) {
 	if (sp.targets.size() == 1)
 		flaps::info("target: ",sp.targets);
 	else if (sp.targets.size() > 1)
-		flaps::info(sp.targets.size()," targets:\n",sp.targets);
+		flaps::info(sp.targets.size()," targets:",sp.targets);
 
 	// check some defaults
 	post_preferences_defaults(prog);
@@ -574,8 +574,19 @@ post_process(vector<Flutcurve*>& curves) {
 			continue;
 		}
 		// ... and print with title = curveid
-		string title{vastr("(", ++number, ") ", curve->aid(), ": ", curveid,
-			" (thread ", curve->thread, ")")};
+		ostringstream os;
+		os << "(" << ++number << ") " << curve->aid();
+		if (!curve->mvfpar.empty()) {
+			os << " mode";
+			for (auto i : curve->mvfpar)
+				os << "." << i;
+		}
+		os << ": " << curveid;
+		if (curve->thread != 0)
+			os << " (thread " << curve->thread << ")";
+		string title{os.str()};
+		//string title{vastr("(", ++number, ") ", curve->aid(), ": ", curveid,
+		//	" (thread ", curve->thread, ")")};
 
 		string ul(title.size(), '-');
 		cout << endl;
@@ -655,7 +666,7 @@ seek_target(vector<Flutcurve*>& curves, Target* target, vector<string>& leaders)
 // Returns: a pset* with targets found in solns, or nullptr if none
 	T_(Trace trc(1,"seek_target ",*target);)
 	pset* rval{nullptr};
-	Specs& sp = flutspecs();
+	T_(Specs& sp = flutspecs();)
 
 	string pname{target->parname};
 	double val{target->value};

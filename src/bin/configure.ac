@@ -4,7 +4,7 @@ AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE()
 AC_PREFIX_DEFAULT($FROOT)
 
-AC_CONFIG_SUBDIRS(call display etc fem flaps flut matview octlab parameters pz viz vz)
+AC_CONFIG_SUBDIRS(call display etc fem flaps flut matview octlab parameters pz viz)
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

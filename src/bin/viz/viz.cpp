@@ -398,9 +398,9 @@ OnPaint(wxPaintEvent& event) {
 
 vector<Plotcurve*>
 Viz::
-loaddata(const vector<string>& aids, const vector<string>& plotfiles) {
+loadcurves(const vector<string>& aids, const vector<string>& plotfiles) {
 // read Plotcurves from given plotfile/aid names, add to existing
-	T_(Trace trc(2,"Viz::loaddata");)
+	T_(Trace trc(2,"Viz::loadcurves");)
 
 	// read the aid/plotfiles...
 	vector<Plotcurve*> newcurves = Plotcurve::getcurves(aids, plotfiles);
@@ -414,18 +414,16 @@ loaddata(const vector<string>& aids, const vector<string>& plotfiles) {
 		sp.vzid = curves[0]->vzid();
 	}
 
-	// get a list of all the parameter names from the first curve (parnames)
-	// XXX what if the curves have diff parameters?
-	// XXX what if we are *adding* curves?
+	// make a list of all the parameter names from all the curves
 	vector<Par*> theparams;
-	if (!curves.empty())
-		theparams = curves[0]->allpar();
-	for (auto& p : theparams)
-		add2vector(p->name, parnames_);
-		//!! parnames_.push_back(p->name);
+	for (auto ci : curves) {
+		vector<Par*> theparams = ci->allpar();
+		for (auto pp : theparams)
+			add2vector(pp->name, parnames_);
+	}
 	
 	return newcurves;
-}	// Viz::loaddata
+}	// Viz::loadcurves
 
 void
 Vizplot::
@@ -724,8 +722,17 @@ loadxy(const string& xnm, const vector<string>& ynms, const vector<int>& toplot,
 	T_(trc.dprint("ymin,ymax: ",ymin,", ",ymax);)
 #endif // NEVER // ignore input xmin, etc: rely on clipping
 
+	// ynms might contain wildcards - expand them
+	vector<string> ys;
+	for (auto& pattern : ynms) {
+		for (auto& str : viz.parnames()) {
+			if (flaps::wildcard(pattern, str))
+				ys.push_back(str);
+		}
+	}
+
 	this->xname = xnm;
-	this->ynames = ynms;
+	this->ynames = ys;
 
 	// x and y axes
 	xaxis = new mpScaleX(viz.parTitle(xname),mpALIGN_BOTTOM,ticks);
@@ -800,7 +807,7 @@ loadxy(const string& xnm, const vector<string>& ynms, const vector<int>& toplot,
 				}					
 			}
 			// XXX should each layer get a unique int id?
-			T_(trc.dprint("curve ",i," has ",xs.size()," points");)
+			T_(trc.dprint("curve ",lid," has ",xs.size()," points and is ",inside?"":"not"," visible");)
 
 			if (xs.size() > 0) {
 				// mpFXYVector layer is the main drawing class
@@ -853,7 +860,7 @@ loadxy(const string& xnm, const vector<string>& ynms, const vector<int>& toplot,
 	vector<myFXYVector*> layers = plotlayers();
 	for (auto li : layers) {
 		li->SetName(li->legend.id());
-		T_(trc.dprint("set layer \"",li->GetName(),"\"");)
+		T_(trc.dprint("set layer \"",li->GetName(),"\", inside? ",li->inside);)
 	}
 
 }	// Vizplot::loadxy
@@ -1056,7 +1063,7 @@ closestCurve(int ix, int iy) {	// XXX rename to closest_soln?
 	int dmin{std::numeric_limits<int>::max()};
 	int imin{0};	// point number
 	int jmin{0};	// solution number
-	myFXYVector* closest_layer{nullptr};
+	T_(myFXYVector* closest_layer{nullptr};)
 	vector<myFXYVector*> layers = visplotlayers();	// visible plot layers
 	for (size_t j=0; j<layers.size(); j++) {
 		string name = layers[j]->GetName().ToStdString();
@@ -1079,7 +1086,7 @@ closestCurve(int ix, int iy) {	// XXX rename to closest_soln?
 				imin = i;
 				jmin = j;
 				dmin = d;
-				closest_layer = layers[j];
+				T_(closest_layer = layers[j];)
 			}
 		}
 	}
@@ -1576,7 +1583,6 @@ VizFrame::VizFrame(const wxString& title,
 		wxFrame(nullptr, wxID_ANY, title, pos, size, style) {
 // VizFrame ctor
 	T_(Trace trc(2,"VizFrame initial ctor");)
-	int cv; // return from addplot
 	frameno = number_of_frames++;
 
 	// create a top-level vertical Sizer
@@ -1614,7 +1620,7 @@ VizFrame::VizFrame(const wxString& title,
 		if (!sp.xname.empty() && !sp.ynames.empty()) {
 			m_plot->loadxy(sp.xname, sp.ynames);
 			// add it to the plotz vector of views
-			cv = addplot(m_plot);
+			addplot(m_plot);
 			setcurrent(0);
 			m_plot->Show(true);
 		}
@@ -1627,7 +1633,7 @@ VizFrame::VizFrame(const wxString& title,
 			sp.ynames.clear();
 			sp.ynames.insert(sp.ynames.begin(), toks.begin()+1, toks.end());
 			m_plot->loadxy(sp.xname, sp.ynames);
-			cv = addplot(m_plot);
+			addplot(m_plot);
 			m_plot->Show(false);
 		}
 		setcurrent(0);
@@ -1648,7 +1654,6 @@ VizFrame::VizFrame(const wxString& title,
 	T_(trc.dprint("frame size: ",GetSize(),", pos ",GetPosition());)
 	T_(trc.dprint("topsizer: ",*topsizer);)
 
-	T_(trc.dprint("returning, now have ",cv+1," plots");)
 }	// VizFrame initial ctor
 
 // the zoom constructor creates a new VizFrame with a new plot size
@@ -1657,7 +1662,6 @@ VizFrame::VizFrame(Vizplot* vizplot, VizFrame* p, const wxString& title,
 		wxFrame(nullptr, wxID_ANY, title, pos, size, style) {
 // VizFrame zoom ctor: take toplot,pset_spot,am_spot from the input Vizplot
 	T_(Trace trc(2,"VizFrame zoom ctor");)
-	int cv; // return from addplot
 	frameno = number_of_frames++;
 
 	// save the frame we were created from so we can propagate Marks
@@ -1709,12 +1713,11 @@ VizFrame::VizFrame(Vizplot* vizplot, VizFrame* p, const wxString& title,
 	double ymax = vizplot->p2y(vizplot->currentPos.y);
 	m_plot->loadxy(vizplot->xname, vizplot->ynames, this->toplot, xmin, xmax, ymin, ymax);
 	// add it to the plotz vector of views
-	cv = addplot(m_plot);
+	addplot(m_plot);
 	setcurrent(0);
 	// zoom it: changes the size (hence the clipping region) of m_plot
 	wxPoint start = m_plot->transform(vizplot, vizplot->startPos);
 	wxPoint end = m_plot->transform(vizplot, vizplot->currentPos);
-	// m_plot->ZoomRect(vizplot->startPos, vizplot->currentPos);
 	m_plot->ZoomRect(start, end);
 	m_plot->Show(true);
 
@@ -1729,7 +1732,6 @@ VizFrame::VizFrame(Vizplot* vizplot, VizFrame* p, const wxString& title,
 	T_(trc.dprint("frame size: ",GetSize(),", pos ",GetPosition());)
 	T_(trc.dprint("topsizer: ",*topsizer);)
 
-	T_(trc.dprint("returning, now have ",cv+1," plots");)
 }	// VizFrame zoom ctor
 
 void
@@ -1956,14 +1958,15 @@ OnFileOpen( wxCommandEvent& event ) {
 	// XXX would it be better to just re-allocate viz?
 	viz.clear();
 
-	viz.loaddata(aids, filenames);
+	viz.loadcurves(aids, filenames);
 
 	// delete all plots in plotz
 	clear();
 
 	// create a new one
 	Vizplot* vp = new Vizplot(lowerpanel, -1, wxDefaultPosition, plotsize);
-	// load data
+
+	// load x,y data
 	vp->loadxy(xnm, ynms);
 
 	// add it to the list of views...
@@ -2028,7 +2031,7 @@ OnFileAdd( wxCommandEvent& event) {
 	vector<string> aids;
 	
 	// load the new aids/plotfiles...
-	vector<Plotcurve*> newcurves = viz.loaddata(aids, filenames);
+	vector<Plotcurve*> newcurves = viz.loadcurves(aids, filenames);
 	// ... then add the new curves to all views (plotz)
 	for (auto vp : plotz) {
 		vp->add(newcurves);
@@ -2751,6 +2754,11 @@ Plot(wxDC & dc, mpWindow & w) {
 	int height = w.GetScrY() - w.GetMarginBottom() - tly;
 	T_(trc.dprint("clipping rect: ",tlx,", ",tly,", w ",width,", h ",height);)
 	
+	// try expanding the box a little so pts on the boundary show
+	tlx -= 2;
+	tly -= 2;
+	width += 4;
+	height += 4;
 	wxRect plotBox(tlx, tly, width, height);
 	dc.SetClippingRegion(plotBox);
 
@@ -2765,9 +2773,9 @@ Plot(wxDC & dc, mpWindow & w) {
 	// check that at least 1 point is in the clipping region
 	inside = false;
 	Rewind();
-		wxPen dotpen = legend.pen;
-		dotpen.SetWidth(5);
-		dc.SetPen(dotpen);
+	wxPen dotpen = legend.pen;
+	dotpen.SetWidth(5);
+	dc.SetPen(dotpen);
 	while (GetNextXY(x,y)) {
 		ix = w.x2p(x);
 		iy = w.y2p(y);
@@ -2854,13 +2862,14 @@ main(int argc, char** argv) {
 
 	T_(trc.dprint("component sizes in pixels:\n",vizsizes);)
 
+		// parse the specs...
 	Specs& sp = specs();
 	try {
-		// parse the specs
+		// ...from the command line ...
 		string options = cmdline(argc, argv);
 		if (options.empty() && isatty(fileno(stdin))) {
 			cout << helpmsg() << endl;
-			//!! return 1;
+		// ... or flaps options
 		} else if (!parse_specs(options, sp)) {
 			cout << helpmsg() << endl;
 			return 1;
@@ -2874,7 +2883,7 @@ main(int argc, char** argv) {
 		// get the Viz instance - this will create the singleton...
 		Viz& viz{Viz::instance()};
 		// ... then load requested files/aids
-		viz.loaddata(sp.aids, sp.plotfiles);
+		viz.loadcurves(sp.aids, sp.plotfiles);
 		// Create an Amviz singleton...
 		Amviz& amviz{Amviz::instance()};
 		if (amviz.error.empty()) {

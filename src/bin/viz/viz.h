@@ -97,19 +97,18 @@ public:
 	// ctor
 	myFXYVector(Vizplot* vp, Plotcurve* pc, const std::string& ynm) :
 			mpFXYVector(""), vizplot(vp), plotcurve(pc) {
-	// doesn't do much: data is loaded in SetData()
+	// The myFXYVector doesn't do much: data is loaded in SetData(),
+	// (inherited from mpFXYVector) in Vizplot::loadxy & Vizplot::add
 		m_type = mpLAYER_PLOT;
 		legend = Legend(pc,ynm);	// set Plotcurve, yname for set_legends
 		yname = ynm;
-		// SetName(legend.id());
 	 }
-	// XXX also include Vizplot*? ie which Vizplot is this associated with
-	//     this would allow for resizing the Vizplot
+	// The Vizplot this is associated with allows for resizing the Vizplot
 	Vizplot* vizplot{nullptr};
 	Plotcurve* plotcurve{nullptr};
 	Legend legend;
 	std::string yname;
-	bool inside{false};	// the clipping region?
+	bool inside{false};	// the clipping region? XXX used?
 
 	// given the index of a point on this layer, return a pointer to
 	// the corresponding Plotcurve and the index of the corresponding point
@@ -285,14 +284,13 @@ class Viz {
 	Viz(Viz&) = delete;
 	void operator=(const Viz&) = delete;
 public:
-	//!! VizFrame* frame{nullptr};		// the main frame XXX NO - multiple frames
 	std::map<std::string,Legend> footnotes;
 	int colorby{-1};
 	static Viz& instance() {
 		static Viz instance_;
 		return instance_;
 	}
-	std::vector<Plotcurve*> loaddata(const std::vector<std::string>& aids,
+	std::vector<Plotcurve*> loadcurves(const std::vector<std::string>& aids,
 		const std::vector<std::string>& plotfiles);
 	std::vector<Plotcurve*> curves;
 	void run();

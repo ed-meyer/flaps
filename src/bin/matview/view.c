@@ -203,9 +203,9 @@ VIEW thumb;
 
 	const char *tmp;
 
-	double *dptr;
+	double *dptr = NULL;
 	double *ptr;
-	int nelems;
+	int nelems = 0;
 
 	double min, max;
 	double xscale;
@@ -742,17 +742,17 @@ VIEW V;
 int nx, ny;
 int xi, yi;
 {
-	TEMPLATE T;
+	TEMPLATE T = NULL;
 
-	COMPLEX C;
+	COMPLEX C = NULL;
 
-	DATA D;
+	DATA D = NULL;
 
 	char cmd[255];
 
-	double *F1;
-	double *F2;
-	double *F;
+	double *F1 = NULL;
+	double *F2 = NULL;
+	double *F = NULL;
 
 	double eff_scale;
 	double xfactor;
@@ -1442,14 +1442,14 @@ VIEW V;
 double *minptr;
 double *maxptr;
 {
-	double *dptr;
-	double *ptr;
+	double *dptr = NULL;
+	double *ptr = NULL;
 
 	double min, max;
 	double fval;
 
 	int vis_mode;
-	int nelems;
+	int nelems = 0;
 	int i;
 
 	/* Determine Vis Mode */
@@ -2403,9 +2403,9 @@ color_value( color, value )
 char color[16];
 double value;
 {
-	char Rstr[4];
-	char Gstr[4];
-	char Bstr[4];
+	char Rstr[16];
+	char Gstr[16];
+	char Bstr[16];
 
 	double ratio;
 	double f;

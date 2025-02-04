@@ -7696,7 +7696,7 @@ A string is a wildcard pattern if it contains one of the characters
 			enclosed in the brackets. A range of characters may be included by
 			separating the first and last of the range with a dash (-); for
 			example \verb+[a-d0-3]+ is equivalent to \verb+[abcd0123]+.
-			To search for a range of number like \verb+0-100+ you must
+			To search for a range of numbers like \verb+0-100+ you must
 			use a pattern list as shown below.
 			The string in the brackets may not be empty, so \verb+[][!]+ matches
 			one of the three characters \verb+]+, \verb+[+, and \Code{!}.
@@ -7711,23 +7711,23 @@ a vertical bar (\verb+|+).
 
 	\begin{description}
        \item{\Code{?(pattern-list)}}
-              The pattern matches if zero or one occurrences of any of  the  pat‐
-              terns in the pattern-list match the input string.
+              The pattern matches if zero or one occurrences of any of  the
+              patterns in the pattern-list match the input string.
 
        \item{\Code{*(pattern-list)}}
-              The  pattern matches if zero or more occurrences of any of the pat‐
-              terns in the pattern-list match the input string.
+              The  pattern matches if zero or more occurrences of any of the
+              patterns in the pattern-list match the input string.
 
        \item{\Code{+(pattern-list)}}
-              The pattern matches if one or more occurrences of any of  the  pat‐
-              terns in the pattern-list match the input string.
+              The pattern matches if one or more occurrences of any of  the
+              patterns in the pattern-list match the input string.
 
        \item{\Code{@(pattern-list)}}
-              The  pattern  matches  if exactly one occurrence of any of the pat‐
-              terns in the pattern-list match the input string.
+              The  pattern  matches  if exactly one occurrence of any of the
+              patterns in the pattern-list match the input string.
 
        \item{\Code{!(pattern-list)}}
-              The pattern matches if the input string cannot be matched with  any
+              The pattern matches if the input string cannot be matched with any
               of the patterns in the pattern-list.
 	\end{description}
 As an example of a pattern-list, to match strings like a1, a2,...a234,
@@ -7755,8 +7755,13 @@ a234 matches a@([1-9]|[1-9][0-9]|[12][0-9][1-4])
 Flaps is the evolution of a program I wrote at Boeing called Apex,
 which in turn is the evolution of a program I wrote for my thesis on
 flutter of a Darrieus wind turbine.
-The common thread here is the use and development of a numerical continuation
-method: pseudo-arclength minimum-norm corrector.
+The common thread here is treating flutter equations as a set of nonlinear
+equations instead of the traditional methods which treat them as
+eigenvalue problems. Flutter equations lend themselves very well to
+tracing them as a set of nonlinear equations, using numerical continuation.
+% the use and development of a numerical continuation
+% method: pseudo-arclength minimum-norm corrector.
+
 % There have been many formulations of the flutter equations over the years;
 % some have been called ``flutter methods'' but the formulation used can
 % often be solved with continuation, for example the

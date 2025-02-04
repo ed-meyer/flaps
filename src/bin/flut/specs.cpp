@@ -86,12 +86,12 @@ e9n_create() {
 }
 	
 string
-incr_mfv(int init) {
-// Set multiple-fixed-value (mfv) parameter values in the gpset to
-// the values for the "visit" set of its mfv parameter values.
+incr_mvf(int init) {
+// Set multiple-value-fixed (mvf) parameter values in the gpset to
+// the values for the "visit" set of its mvf parameter values.
 // To initialize the incrementation, call with a starting argument,
 // usually 0; with no argument init=-1
-// The first time this function is called (with an argument) the mfv
+// The first time this function is called (with an argument) the mvf
 // parameter values are set to their first value; subsequent calls
 // increment the first parameter value through all multi-values,
 // then set the second parameter to its second value and
@@ -101,14 +101,18 @@ incr_mfv(int init) {
 // are set "fortran-style": first index increasing most rapidly.
 //
 // Returns a string like cbba where the letters are the
-// ordinal numbers of the mfv parameters
-// (in this example there are four mfv parameters, the first
+// ordinal numbers of the mvf parameters
+// (in this example there are four mvf parameters, the first
 // is on it's 3rd mv value, the 2nd & 3rd on their second, and
 // the 4th on its first.
 //
 // Note: this function is not threadsafe: contains statics
-	T_(Trace trc(1,"incr_mfv");)
+	T_(Trace trc(1,"incr_mvf");)
+#ifdef NEVER // use get_mvf()
 	vector<Par*> fixed = gpset::get().get_fixed();
+#else // NEVER // use get_mvf()
+	vector<Par*> mvfpar = gpset::get().get_mvf();
+#endif // NEVER // use get_mvf()
 	size_t i;
 	ostringstream os;
 	static int visit{0};
@@ -116,7 +120,11 @@ incr_mfv(int init) {
 
 	T_(trc.dprint("init ",init,", visit ",visit);)
 
-	if (fixed.empty()) {
+#ifdef NEVER // use get_mvf()
+	if (fixed.empty())
+#else // NEVER // use get_mvf()
+	if (mvfpar.empty()) {
+#endif // NEVER // use get_mvf()
 		T_(trc.dprint("returning empty string: no fixed parameters");)
 		return "";
 	}
@@ -129,32 +137,41 @@ incr_mfv(int init) {
 	// Create a vector of sizes of each "altval" member of
 	// the fixed parameters...
 	vector<size_t> ld;
-	vector<Par*> mfvpar;
 	size_t nmv{1};  // number of mv combinations
+#ifdef NEVER // use get_mvf()
+	vector<Par*> mvfpar;
 	for (auto pp : fixed) {
 		size_t sz = pp->altval.size();
 		if (sz > 0) {
-			mfvpar.push_back(pp);
+			mvfpar.push_back(pp);
 			ld.push_back(sz);
-			T_(trc.dprint("mfv parameter (",pp->name,") has ",sz," altval");)
+			T_(trc.dprint("mvf parameter (",pp->name,") has ",sz," altval");)
 			nmv *= sz;
 		}
 	}
+#else // NEVER // use get_mvf()
+	for (auto pp : mvfpar) {
+		size_t sz = pp->altval.size();
+		ld.push_back(sz);
+		T_(trc.dprint("mvf parameter (",pp->name,") has ",sz," altval");)
+		nmv *= sz;
+	}
+#endif // NEVER // use get_mvf()
 
 	if (visit >= (int)nmv) {
-		T_(trc.dprint("returning empty string: all mfv par used");)
+		T_(trc.dprint("returning empty string: all mvf par used");)
 		return "";
 	}
 
 	// Create a vector of indices into the "altval" member of
-	// each mfv parameter...
-	static vector<size_t> mfvindex;	// not threadsafe
-	mfvindex = vec2mdim(visit, ld);
-	T_(trc.dprintv(mfvindex,"mfvindex");)
-	// ... then set each mfv parameter to that value
-	for (i=0; i<mfvpar.size(); i++) {
-		Par* pp = mfvpar[i];
-		double pi = pp->altval[mfvindex[i]];
+	// each mvf parameter...
+	static vector<size_t> mvfindex;	// not threadsafe
+	mvfindex = vec2mdim(visit, ld);
+	T_(trc.dprintv(mvfindex,"mvfindex");)
+	// ... then set each mvf parameter to that value
+	for (i=0; i<mvfpar.size(); i++) {
+		Par* pp = mvfpar[i];
+		double pi = pp->altval[mvfindex[i]];
 		T_(trc.dprint("set ",pp->name," to ",pi," @",pp);)
 		// use valuef to force the change; note this does not change
 		// the "constant" member
@@ -163,7 +180,7 @@ incr_mfv(int init) {
 
 	// create the return string
 	os.str("");
-	for (auto i : mfvindex)
+	for (auto i : mvfindex)
 		os << char('a'+i);
 	rval = os.str();
 

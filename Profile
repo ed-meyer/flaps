@@ -57,7 +57,7 @@ CONFIGUREFLAGS="$CONFIGUREFLAGS --cache-file=$FROOT/cache"
 
 # export CC=gcc
 # export CXX=g++
-export CFLAGS="$Optimize $Traceflag -fPIC $CFLAGS"
+export CFLAGS="-D$Version $Optimize $Traceflag -fPIC $CFLAGS"
 export CXXFLAGS="-std=c++17 ${CFLAGS}"
 export CPPFLAGS="-I${FROOT}/include"
 # export F77=gfortran

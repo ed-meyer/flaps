@@ -371,8 +371,8 @@ eval(pset& plt, vector<complex<Ad>>& result) const {
 		throw runtime_error(vastr("evaluating ",this->mid(),": ",s.what()));
 	}
 
-	static int visit{0};
-	if (visit++ == 0)
+	T_(static int visit{0};)
+	T_(if (visit++ == 0))
 		T_(trc.dprintm(nr,nc,nr,result,this->mid());)
 	return rval;
 }

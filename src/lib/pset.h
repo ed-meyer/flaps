@@ -90,6 +90,7 @@ public:
 	std::vector<Par*> get_indep();
 	std::vector<Par*> get_derived();
 	std::vector<Par*> get_fixed();
+	std::vector<Par*> get_mvf();
 	std::vector<Eigpar*> get_eigv();
 	std::vector<Par*> get_aux();
 
@@ -139,13 +140,13 @@ public:
 	// get a pointer to a particular parameter
 	const Par* findp (const std::string& name) const;
 	Par* findp (const std::string& name);
-	//!! Par* findp (const std::string& name);
-	//!! const Par* findg (const std::string& name);
 	Par* findg (const std::string& name);
 	// CAUTION when using findRe: you could match, e.g.
 	// "cdpress" when you are looking for "dpress" (it happened).
 	// Probably better to anchor the re: "^dpress$"
 	std::vector<Par*> findRe(const std::string& pattern);
+	// find parameters matching a wildcard patter
+	std::vector<Par*> findwildcard(const std::string& pattern);
 	Par* findic(const std::string& name);
 
 	// interpolate each Par's solns:

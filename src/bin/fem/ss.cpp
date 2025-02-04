@@ -292,10 +292,11 @@ lump(vector<double>& kaa) {
 	T_(trc.dprint("interior: ",inter);)
 
 	int na = att.size();
-	int ni = inter.size();
 
 	// Gia = -K_{ii}^{-1} K_{ia}
 	vector<double> gia = Gia();
+
+	T_(int ni = inter.size();)
 	T_(trc.dprintm(ni,na,ni,gia,"gia");)
 
 	vector<double> rval(na*na, 0.0);

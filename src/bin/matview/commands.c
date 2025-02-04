@@ -306,8 +306,8 @@ int
 set_complex_view_proc(ClientData clientData, Tcl_Interp* itp, int argc, char** argv ) {
 	char *cv;
 
-	int changed;
-	int tmp;
+	int changed = 0;
+	int tmp = 0;
 
 	if ( argc != 2 )
 	{
@@ -1186,7 +1186,7 @@ char **argv;
 	int thumb_redraw;
 	int recolor;
 	int redraw;
-	int tmp;
+	int tmp = 0;
 
 	if ( argc != 3 )
 		goto err;

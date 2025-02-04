@@ -551,6 +551,7 @@ int
 perfind (int n, const vector<double>& m, const vector<double>& g,
 		const vector<double>& k, double w, complex<double>* x) {
 // compute a performance index for the free-vibration gyro problem
+//   (-w^2M + wG + K)x = 0    w = imag(s)
 // where 0 is bad and 14 is about as good as possible
 	T_(Trace trc(1,"perfind");)
 	int rval{0};

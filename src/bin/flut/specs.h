@@ -90,9 +90,9 @@ void print_prefs(std::string const& prog);
 bool is_flutmat (std::string const& desc);
 
 // increment the multi-valued fixed parameters and return
-// a tag. To initialize, call "incr_mfv(0)", and increment
-// subsequently, "incr_mfv();"
-std::string incr_mfv(int init=-1);
+// a tag. To initialize, call "incr_mvf(0)", and increment
+// subsequently, "incr_mvf();"
+std::string incr_mvf(int init=-1);
 
 int
 is_voe(int state=-1);

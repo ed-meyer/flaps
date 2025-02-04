@@ -23,6 +23,7 @@
 // operator<< for vector<T> for any type T that has operator<<
 // short vectors get printed on one line, long ones with one
 // element per line
+// Specializations are in vastr.cpp
 template<typename Type>
 std::ostream&
 operator<<(std::ostream& s, const std::vector<Type>& x) {

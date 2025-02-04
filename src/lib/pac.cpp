@@ -153,7 +153,7 @@ sigue (Pac& to, vector<double>* projectee) {
 		//!! if (stepsize < specs.minstepsize*8.0)
 		if (to.stepsize < specs.minstepsize*pow(specs.reductionfac,4.0))
 			return rval;
-		int red = step.red_angle + step.red_conv + step.red_dsc;
+		T_(int red = step.red_angle + step.red_conv + step.red_dsc;)
 		T_(trc.dprint("reduction ",red,", retry with stepsize ",to.stepsize,", issue: ",rval);)
 	}
 

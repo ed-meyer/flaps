@@ -50,7 +50,7 @@ checkbuild:	FORCE
 	cd release/flaps-$(Version) && . ./Profile && cd demo && run all
 
 check:	FORCE
-	make checkbuild >check.$(Version)
+	make checkbuild >check.$(Version) 2>&1
 
 release:		FORCE
 	cd release && cp flaps-$(Version).tar.gz ~/Insync/flapsconsulting@gmail.com/'Google Drive'/flaps

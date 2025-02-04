@@ -10,8 +10,8 @@ ALL="$QUICK $BIGUNS"
 
 usage() {
 	echo "Usage: run [-bpqv] [all] [quick] [file...]" >&2
-	echo "  -b            do not display graphics from vz or matview" >&2
-	echo "  -g            display graphics from vz or matview" >&2
+	echo "  -b            do not display graphics from viz or matview" >&2
+	echo "  -g            display graphics from viz or matview" >&2
 	echo "  -k            keep the temporary directory" >&2
 	echo "  -v            run under valgrind" >&2
 	echo '  The "all" option runs all available files' >&2

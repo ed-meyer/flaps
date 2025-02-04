@@ -19,24 +19,22 @@
    import { ${FROOT}/demo/lco.uf}
    catalog{}
 
-#  display {matview, gstif, mass}
-
-# give the stiffness matrix an evaluation function with freeplay and bilinear
+   # give the stiffness matrix an evaluation function with freeplay and bilinear
    pz {
       i=gstif
       code=stiffcn
       o=stif
    }
 
-# gaf matrices are interpolated wrt rf, then passed
-# to gaffcn for nonlinear mods
+   # gaf matrices are interpolated wrt rf, then passed
+   # to gaffcn for nonlinear mods
    pz {
       i=(gaf0{rf=0}, gaf0008{rf=0.031496}, gaf0015{rf=0.059055}
          gaf002{rf=0.07874}, gaf003{rf=0.11811}, gaf01{rf=0.3937}, gaf05{rf=1.9685})
       o = pgaf
    }
 
-# VSO at gcnorm=0
+   # VSO at gcnorm=0
    flut {
       id = vso
       mass=mass
@@ -53,7 +51,7 @@
    viz {id=vso, x[-1:1]=sigma, y=freq}
    viz {id=vso, x=vtas, y=sigma}
 
-# vsoe starting at 50 m/s
+   # vsoe starting at 50 m/s
    flut {
       id=vsoe, source=vso
       indep=(vtas[0:100], sigma[-100:0.001], freq, gcnorm[0:1])
@@ -63,7 +61,7 @@
    }
    viz{id=vsoe, x=sigma, y=gcnorm}
 
-# voe starting from vsoe
+   # voe starting from vsoe
    flut {
       id=voe2, source=vsoe
       indep=(vtas[10:500], freq, gcnorm)
@@ -72,10 +70,9 @@
    }
    viz {id=voe2, x=vtas, y=gcnorm, w=lcostab}
    viz {id=(voe2,vsoe), x=vtas, y=gcnorm}
-# these are the only gc that go beyond delta
-   viz {id=voe2, x=vtas, y='fac4[12345]'}
-#  viz {id=voe2, x=vtas, y='fac[1234]'}
-# check the interpolations of the 3 df's
+   # these are the only gc that go beyond delta
+   viz {id=voe2, x=vtas, y='fac4@([1-5])'}
+   # check the interpolations of the 3 df's
    viz {x=q, y=f, bilinear@0.001@0.5.apf}
    viz {x=q, y=f, bilinear@0.01@1.2.apf}
    viz {x=q, y=f, gap@0.001.apf}

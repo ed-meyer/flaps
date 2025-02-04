@@ -293,7 +293,9 @@ wildcard(const std::string& pattern, const std::string& str) {
 	T_(Trace trc(2,"wildcard");)
 	bool rval{false};
 
+
 	int res = fnmatch(pattern.c_str(), str.c_str(), FNM_EXTMATCH);
+	T_(trc.dprint("testing ",str," against ",pattern,": ",res==0?"matches":"no match");)
 	if (res == 0)
 		rval = true;
 	else if (res != FNM_NOMATCH)

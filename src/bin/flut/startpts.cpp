@@ -22,7 +22,17 @@
 //                                              |
 //                                         interp_curve
 //
-// Curve naming:
+// Curves are identified by
+// 1) analysis id (aid): set with the "id" or "aid" option in flut
+// 2) curve id (cid):
+//        a string of digits separated by periods '.' with the first digit
+//        the mode number assigned by increasing frequency in the
+//        free-vibration solution in this analysis if the "source" option
+//        was not included, or in the non-source analysis this analysis is
+//        source'd from. The next digits are included if there are multiple-
+//        fixed-valued (mfv) parameters, giving the ordinal number of these
+//        multiple values.
+
 //   the basic name for all curves is mode_n where "n" is
 //   the frequency-ascending mode number. In addition there may be
 //   tags for multiple-fixed-valued (mfv) parameters and start regions:
@@ -97,25 +107,25 @@ startregions(string const& options) {
 	vector<Tok*> toks = flaps::lexer(options);
 
 	// look for mode(s) = (m : s : n), convert to mode_m, mode_(m+s), ... mode_n
-	// look for multi-valued parameters
-	vector<size_t> ld;  // leading-dimension for each mv par
-	size_t nmv{1};       // number of mv combinations: product of ld's
-	vector<Tok*> mvtoks;
+	// Also look for multi-valued-fixed (mvf) parameters
+	vector<size_t> ld;	// leading-dimension for each mvf par
+	size_t nmvf{1};		// number of mvf combinations: product of ld's
+	vector<Tok*> mvftoks;
 	for (auto tok : toks) {
 		size_t sz = tok->svec.size();
 		Par* pp = gpset::find(tok->lhs);
 		if (pp != nullptr && sz > 0) {
 			ld.push_back(sz);
-			nmv *= sz;
-			mvtoks.push_back(tok);
+			nmvf *= sz;
+			mvftoks.push_back(tok);
 		}
 	}
 	// for each combination of the multi-valued parameters create
-	// a Region (this also works if there are no mv toks)
-	for (size_t i=0; i<nmv; i++) {
-		vector<size_t> mvidx = vec2mdim(i, ld);
-		for (size_t j=0; j<mvidx.size(); j++) {
-			mvtoks[j]->srhs = mvtoks[j]->svec[mvidx[j]];
+	// a Region (this also works if there are no mvf toks)
+	for (size_t i=0; i<nmvf; i++) {
+		vector<size_t> mvfidx = vec2mdim(i, ld);
+		for (size_t j=0; j<mvfidx.size(); j++) {
+			mvftoks[j]->srhs = mvftoks[j]->svec[mvfidx[j]];
 		}
 		Region region;
 		for (auto tok : toks) {
@@ -169,7 +179,7 @@ startpts() {
 			srtag = vastr(char('a' + i));
 
 		// do this for each mv combination - first initialize
-		string mfvtag = incr_mfv(0);
+		string mvftag = incr_mvf(0);
 		do {
 			vector<Flutcurve*> startpts;
 			try {
@@ -188,12 +198,12 @@ startpts() {
 					}
 				}
 
-				// Add mfv and startregion tags to the curve id and
+				// Add mvf and startregion tags to the curve id and
 				// give the same curve id to the params desc member
 				for (auto& curve : startpts) {
 					string curveid = curve->cid();
-					if (!mfvtag.empty()) {
-						curveid += "." + mfvtag;
+					if (!mvftag.empty()) {
+						curveid += "." + mvftag;
 					}
 					if (!srtag.empty()) {
 						curveid += "." + srtag;
@@ -205,9 +215,9 @@ startpts() {
 			} catch (runtime_error& s) {
 				flaps::error(s.what());
 			}
-			if (!mfvtag.empty())
-				mfvtag = incr_mfv();
-		} while (!mfvtag.empty());
+			if (!mvftag.empty())
+				mvftag = incr_mvf();
+		} while (!mvftag.empty());
 	}
 
 	T_(trc.dprint("returning ",rval.size()," start points");)
@@ -1089,7 +1099,7 @@ search_curve (Curve& source_curve, vector<string>& messages,
 		T_(trc.dprint("returning empty pset: only ", source_curve.nsolns()," points in source");)
 	}
 
-	// 2) interpolate on a Fixed or multiple-fixed-value (mfv) parameter
+	// 2) interpolate on a Fixed or multiple-fixed-value (mvf) parameter
 	//    For each parameter that was declared Fixed as an option
 	//    (so Par::pref=1) in the current analysis:
 	//       a) if it was constant in the source analysis and the values

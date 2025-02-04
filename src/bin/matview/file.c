@@ -225,11 +225,11 @@ int
 read_mm_coordinate( FILE* mat, int has_values, int contflag, int inst ) {
 	static int cnt;
 
-	TEMPLATE T;
+	TEMPLATE T = NULL;
 
-	COMPLEX C;
+	COMPLEX C = NULL;
 
-	DATA D;
+	DATA D = NULL;
 
 #ifdef FILE_BUFFERING
 	char *line;
@@ -1433,11 +1433,11 @@ read_coordinate( FILE* mat, int contflag, int inst ) {
 	static int nelems;
 	static int cnt;
 
-	TEMPLATE T;
+	TEMPLATE T = NULL;
 
-	COMPLEX C;
+	COMPLEX C = NULL;
 
-	DATA D;
+	DATA D = NULL;
 
 #ifdef FILE_BUFFERING
 	char *line;
@@ -2269,7 +2269,7 @@ FILE **mat;
 int *is_compressed; */
 	char cmd[255];
 
-	char *uncompress;
+	char *uncompress = NULL;
 	char *suffix;
 
 	/* Close Any Open File */
@@ -2443,11 +2443,11 @@ int has_values;
 
 int
 realloc_mat( int nelems, int has_values ) {
-	TEMPLATE TSAVE;
+	TEMPLATE TSAVE = NULL;
 
-	COMPLEX CSAVE;
+	COMPLEX CSAVE = NULL;
 
-	DATA DSAVE;
+	DATA DSAVE = NULL;
 
 	int old_nelems;
 

@@ -231,7 +231,7 @@ nullProj(const vector<double>& proj) {
 //   p = V V^t proj
 // The last nc-nr+rankdef columns of V (rows of vt) are null vectors
 	vector<double> rval(nc, 0.0);
-	int nnull = nc - nr + rankdef;
+	T_(int nnull = nc - nr + rankdef;)
 	T_(trc.dprint(nnull, " null vectors, start at V[",nc-nnull,"] 0b");)
 	double vtp;
 	int start = (int)(nr - rankdef);

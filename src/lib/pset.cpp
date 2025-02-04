@@ -17,6 +17,7 @@
 #include "atmos.h"
 #include "Curve.h"
 #include "exim.h"
+#include "lexer.h"
 #include "matrix.h"
 #include "pset.h"
 #include "settings.h"
@@ -333,6 +334,33 @@ findRe(const std::string& pattern) {
 	return rval;
 }
 
+std::vector<Par*>
+pset::
+findwildcard(const std::string& pattern) {
+// find all Par with names matching an ECMA regular expression,
+// ignoring case
+	std::vector<Par*> rval;
+	for (auto& par : this->pmap_) {
+		Par* pp = par.second;
+		if (flaps::wildcard(pattern, pp->name)) {
+			// names only get added to monitor list if
+			// they already exist
+			this->monitor_add(pp->name);
+			rval.push_back(pp);
+		}
+	}
+	// maybe an eigenvector name
+	for (auto& pp : this->eigv_) {
+		if (flaps::wildcard(pattern, pp->name)) {
+			// names only get added to monitor list if
+			// they already exist
+			this->monitor_add(pp->name);
+			rval.push_back(pp);
+		}
+	}
+	return rval;
+}
+
 Par*
 pset::
 findic(const std::string& name) {
@@ -514,10 +542,9 @@ summary (std::vector<std::string> const& toprint, int maxchar) {
 // If a parameter is out-of-range print an asterisk at it's right edge
 	T_(Trace trc(3,"pset::summary");)
 	std::ostringstream os;
-	int pw = page_width();
 	bool printev{false};
 
-	T_(trc.dprint(this->size()," par, ",toprint.size()," printed, pagewidth ",pw);)
+	T_(trc.dprint(this->size()," par, ",toprint.size()," printed, pagewidth ",page_width());)
 
 	if (toprint.empty()) {
 		os << desc() << " " << this->size() << " parameters";
@@ -866,6 +893,29 @@ get_fixed () {
 	for (auto& i : this->pmap_) {
 		if (i.second->is_fixed())
 			rval.push_back(i.second);
+	}
+	T_(trc.dprint(rval.size(), " fixed parameters");)
+	return rval;
+}
+
+vector<Par*>
+pset::
+get_mvf() {
+	T_(Trace trc(3,"pset::get_mvf ", this->desc());)
+	vector<Par*> rval;
+
+	vector<Par*> fixed = get_fixed();
+	if (fixed.empty()) {
+		T_(trc.dprint("quick return: no fixed");)
+		return rval;
+	}
+
+	for (auto& i : fixed) {
+		size_t sz = i->altval.size();
+		if (sz > 0) {
+			rval.push_back(i);
+			T_(trc.dprint("mvf parameter (",i->name,") has ",sz," altval");)
+		}
 	}
 	T_(trc.dprint(rval.size(), " fixed parameters");)
 	return rval;

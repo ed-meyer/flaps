@@ -198,8 +198,17 @@ parse_specs (string const& options, Specs& sp) {
 				}
 				return true; }},
 			{"^y$", [&](const Tok& p) {
+#ifdef NEVER // try wildcard
+				for (auto& s : p.svec) {
+					vector<Par*> ypar = gpset::get().findwildcard(s);
+					for (auto& pp : ypar)
+						sp.ynames.push_back(pp->name);
+				}
+#else // NEVER // try wildcard
 				sp.ynames.insert(sp.ynames.end(),p.svec.begin(),p.svec.end());
+#endif // NEVER // try wildcard
 				return true; }},
+			// XXX require limits to got on the rhs?
 			{R"(^y\[.*\])", [&](const Tok& p) {
 				sp.ynames.insert(sp.ynames.end(),p.svec.begin(),p.svec.end());
 				string min, max;

@@ -45,6 +45,15 @@ parser (string const& settings) {
 			return true; }},
 		{"^callgrind", [&](const Tok& p) {
 			sp.debugger = "valgrind --tool=callgrind";
+			flaps::info("profiling processs with callgrind: to view results "
+				"type\n  kcachegrind callgrind.n\n"
+				"where n is a process id");
+			return true; }},
+		{"^gprofng", [&](const Tok& p) {
+			sp.debugger = "gprofng collect app";
+			flaps::info("profiling processes with gprofng: to view results "
+				"type\n  gprofng display text -functions test.n.er\n"
+				"where 'n' is 1,2,etc");
 			return true; }},
 		{"^time", [&](const Tok& p) {
 			sp.debugger = "valgrind --tool=callgrind";

@@ -1179,6 +1179,8 @@ RFAApprox (vector<complex<double> > const& pval,
 		reinterpret_cast<double*>(&b[0]), ma, &s[0], rcond, &rank);
 
 	T_(trc.dprint("dgelss returned ",info,", rank ",rank, " (",ma,',',na,"), rcond ",rcond);)
+	if (info != 0)
+		flaps::warning("least-squares solution failed with info ",info);
 	if (rank < (int)na) {
 		flaps::warning( "ill-conditioned least-squares problem: ", na-rank,
 				" rank-deficiencies");

@@ -112,13 +112,14 @@ checkdsc(Pac& a, Pac& b) {
 		return det.coef;
 	};
 
-	double bif = t;
 
 	T_(trc.dprint("det sign change localized between ",a.coord," and ",b.coord," with step ",a.stepsize);)
 
 	// recompute bifp in case root did not return the last iteration
+	double bif = t;
 	double det = rootfcn(bif);
 	T_(trc.dprint("converged det = ",det);)
+	flaps::info("converged bifurcation determinant: ",det);
 
 	// compute starting tangents for the bifurcations
 	vector<double> t1(nx, 0.0);
@@ -219,8 +220,8 @@ bif_tan(Pac& bifp, vector<double>& t1, vector<double>& t2) {
 	blas::copy(m+1, &jf.vt[IJ(m-1,0,m+1)], m+1, &vmp1[0], 1);
 
 	// compute alpha_k, beta_k, k=1,2
-	double alpha1, beta1;
-	double alpha2, beta2;
+	double alpha1{0.0}, beta1{0.0};
+	double alpha2{0.0}, beta2{0.0};
 	string rval = alpha_beta (bifp, um, vm, vmp1, alpha1, beta1, alpha2, beta2);
 	if (!rval.empty())
 		return rval;
