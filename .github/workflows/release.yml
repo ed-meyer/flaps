@@ -1,0 +1,33 @@
+# This is from Gemini: see Google Docs/github release for details
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers the workflow on any tag starting with 'v'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create the tar archive
+        run: |
+          tar -czvf myprogram-v${GITHUB_REF_NAME}.tar.gz myprogram_build # Creates the tar.gz
+
+      - name: Create a GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            flaps-v${GITHUB_REF_NAME}.tar.gz # Or .zip
+          name: Release v${GITHUB_REF_NAME}
+          tag_name: ${GITHUB_REF_NAME}
+          body: | # Add release notes here
+            # Example release notes:
+            New features:
+            - Testing release process
+            - Create a tar.gz file
+            Bug fixes:
