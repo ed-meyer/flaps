@@ -82,7 +82,7 @@ public:
 	~Ad () {
 		if (data_ != nullptr)
 			delete[] data_;
-		data_=nullptr;
+		data_ = nullptr;
 	}
 
 	// member access
@@ -92,7 +92,7 @@ public:
 
 	// reference to the real or imag parts - not avail in std::complex
 	// cplusplus.github.io/LWG/issue 387: complex over-encapsulated
-	// XXX do this also for complex<double>?
+	// This avoid unnecessary creation of Ad's in std::real()/imag()
 	static Ad& real(std::complex<Ad>& x) {
 		return reinterpret_cast<Ad(&)[2]>(x)[0];
 	}
@@ -252,7 +252,9 @@ public:
 
 	static std::string toString();
 
-	// return the 0b index into data_ of parameter "name" or -1
+	// return the 0b index into data_ of parameter "name". If name is
+	// empty it returns 0, otherwise it returns 1-nder. Returns -1
+	// if the name is not an Ad parameter
 	static int find(std::string const& name);
 
 	static std::string live();

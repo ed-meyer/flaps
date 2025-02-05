@@ -39,7 +39,8 @@
    # VSO flutter analysis using rf interpolation
    flut {
       id=rf
-      indep=(vtas[0:250],sigma,freq)
+      indep=(rf,sigma,freq)
+		vtas[0:250]
       alt=0
       mass=mass.modal
       stif=stif.modal
@@ -48,7 +49,22 @@
       target{sigma=0, vtas[10:1000]}
       vzid = modal
    }
-   viz{id=rf, x=sigma, y=freq, w=rfrange}
+
+   # repeat using the g-method
+# settings{wait}
+   flut {
+      id=gmethod
+      indep=(rf,sigma,freq)
+		vtas[0:250]
+		gmethod
+      alt=0
+      mass=mass.modal
+      stif=stif.modal
+      gaf=gaf
+      start{modes=(1:2)}
+      target{sigma=0, vtas[10:1000]}
+      vzid = modal
+   }
 
    # 2) repeat with rf-rsf
    fem {
@@ -62,7 +78,8 @@
 
    flut {
       id=rf-rsf
-      indep=(vtas[0:250],sigma,freq)
+      indep=(rf,sigma,freq)
+		vtas[0:250]
       alt=0
       mass=mass.modal
       stif=stif.modal
@@ -85,7 +102,8 @@
 
    flut {
       id=rf-mach
-      indep=(vtas[0:250],sigma,freq)
+      indep=(rf,sigma,freq)
+		vtas[0:250]
       alt=0
       mass=mass.modal
       stif=stif.modal
@@ -108,7 +126,8 @@
 
    flut {
       id=rf-rsf-mach
-      indep=(vtas[0:250],sigma,freq)
+      indep=(rf,sigma,freq)
+		vtas[0:250]
       alt=0
       mass=mass.modal
       stif=stif.modal
@@ -117,6 +136,6 @@
       target{sigma=0, vtas[10:1000]}
       vzid = modal
    }
-   viz{id=(rf,rf-rsf,rf-mach,rf-rsf-mach), x=sigma, y=freq, w=rfrange}
+   viz{id=(rf,rf-rsf,rf-mach,rf-rsf-mach,gmethod), x=sigma, y=freq, w=rfrange}
 
 end

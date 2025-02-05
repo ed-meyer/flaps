@@ -17,6 +17,13 @@ Goals in writing Flaps include
   - treat the multiple nonlinearities present in realistic
     structures
 
+Flaps differs from traditional flutter solvers in that the flutter
+equations are treated as a system of nonlinear algebraic equations
+instead of an eigenvalue problem. This extends the types of problems
+which can be solved far beyond what can be solved as an eigenvalue problem,
+including control systems, nonlinearities, and parameter variations,
+and automatic matched-points.
+
 Flutter solutions are done in the frequency domain for efficiency, using
 a continuation method and automatic differentiation for flexibility in
 types of solution.  A variety of methods for parameterizing matrices

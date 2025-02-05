@@ -244,6 +244,7 @@ operator<<(ostream& s, const Specs& t) {
 		s << "cu2eu: " << t.cu2eu << endl;
 	s << "dmatrix " << t.dmatrix << endl;
 	s << "free_vibration " << t.free_vibration << endl;
+	s << "gmethod " << t.gmethod << endl;
 	s << "lcostab " << t.lcostab << endl;
 	s << "linearize " << t.linearize << endl;
 	s << "nlev " << t.nlev << endl;
@@ -872,6 +873,7 @@ parser (string const& prog) {
 			return true;
 		}},
 		{"^freevib(ration)?", [&](const Tok& p) {return sp.free_vibration = true; }},
+		{"^gmethod", [&](const Tok& p) {return sp.gmethod = true; }},
 		{"^increase$", optimize_f },
 		{"^indep(endent)?", indep_f },
 		{"^lcostab(ility)?", [&](const Tok& p) {return sp.lcostab = true; }},

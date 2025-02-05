@@ -709,10 +709,14 @@ set_adpar_derivs() {
 		Par* pp = this->findp(adparnames[i]);
 		assert(pp != nullptr);
 		pp->deriv(i, 1.0);
-		// check that all other deriv are zero
-		for (size_t j=0; j<adparnames.size(); j++) {
-			if (j != i && pp->deriv(j) != 0.0)
-				throw runtime_error(vastr("deriv ",j," of ",pp->name," is ",pp->deriv(j)));
+		// if this Par is indep (usually the case) check that all
+		// other deriv are zero
+		if (pp->is_indep()) {
+			for (size_t j=0; j<adparnames.size(); j++) {
+				if (j != i && pp->deriv(j) != 0.0)
+					throw runtime_error(vastr("deriv ",j," (0b) of ",
+						pp->name," is ",pp->deriv(j), ", should be zero"));
+			}
 		}
 	}
 }

@@ -167,6 +167,9 @@ pre_process(string const& prog) {
 	vector<Par*> indep = gpset::get().get_indep();
 	for (auto pp : indep)
 		adnames.push_back(pp->name);
+	// ... g-method? ...
+	if (sp.gmethod && (find(adnames.begin(),adnames.end(),"rf") == adnames.end()))
+		adnames.push_back("rf");
 	//    ... nonlinear ev components and gcnorm, unless gcnorm is 0 (fixed)...
 	Par* gcnormp = gpset::find("gcnorm");
 	if (!(gcnormp->is_fixed() && gcnormp->value() == 0.0)) {
@@ -189,7 +192,8 @@ pre_process(string const& prog) {
 			T_(trc.dprint("VOE process: added lcostab");)
 		}
 		// turn on lco stability calc
-		adnames.push_back("sigma");
+		if (find(adnames.begin(),adnames.end(),"sigma") == adnames.end())
+			adnames.push_back("sigma");
 		flaps::info("LCO stability will be included in the plot file as \"lcostab\"");
 	}
 

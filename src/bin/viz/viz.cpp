@@ -459,14 +459,14 @@ set_legends() {
 	// - to PerCurve otherwise
 	if (viz.colorby == -1)
 		viz.colorby = sp.colorby;
-	if (viz.colorby == -1 && nums.size() > 1)
-		viz.colorby = PerCurveNum;
 	if (viz.colorby == -1 && leaders.size() > 1)
 		viz.colorby = PerFile;
 	if (viz.colorby == -1 && extensions.size() > 1)
 		viz.colorby = PerExt;
 	if (viz.colorby == -1 && ynames.size() > 1)
 		viz.colorby = PerY;
+	if (viz.colorby == -1 && nums.size() > 1)
+		viz.colorby = PerCurveNum;
 	if (viz.colorby == -1)
 		viz.colorby = PerCurve;
 

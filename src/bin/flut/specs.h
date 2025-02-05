@@ -50,6 +50,7 @@ public:
 	int ecc{0};								// use ECC? -1/0/1: never/default/always
 	bool e9n{false};						// include exploration data in plotfile?
 	bool free_vibration{false};
+	bool gmethod{false};
 	bool lcostab{false};
 	bool linearize{false};
 	std::vector<std::string> nlev;

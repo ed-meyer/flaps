@@ -1264,6 +1264,28 @@ dmatrix (pset& plt, vector<complex<Ad>>& result,
 		cp = Matrix::find_desc("gaf");
 		if (cp) {
 			cp->eval(plt, work);
+			if (sp.gmethod) {
+			// The gaf matrix A(p) \approx A(ik) + g(\partial A/\partial g)
+			// where p = s/v = rsf + i*rf
+			// using Cauchy-Riemann:
+			// A(p) \approx A(rf) - i*rsf* A(rf)'
+				int idx = Ad::find("rf");
+				if (idx != -1) {
+					vector<complex<double>> drf(nsq);
+					Ad rsf = plt.parval("rsf");
+					extract(work, idx, drf.data());	// dA/drf
+					// NOTE: dA/drf will not be quite right because changes,
+					// i.e. we need the second deriv
+					for (int i=0;  i<nsq; i++) {
+						Ad& wr = Ad::real(wp[i]);
+						Ad& wi = Ad::imag(wp[i]);
+						double dar = drf[i].real();
+						double dai = drf[i].imag();
+						wr += rsf*dai;
+						wi -= rsf*dar;
+					}
+				}
+			}
 			dpress *= -1.0;
 			blas::scal(nsq, dpress, wp, 1);
 			for (int i=0; i<nsq; i++)
