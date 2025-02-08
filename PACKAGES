@@ -1,96 +1,25 @@
 # Usage:
-#   yes | sudo PACKAGES
+#   yes | sudo ./PACKAGES
 
 rpmbased=$(which rpm)
 aptbased=$(which apt)
 
-if [ -n $rpmbased];then
+if [[ -n $rpmbased ]];then
+	dnfcmd=dnf		# dnf | rpm | ?
 	# packages for rpm-based systems (e.g. Red Hat, Centos)
-	yum install lapack-devel.x86_64
-	yum install tcl-devel.x86_64
-	yum install tk-devel.x86_64
-	yum install gtk3-devel.x86_64
-	yum install freeglut-devel.x86_64
-	yum install wxGTK-devel.x86_64
-	yum install gl2ps-devel.x86_64
-	yum install autoconf
-	yum install autotools
-	yum install libtool
-	yum install libwxgtk3.2-dev
-	yum install wx3.2-headers
-	yum install wx-common
+	$dnfcmd install lapack-devel
+	$dnfcmd install tcl-devel.x86_64
+	$dnfcmd install tk-devel.x86_64
+#	$dnfcmd install gtk3-devel.x86_64
+#	$dnfcmd install freeglut-devel.x86_64
+	$dnfcmd install wxGTK-devel
+#	$dnfcmd install gl2ps-devel.x86_64
 fi
 
 if [ -n $aptbased ];then
 	# Packages necessary for building Flaps on apt-based Linux (e.g. Debian)
 	apt-get install liblapack-dev
-	apt-get install libwxgtk3.0-gtk3-dev
 	apt-get install tk-dev
 	apt-get install tcl-dev
-	apt-get install libgl1-mesa-dev
-	apt-get install libglu1-mesa-dev
-	apt-get install libglpk-dev
-	apt-get install libgl2ps-dev
-	apt-get install autoconf
-	apt-get install autotools
-	apt-get install libtool
 	apt-get install libwxgtk3.2-dev
-	apt-get install wx3.2-headers
-	apt-get install wx-common
-
-	# developer's tools, like TeX
-	if [ -n $DEVELOPER ];then
-		apt-get install libtar-dev
-		apt-get install libfftw3-dev
-		apt-get install gsfonts-x11
-		apt-get install automake
-		# apt-get install libreadline-dev
-		apt-get install gnuplot-x11
-		apt-get install mesa-common-dev
-		apt-get install opensp
-		apt-get install openjade
-		apt-get install libsm-dev
-		apt-get install libice-dev
-		apt-get install valgrind
-		apt-get install subversion
-		apt-get install libboost-doc
-		apt-get install units
-		apt-get install ddd
-		apt-get install evince
-		apt-get install libboost-dev
-		apt-get install texlive-bibtex-extra
-		apt-get install texlive-extra-utils
-		apt-get install texlive-fonts-extra
-		apt-get install texlive-fonts-extra-doc
-		apt-get install texlive-font-utils
-		apt-get install texlive-formats-extra
-		apt-get install texlive-generic-extra
-		apt-get install texlive-generic-recommended
-		apt-get install texlive-latex-base-doc
-		apt-get install texlive-latex-extra
-		apt-get install texlive-latex-extra-doc
-		apt-get install texlive-latex-recommended-doc
-		apt-get install texlive-luatex
-		apt-get install texlive-math-extra
-		apt-get install texlive-plain-extra
-		apt-get install texlive-pstricks
-		apt-get install texlive-pstricks-doc
-		apt-get install texlive-publishers
-		apt-get install texlive-publishers-doc
-		apt-get install texlive-science
-		apt-get install texlive-science-doc
-		apt-get install latex-beamer
-		apt-get install texinfo
-		apt-get install psutils
-		apt-get install pstoedit
-		apt-get install ps2eps
-		apt-get install transfig
-		apt-get install xfig
-		# apt-get install g++
-		apt-get install gfortran
-		# apt-get install libgfortran-5-dev:amd64
-		# apt-get install libstdc++6-4.7-dev:amd64
-		# apt-get install synaptic
-		apt-get install hunspell
-	fi
 fi

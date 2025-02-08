@@ -13,7 +13,7 @@ LIBS += -L$(FROOT)/lib -lflaps -lrt
 # LIBS = $(Libraries)
 LIBS += `wx-config --libs gl,core,base`
 LIBS += `pkg-config --libs opengl`
-LIBS += `pkg-config --libs gl glu`
+# LIBS += `pkg-config --libs gl glu`
 LIBS += -lX11
 LIBS += -lrt
 LIBS += -lpng
@@ -53,5 +53,5 @@ bin_PROGRAMS = viz amviz colors
 
 viz_DEPENDENCIES = FORCE
 
-colors:		util.cpp util.h
+colors$(EXEEXT):		util.cpp util.h
 		$(CXX) $(CPPFLAGS) $(CFLAGS) -DMAIN -o colors -g util.cpp $(LIBS)

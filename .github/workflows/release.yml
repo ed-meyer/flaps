@@ -15,7 +15,7 @@ jobs:
 
       - name: Create the tar archive
         run: |
-          tar -czvf myprogram-v${GITHUB_REF_NAME}.tar.gz myprogram_build # Creates the tar.gz
+          tar -czvf flaps-v${GITHUB_REF_NAME}.tar.gz flaps_build # Creates the tar.gz
 
       - name: Create a GitHub Release
         uses: softprops/action-gh-release@v1

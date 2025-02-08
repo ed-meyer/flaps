@@ -1,0 +1,29 @@
+
+How to setup a computer after a new Linux installation assuming
+an apt-based Linux distro (Debian, Ubuntu, etc)
+
+- Get insync:
+    scp 192.168.1.17:Downloads/insync_3.8.6.50504-bookworm_amd64.deb Downloads
+	 or download from my Google Drive
+
+- add you to the sudoers file: as root create a file in /etc/sudoers.d
+  that looks like this:
+	eem2314 ALL=(ALL)		ALL
+  the file can be called anything.
+  Alternatively, add you to the "sudo" group:
+  > su
+  > /sbin/adduser eem2314 sudo
+  and make sure there is a line (uncommented) in /etc/sudoers like
+     sudo	ALL=(ALL:ALL) ALL
+
+- install insync:
+     sudo dpkg -i Downloads/insync*.deb
+
+- start insync: insync start
+  sync with Google Drive eem2314:
+  		- bin
+		- system
+	ln -s ~/Insync/eem2314@gmail.com/'Google Drive'/system system
+	ln -s ~/Insync/eem2314@gmail.com/'Google Drive'/bin bin
+	cp system/profile .profile
+	cp system/kshrc .bashrc

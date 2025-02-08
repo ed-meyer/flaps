@@ -1,0 +1,57 @@
+# Packages which may be required if developing Flaps
+
+	apt-get install libtar-dev
+	apt-get install libfftw3-dev
+	apt-get install gsfonts-x11
+	apt-get install automake
+	apt-get install autoconf
+	apt-get install autotools
+	apt-get install libtool
+	# apt-get install libreadline-dev
+	apt-get install gnuplot-x11
+	apt-get install mesa-common-dev
+	apt-get install opensp
+	apt-get install openjade
+	apt-get install libsm-dev
+	apt-get install libice-dev
+	apt-get install valgrind
+	apt-get install subversion
+	apt-get install libboost-doc
+	apt-get install units
+	apt-get install ddd
+	apt-get install evince
+	apt-get install libboost-dev
+	apt-get install texlive-bibtex-extra
+	apt-get install texlive-extra-utils
+	apt-get install texlive-fonts-extra
+	apt-get install texlive-fonts-extra-doc
+	apt-get install texlive-font-utils
+	apt-get install texlive-formats-extra
+	apt-get install texlive-generic-extra
+	apt-get install texlive-generic-recommended
+	apt-get install texlive-latex-base-doc
+	apt-get install texlive-latex-extra
+	apt-get install texlive-latex-extra-doc
+	apt-get install texlive-latex-recommended-doc
+	apt-get install texlive-luatex
+	apt-get install texlive-math-extra
+	apt-get install texlive-plain-extra
+	apt-get install texlive-pstricks
+	apt-get install texlive-pstricks-doc
+	apt-get install texlive-publishers
+	apt-get install texlive-publishers-doc
+	apt-get install texlive-science
+	apt-get install texlive-science-doc
+	apt-get install latex-beamer
+	apt-get install texinfo
+	apt-get install psutils
+	apt-get install pstoedit
+	apt-get install ps2eps
+	apt-get install transfig
+	apt-get install xfig
+	# apt-get install g++
+	apt-get install gfortran
+	# apt-get install libgfortran-5-dev:amd64
+	# apt-get install libstdc++6-4.7-dev:amd64
+	# apt-get install synaptic
+	apt-get install hunspell

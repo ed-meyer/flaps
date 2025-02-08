@@ -6,7 +6,7 @@ main.cpp
 
 bin_PROGRAMS = call
 
-LDADD=-L$(FROOT)/lib -lflaps -lrt
+LDADD=-L$(FROOT)/lib -lflaps -lrt -llapack -lblas
 
 main.o:		version.cpp
 

@@ -1614,6 +1614,7 @@ OnEraseBackground(wxEraseEvent& WXUNUSED(event)) {
     // Do nothing, to avoid flashing on MSW
 }
 
+#ifdef NEVER // deprecate
 void
 screen2world(const wxPoint& pt,
 		GLdouble& worldx,
@@ -1651,11 +1652,13 @@ world2screen(GLdouble worldx, GLdouble worldy,
 		cerr << "gluProject failed\n";
 	}
 }
+#endif // NEVER // deprecate
 
 void
 FGLCanvas::
 display_node(double x, double y) {
 	T_(Trace trc(1,"display_node");)
+#ifdef NEVER // needs work - isRunning doesn't work
 	Amviz& amviz{Amviz::instance()};
 
 	if (amviz.frame->isRunning()) {
@@ -1692,6 +1695,7 @@ display_node(double x, double y) {
 	T_(trc.dprint("got alt-left at (", x, ", ", y,") placing ",node,"\n");)
 	string nodestr = vastr(node);
 	wxMessageBox(nodestr);
+#endif // NEVER // needs work - isRunning doesn't work
 }
 
 void
