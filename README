@@ -1,9 +1,11 @@
 
 For quick installation from a distribution tar file
 -----------------------------------------------------------------
-starting in the directory containing the tar file:
+Assuming a Linux operating system(*), and starting in the directory
+containing the tar file:
 >  tar zxf flaps-XXX.tar.gz
-will create a directory "flaps-XXX", the Flaps root directory.
+will create a directory "flaps-XXX", the Flaps root directory,
+populated with the source files necessary to build Flaps.
 
 If this is the first time installing Flaps it may be necessary to
 install certain packages; the PACKAGES in the Flaps root directory
@@ -36,7 +38,16 @@ flapsconsulting@gmail.com
 
 For quick installation from github:
 -----------------------------------------------------------------
-git clone https://github.com/eem2314/flaps
+git clone https://github.com/ed-meyer/flaps [directory]
 cd flaps
 src/scripts/bootstrap
 make install
+
+-----------------------------------------------------------------
+(*) there are hundreds of Linux distibutions; the important thing here is
+    the package manager used. The 3 main package managers used in Linux
+	 distros are apt, dnf (yum), and pacman. The PACKAGE script used here
+	 lists the packages for apt and dnf; it should be easy to modify them
+	 to work with pacman, which is used in distros based on Arch Linux.
+	 Likewise for the less-used package managers like portage, zypper, and xbps.
+

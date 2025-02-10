@@ -1,12 +1,18 @@
+# Install packages necessary for building Flaps on Linux
+# Currently only Linux distros using rpm-format packages
+# (Red Hat, Fedora, Centos, SUSE,...) or deb-format packages
+# (Debian, Ubuntu, Linux Mint,...) are included here
 # Usage:
 #   yes | sudo ./PACKAGES
 
-rpmbased=$(which rpm)
-aptbased=$(which apt)
+# Attempt to determine which package format this machine uses
+rpmbased=$(which dnf)
+debbased=$(which apt)
+pacbased=$(which pacman)
 
-# packages for rpm-based systems (e.g. Red Hat, Centos)
+# packages for rpm-based systems (e.g. Red Hat, Centos, SUSE)
 if [[ -n $rpmbased ]];then
-	dnfcmd=dnf		# dnf | rpm | ?
+	dnfcmd="dnf"	# or yum or rpm
 #	$dnfcmd install octave			# necessary if matlab not installed
 	$dnfcmd install lapack-devel
 	$dnfcmd install tcl-devel
@@ -14,8 +20,8 @@ if [[ -n $rpmbased ]];then
 	$dnfcmd install wxGTK-devel
 fi
 
-# Packages necessary for building Flaps on apt-based Linux (e.g. Debian)
-if [ -n $aptbased ];then
+# packages for deb-based Linux (e.g. Debian, Ubuntu, Linux Mint)
+if [ -n $debbased ];then
 #	apt-get install octave			# necessary if matlab not installed
 	apt-get install liblapack-dev
 	apt-get install tk-dev
