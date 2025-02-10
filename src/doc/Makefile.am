@@ -25,8 +25,8 @@ install:
 # which according to the man page is because we are using extensions.
 
 SRC = \
-flaps.bib \
 manual.tex
+# flaps.bib
 
 manual.pdf:	manual.tex
 	cd figures && make
@@ -42,9 +42,9 @@ manual.pdf:	manual.tex
 
 FORCE:
 
-noinst_DATA = \
-flaps.bib \
-manual.pdf
+# noinst_DATA = \
+# flaps.bib \
+# manual.pdf
 
 refs:		FORCE
 		sed -n 's/^.*label{eqn:\([^}]*\)}.*/\1/p' manual.tex >eqn.ref

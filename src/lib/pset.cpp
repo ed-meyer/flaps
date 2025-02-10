@@ -529,7 +529,7 @@ summary () {
 
 std::string
 pset::
-summary (std::vector<std::string> const& toprint, int maxchar) {
+values (std::vector<std::string> const& toprint, int maxchar) {
 // One-line summary of a parameter list in "presentation" units.
 // Only include parameters in "toprint"; if toprint is empty
 // just return the desc and number of Par.
@@ -635,9 +635,9 @@ summary_solns (vector<string> const& toprint, const string& header,
 	if (nval == 0) {
 		if (leaders.empty()) {
 			os << std::setw(lwidth) << desc() << ":  "
-				<< summary(toprint) << std::endl;
+				<< values(toprint) << std::endl;
 		} else {
-			os << leaders[0] << summary(toprint) << std::endl;
+			os << leaders[0] << values(toprint) << std::endl;
 		}
 	} else {
 		for (i=0; i<nval; i++) {
@@ -649,9 +649,9 @@ summary_solns (vector<string> const& toprint, const string& header,
 			}
 			update_from_solns(i);
 			if (leaders.size() < i+1) {
-				os << std::setw(7) << i+1 << ")  " << summary(toprint) << std::endl;
+				os << std::setw(7) << i+1 << ")  " << values(toprint) << std::endl;
 			} else {
-				os << leaders[i] << summary(toprint) << std::endl;
+				os << leaders[i] << values(toprint) << std::endl;
 			}
 		}
 	}

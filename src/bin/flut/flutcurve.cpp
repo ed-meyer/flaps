@@ -449,7 +449,7 @@ processfcn(Pac& from, Pac& to, bool& looped, Issue* issue) {
 
 	// was this step successful?
 	if (to.step.conv_crit < 0) {
-		flaps::warning(cid(),": no convergence at ",params.summary(sp.toprint));
+		flaps::warning(cid(),": no convergence at ",params.values(sp.toprint));
 		return 0;
 	}
 	// check for bifurcation...
@@ -785,7 +785,7 @@ Flutcurve::
 current_values() {
 // returns a one-line summary of the current parameter values
 // specified by policy "toprint"
-	return this->params.summary(this->specs.toprint);
+	return this->params.values(this->specs.toprint);
 }
 
 string

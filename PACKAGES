@@ -4,22 +4,22 @@
 rpmbased=$(which rpm)
 aptbased=$(which apt)
 
+# packages for rpm-based systems (e.g. Red Hat, Centos)
 if [[ -n $rpmbased ]];then
 	dnfcmd=dnf		# dnf | rpm | ?
-	# packages for rpm-based systems (e.g. Red Hat, Centos)
+#	$dnfcmd install octave			# necessary if matlab not installed
 	$dnfcmd install lapack-devel
-	$dnfcmd install tcl-devel.x86_64
-	$dnfcmd install tk-devel.x86_64
-#	$dnfcmd install gtk3-devel.x86_64
-#	$dnfcmd install freeglut-devel.x86_64
+	$dnfcmd install tcl-devel
+	$dnfcmd install tk-devel
 	$dnfcmd install wxGTK-devel
-#	$dnfcmd install gl2ps-devel.x86_64
 fi
 
+# Packages necessary for building Flaps on apt-based Linux (e.g. Debian)
 if [ -n $aptbased ];then
-	# Packages necessary for building Flaps on apt-based Linux (e.g. Debian)
+#	apt-get install octave			# necessary if matlab not installed
 	apt-get install liblapack-dev
 	apt-get install tk-dev
 	apt-get install tcl-dev
 	apt-get install libwxgtk3.2-dev
+	apt-get install libfftw3-dev
 fi

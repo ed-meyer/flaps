@@ -13,9 +13,9 @@ to set up ssh with github
 To clone flaps into "directory" (default:flaps)
 -----------------------------------------------
 if ssh is set up:
-   git clone git@github.com:eem2314/flaps.git [directory]
+   git clone git@github.com:ed-meyer/flaps.git [directory]
 using https:
-   git clone https://github.com/eem2314/flaps.git [directory] (requires passwd)
+   git clone https://github.com/ed-meyer/flaps.git [directory] (requires passwd)
 
 It is best to build flaps in a separate directory from the cloned
 repository; to create a "build" directory tree with all files in

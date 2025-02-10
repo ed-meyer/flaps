@@ -485,7 +485,6 @@ df_fft(const string& dfid, const vector<double>& params,
 	std::vector<double> fs;
 	double pi{flaps::pi};
 	vector<double> in(ncoef, 0.0);
-	int nc = ncoef/2 + 1;
 	vector<double> df;
 	for (auto qi : qs) {
 		T_(trc.dprint("fft df_fq(",qi,"*sin(wt)");)
@@ -499,14 +498,12 @@ df_fft(const string& dfid, const vector<double>& params,
 		}
 		// fft the in
 #ifdef HAVE_LIBFFTW3
-		// use std::vector instead of fftw_malloc, but it requires a
-		// C-style cast!
-		//!! fftw_complex* out = (fftw_complex*)fftw_malloc(nc*sizeof(fftw_complex));
+		int nc = ncoef/2 + 1;
+		// use std::vector instead of fftw_malloc, cast to fftw_complex*
 		vector<complex<double>> out(nc);
 		fftw_plan p = fftw_plan_dft_r2c_1d(ncoef, &in[0],
-				(fftw_complex*)&out[0], FFTW_ESTIMATE);
+				reinterpret_cast<fftw_complex*>(out.data()), FFTW_ESTIMATE);
 		fftw_execute(p);
-		//!! double t = 2.0*abs(out[1][1])/(qi*ncoef);
 		double t = 2.0*abs(out[1].imag())/(qi*ncoef);
 #else
 		size_t nn = ncoef/2;

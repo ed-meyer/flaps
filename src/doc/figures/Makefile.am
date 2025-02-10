@@ -5,9 +5,9 @@
 #   because an xfig save destroys the link and creates the fig file locally
 #   
 # - figures produced in xfig may use Latex math, e.g.
-#   12 pt font -----v
+#   % 12 pt font ---v
 #     4 0 0 50 -1 0 12 0.0000 2 150 495 3092 1588 $\\int$\001
-#   Notice the 2 here --------^ which means latex fonts; also the double backslash
+#   % Notice the 2 here ------^ which means latex fonts; also the double backslash
 
 # - Figures from xfig are converted to eps with fig2eps
 
@@ -67,11 +67,11 @@ ss-cms.fig \
 ss-km.fig \
 ss_phi.fig \
 viz-manip.fig \
-vso2d/vso2d.fig \
 whirl-vso.fig \
 whirl-gaf.fig \
 whirl-lbar.fig
 
+# XXX eliminate eps? redundant
 eps = \
 beta.eps \
 bif.eps \
@@ -108,7 +108,7 @@ whirl-lbar.eps
 
 all:	$(eps)
 
-# list of stuff to include in dist tarfile
+# list of stuff to include in dist tarfile XXX no eps?
 EXTRA_DIST = $(nosrc) $(figs) $(eps)
 
 # noinst_DATA = \

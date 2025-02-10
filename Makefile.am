@@ -5,6 +5,7 @@ FORCE:
 
 EXTRA_DIST = \
 COPYING \
+doc/manual.pdf \
 header \
 Profile \
 PACKAGES \

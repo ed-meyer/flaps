@@ -28,6 +28,7 @@
 % I don't know why this is not standarized:
 \DeclareMathOperator\sgn{sgn}
 
+% page style: headers and footers (see texdoc fancyhdr)
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhead{}
@@ -45,8 +46,7 @@
 % change font size in lstlisting
 \lstset{basicstyle=\footnotesize\ttfamily}
 
-% cliclable links for toc, cite, index
-%% XXX removing to try to fix BOOKMARKS problem, also new cmd url
+% hyperref: cliclable links for toc, cite, index
 \def\url{}
 \usepackage{hyperref}
 % \hypersetup{
@@ -61,7 +61,6 @@
 \setlength{\parindent}{10pt}
 
 % use \Cpp, not C++
-% \newcommand{\Cpp}{C\nolinebreak\hspace{-0.05em}\raisebox{.4ex}{\tiny\bf +}\nolinebreak\hspace{-.10em}\raisebox{.4ex}{\tiny\bf +}\/}
 \def\Cpp{{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\tiny\bf ++}}\:}
 
 % ----------------------------------------------------
@@ -69,7 +68,7 @@
 \newcommand{\Cmd}[1]{{\sf #1}}
 \newcommand{\UserIn}[1]{{\small\sf\bf #1}}
 % \newcommand{\Newterm}[1]{{\em #1}\index{#1}}
-\newcommand{\Newterm}[1]{{\em #1}}
+\newcommand{\Newterm}[1]{{\em #1}}	% don't index Newterms
 \newcommand{\Code}[1]{{\small\tt #1}}
 % Subst{ }: an item the user must substitute with something 
 % note the \/ adds a little space after the slanted font
@@ -285,7 +284,8 @@ This allows for including control systems, nonlinearities, gyroscopics,
 and parameter variations, in addition to any of the traditional
 formulations \cite{demasi2024introduction}.
 These parameterized nonlinear equations can be solved very efficiently
-over a range of parameters using \Newterm{numerical continuation}.
+over a range of parameters using \Newterm{numerical continuation}
+\cite{allgower1990numerical}.
 
 Because parameters are so important to flutter analysis \Flaps has
 a variety of ways to introduce new parameters, and to
@@ -2624,19 +2624,6 @@ of matrices.
 \section{Flutter plots}\label{sect:flutter-plots}
 The most common way to view results from \Cmd{flut} is with 2D
 plots as in \Figref{fig:viz}, made with the \Cmd{viz} command \Sectref{ref:viz}
-% \Figref{fig:vso2d}, showing 3 views of the 3 most important
-% variables: \Code{vtas} ($V$), \Code{sigma} ($\sigma$), and \Code{freq} ($\omega$).
-% These were created with three \Cmd{vz} commands:
-% \begin{lstlisting}
-% vz -x vtas -y[-15:15] sigma vso
-% vz -x vtas -y freq vso
-% vz -x[-15:15] sigma -y freq vso
-% \end{lstlisting}
-% \begin{figure}[h]
-% 		\includegraphics[height=13cm,width=16cm]{vso2d/vso2d.eps}
-% 	\centering
-% 	\caption{3 views of typical flutter results} \label{fig:vso2d}
-% \end{figure}
 \begin{figure}[h]
 		\includegraphics[height=8cm,width=10cm]{viz.png}
 	\centering
@@ -2649,14 +2636,8 @@ Various manipulations can be made to a \Cmd{viz} plot with the buttons on top:
 \begin{description}
 	\item[Curves] allows you to include or exclude curves using wildcards
 		\Sectref{app:wildcards}
-%		and implicit lists, for example
-%		\begin{itemize}
-%			\item (1, 3, 5, 6:3:21) 
-%			\item bma.*,cms.(1:5)
-%		\end{itemize}
 		and select from a list of all curves; the resulting list will be a
 		combination of includes, excludes, and selections.
-%		Note that lists must be enclosed in parentheses.
 	\item[Parameters] choose x and y parameters either from a list of all
 		parameters or by typing them in.
 	\item[X-Y Views] choose an x-y combination from a list of all the x-y parameter
@@ -7948,7 +7929,7 @@ code to anyone who could further this goal.
 % the TOC - the latest is to include package tocbibind - it's almost right
 % bibliography
 \newpage
-\bibliography{flaps}
+\bibliography{bib/flaps}
 % \bibliographystyle{acm}
 \bibliographystyle{plain}
 % \addcontentsline{toc}{chapter}{\numberline{}\bibname}

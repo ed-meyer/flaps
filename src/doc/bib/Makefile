@@ -1,3 +1,4 @@
+# Hand-written Makefile for various tasks in the bib directory
 
 articles_to_fetch.pdf:	FORCE articles_to_fetch.tex
 	make clean

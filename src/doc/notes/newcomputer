@@ -4,7 +4,7 @@ an apt-based Linux distro (Debian, Ubuntu, etc)
 
 - Get insync:
     scp 192.168.1.17:Downloads/insync_3.8.6.50504-bookworm_amd64.deb Downloads
-	 or download from my Google Drive
+	 or download from my Google Drive/system
 
 - add you to the sudoers file: as root create a file in /etc/sudoers.d
   that looks like this:

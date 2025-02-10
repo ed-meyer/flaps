@@ -172,7 +172,7 @@ public:
 	//   desc():          short string, e.g. "mode 2,target=growth"
 	//   desc(string):    set the description
 	//   summary()                desc() + number of parameters
-	//   summary(vector<string>)  one-line current values of "toprint" parameters
+	//   values(vector<string>)  one-line current values of "toprint" parameters
 	//   summary_solns    one-line for each element of "solns" array
 	//   display          summary of all parameters, one line per
 	//   operator<<       long summary of each parameter
@@ -180,7 +180,7 @@ public:
 	void desc(std::string const& des) { desc_ = des; }
 	std::string summary();
 	// one-line summary of current values
-	std::string summary(std::vector<std::string> const& toprint, int maxchar=160);
+	std::string values(std::vector<std::string> const& toprint, int maxchar=160);
 	// one-line summary of each set in the "solns" arrays
 	// Note: summary_solns  modifies "this" so it cannot be const
 	std::string summary_solns(std::vector<std::string> const& toprint,

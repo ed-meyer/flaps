@@ -368,7 +368,6 @@ std::string get_datadir();
 std::string getfwd();
 
 char* errDir();
-std::string removeHOME(std::string const& path);
 void rmdirTree (std::string const& path);
 std::vector<std::string> ls (std::string const& path);
 

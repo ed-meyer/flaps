@@ -788,6 +788,8 @@ get_cwd() {
 std::string
 fio::
 shortenpath(const std::string& path) {
+// shorten "path" by removing the current working directory (giving
+// a relative path) or by removing HOME
     std::filesystem::path fullPath = std::filesystem::absolute(path);
     string cwd = std::filesystem::current_path().string();
 
@@ -796,10 +798,10 @@ shortenpath(const std::string& path) {
     if (starts_with == cwd)
 	 	return fullPath.string().substr(cwd.size()+1);
 	// then try removing home
-	std::string homeDir = std::getenv("HOME");
-	starts_with = fullPath.string().substr(0,homeDir.size());
-	if (starts_with == homeDir)
-		return "~" + fullPath.string().substr(homeDir.size());
+	std::string home = std::getenv("HOME");
+	starts_with = fullPath.string().substr(0,home.size());
+	if (starts_with == home)
+		return "~" + fullPath.string().substr(home.size());
 
 #ifdef NEVER // needs work
     int commonPrefixLength = 0;
@@ -922,49 +924,6 @@ rmdirTree (string const& path) {
 		throw runtime_error(os.str());
 	}
 #endif // HAVE_NFTW
-}
-
-string
-removeHOME (string const& path) {
-/*------------------------------------------------------------------
- * Given a path, returns a string containing that portion of
- * the path which is relative to the current "HOME" environment
- * variable if the path starts with it; otherwise the input path
- * is returned.
- *------------------------------------------------------------------*/
-	T_(Trace trc(1,"removeHOME");)
-	char const* home = getenv("HOME");
-	// char* logname = getenv("LOGNAME");
-	string rval;
-
-	T_(trc.dprint("path<",path,">");)
-	
-	if (!home) {
-		T_(trc.dprint("quick return: no HOME in env");)
-		return path;
-	}
-
-	if (path == string(home)) {
-		T_(trc.dprint("returning \".\": path==home");)
-		return string(".");
-	}
-
-	string homestr(home);
-	if (homestr[homestr.size()-1] != '/') {
-		homestr += '/';
-	}
-	if (path.size() > homestr.size()) {
-		if (path.substr(0,homestr.size()) == homestr) {
-			rval = path.substr(homestr.size());
-			T_(trc.dprint("returning \"",rval,"\"");)
-			return rval;
-		}
-	}
-	/*
-	 * HOME not found - just return the input string
-	 */
-	T_(trc.dprint("returning input: \"",path,"\"");)
-	return path;
 }
 
 static void

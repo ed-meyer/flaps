@@ -2,6 +2,7 @@
 Files:
 -----
 flaps.bib: the main bibliography file - all entries should go here
+bst/*.bst:	bibliography styles
 
 Checking the validity of the bibliography entries:
 -------------------------------------------------
@@ -12,5 +13,4 @@ style is determined by the next-to-last line of bib.tex:
 Instead of "plain" you can use "aiaa" or "mdpi" or any other
 that has a .bst file in this directory
 
-Documentation of BibTex is in ./doc/btxdoc.pdf including a list of
-all bib item types (article, book, etc)
+Like the rest of LaTeX, documentation of BibTex can be viewed with "texdoc btxdoc"

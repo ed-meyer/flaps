@@ -1,6 +1,6 @@
 # Administration Makefile - several targets for maintaining Flaps
 # Intended to be installed in ../$froot i.e. in the directory above
-# flaps and build
+# repo and build
 
 RSYNCOPTS = \
 --verbose \
