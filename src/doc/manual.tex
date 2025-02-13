@@ -272,8 +272,9 @@ These tasks include
 			flutter data is a challenging task
 \end{enumerate}
 
-Traditional methods for solving flutter equations treat them as
-some form of eigenvalue problem, usually requiring approximation and
+Traditional methods for solving flutter equations
+\footnote{An excellent treatment of traditional methods is \cite{demasi2024introduction}}
+treat them as some form of eigenvalue problem, requiring approximation and
 manipulation of the equations. These methods are incapable of treating
 control systems, nonlinearities, or parameter variations, nor can they
 provide continuous solution curves.
@@ -282,10 +283,17 @@ In contrast, the approach taken here is to consider the flutter equations as a
 set of nonlinear equations in several parameters, including the displacements.
 This allows for including control systems, nonlinearities, gyroscopics,
 and parameter variations, in addition to any of the traditional
-formulations \cite{demasi2024introduction}.
+formulations.
 These parameterized nonlinear equations can be solved very efficiently
 over a range of parameters using \Newterm{numerical continuation}
 \cite{allgower1990numerical}.
+
+The goal of many traditional methods is to give more accurate estimates
+of damping at velocities below the flutter speed to answer the questions:
+how quickly will disturbances die out? and how close are we to flutter?
+Another goal is to find so-called \emph{matched-point}\index{matched point}
+solutions, where the Mach number used to compute the aerodynamics is correct,
+usually requiring iteration. Both of these goals are easily satisfied in \Flaps.
 
 Because parameters are so important to flutter analysis \Flaps has
 a variety of ways to introduce new parameters, and to
@@ -539,7 +547,7 @@ $\Vector{\chi}$ & & real vector of physical motion of the structure
 $\Matrix{Q}$, $\Matrix{R}$ & & QR factors of the transposed Jacobian (\Eqn{eqn:qr}) \\
 $\mathbb{R}^n$, $\mathbb{R}^{m \times n}$ & & the real $n$-vectors and $m$ by $n$ matrices \\
 $\Re(), \Im()$ & & real and imaginary parts of a complex variable \\
-$s$ & & complex frequency $\sigma + i\omega$, aka characteristic exponent \\
+$s$ & & Laplace variable $\sigma + i\omega$, aka characteristic exponent \\
 $\bar{s}$ & & $sb/V$, complex reduced frequency \\
 $\Vector{t}$ & & tangent vector \\
 $V$ & & velocity (true airspeed) \\
@@ -1003,7 +1011,7 @@ avoid this problem\index{continuation!locally parameterized}
 by choosing the best parameter to increment at each point.
 These methods constrain the corrector steps to be at constant values of the
 continuation parameter.
-In contrast, so-called pseudo-arclength methods take steps along the tangent
+Instead, so-called pseudo-arclength methods take steps along the tangent
 to the curve, avoiding the problem with limit points and the complexity of
 choosing locally optimal continuation parameters.
 % A pseudo-arclength method can constrain the corrector steps to be perpendicular
@@ -2216,15 +2224,17 @@ in the example above are the default equation units, \Code{m/s}.
 % Chapter Equations
 % =================================================================
 \chapter{Equations}\label{chap:equations}
+Equations are used in \Flaps to evaluate builtin and user-defined parameters
+and to parameterize specific elements of matrices (\Sectref{opt:matrix-element}).
+All the builtin parameters have one or more candidate equations; the equation actually
+used depends on the independent and fixed parameters chosen for an analysis.
+
 An equation in \Flaps is a string which must be parsed to
 give a value at the current values of the builtin and user-defined
 parameters. Like parameters, equations have only real values, not
 complex. Complex values must be treated in custom evaluation functions
 (\Sectref{chap:functions}) or in \Cmd{octlab}
 (\Sectref{ref:octlab}).
-
-Two places equations are used are to evaluate parameters,
-and to give values to specified matrix elements (\Sectref{opt:matrix-element}).
 
 \begin{description}
 \item[{\bf Parameter equations}] are stored with the parameter
@@ -2237,7 +2247,7 @@ listed in \Tableref{table:stdpl-eqns}.
 % independent or fixed. User-defined parameters may be given an equation
 % (\Sectref{sect:pareqns}), just like the builtin parameters; they may not
 % have multiple candidate equations however.
-\item[{\bf Matrix equations}] are created assigned in the \Cmd{pz} command,
+\item[{\bf Matrix equations}] are created and assigned in the \Cmd{pz} command,
 and stored with the matrix so they are available in subsequent commands.
 Since parameter values are real numbers, if a matrix equation is
 complex it must be applied with a custom evaluation function
@@ -4025,7 +4035,7 @@ order of generality they are
 
 \item[rational function approximation (RFA)]
    approximate a set of generalized aerodynamic matrices
-   as a function of complex reduced frequency
+   as a function of complex reduced frequency (\Sectref{sect:rfa-theory})
 	\index{aerodynamics!approximation}
                         
 \item[custom evaluation function]
@@ -4086,14 +4096,14 @@ Parameters may be associated with matrices by following the
 name with one or more comma-separated parameter names
 enclosed in curly braces; for example
 \begin{lstlisting}
-   pz { i=(gaf0{rf=0}, o=gaf,
-        gaf0008{rf=0.0008}, gaf0015{rf=0.0015}
-        gaf002{rf=0.002}, gaf003{rf=0.003},
-        gaf01{rf=0.01}, gaf05{rf=0.05})
-   }
+   pz { i=(gaf0{rf=0, rsf=0, mach=0},
+           gaf08{rf=0.08, rsf=-1, mach=0.4}, gaf0015{rf=0.0015}
+           gaf10{rf=0.10, rsf=1, mach=0.8})
+      }
 \end{lstlisting}
-will interpolate the matrices with respect to \Code{rf},
-which is a builtin parameter (\Sectref{sect:predef}).
+will interpolate the matrices with respect to the 3 parameters \Code{rf},
+\Code{rsf}, and \Code{mach} which are builtin parameters (\Sectref{sect:predef}).
+
 A new parameter\index{parameters!creating}
 may be associated with a matrix by following the
 name with a new parameter definition (\Sectref{sect:parformat}).
@@ -4102,11 +4112,9 @@ For example
    pz { i = (gm1{fuel(Percent Fuel)[0:100]=0},gm2{fuel=25},
         gm3{fuel=50},gm4{fuel=75},gm5{fuel=100}), o = Mass }
 \end{lstlisting}
-interpolates 5 mass matrices with respect to a new
-parameter called \Code{fuel},
-creating a new matrix called \Code{Mass}.
-
-If the matrix is already a function of the parameter in curly braces
+interpolates 5 mass matrices with respect to a new parameter called \Code{fuel},
+creating a new matrix called \Code{Mass}. Continuing with this example,
+if the matrix is already a function of the parameter in curly braces
 it will be evaluated at the parameter value. So, for example the statement
 \begin{lstlisting}
    pz { i = Mass{fuel=0}, i = Mass{fuel=100} o = LMass }
@@ -4147,26 +4155,28 @@ involving a user-defined parameter (\Spec{lnvb}),
 standard parameter \Spec{alt}, and the (27,27) element
 of a matrix called \Spec{Mass}.
 
-\begin{Optlist}{Interpolation}{If there is more than one input matrix, and the
-\Spec{beta} spec is not included, the matrices are fitted with a
+\begin{Optlist}{Interpolation}{If there is more than one input matrix, the
+\Spec{beta} spec is not included, and the matrices are functions of the same
+1 to 3 parameters, the matrices are fitted with a
 \Newterm{cubic spline}.}
 \Opt{i}{ = \Stringlist}{list of input matrices; each name should be followed
 by a list of the parameters the matrix is a function of, and their values.
-For example: \Code{i=gaf1{rf=0.001}}}{interpolation is only triggered if multiple input matrices are specified}
+}{interpolation is only triggered if multiple input matrices are specified}
 \index{spline}
 \index{interpolation}
 \end{Optlist}
 
 \begin{Optlist}{Approximation}{Approximation of a set of unsteady aerodynamic
-matrices by a rational-function approximation (RFA) (appendix \ref{sect:rfa-theory})
+matrices by a rational-function approximation (RFA) (\Sectref{sect:rfa-theory})
 is triggered by including the \Spec{beta} spec.
-The input matrices must be functions of \Spec{rf} (\Tableref{table:stdpl-eqns})}
-\index{approximation}
-\index{s-plane approximation}
-\index{RFA}
+The input matrices must be functions of \Spec{rf}, and possibly
+\Spec{rsf} (\Tableref{table:stdpl-eqns}).}
 \Opt{beta}{ = \Floatlist}{Values of $\beta$ used in the
 rational-function approximation.}{RFA is not used}
 \end{Optlist}
+\index{approximation}
+\index{s-plane approximation}
+\index{RFA}
 
 \begin{Optlist}{Custom evaluation functions}{A custom function
 parameterization can be used to modify an existing matrix or to
@@ -4904,6 +4914,62 @@ triple products with the matrices. Two flutter solutions, one with the
 full 144 dof model and the other with the reduced model show very little
 difference in the 10 modes tracked.
 
+\section{Unsteady aerodynamics: multi-variate interpolation}\label{ex:unsteady-aero}
+As pointed out in \Sectref{chap:intro} \Flaps can solve flutter problems
+with unsteady aerodynamics which are functions of reduced stability factor
+$\bar{\sigma}$ and Mach number in addition to the usual reduced frequency
+$\bar{\omega}$. Demo file \Code{dlm.fp}\index{examples!dlm.fp}
+demonstrates interpolation of
+the unsteady aero matrix with respect to combinations of these three
+parameters. \Figref{fig:dlm-compare} shows the result of tracking
+the first 2 modes using these combinations.
+In this example the 2 combinations using Mach number track very differently
+than the others; interpolating with Mach number results in every point on
+the curve a so-called \emph{matched point}\cite{demasi2024introduction}.
+\index{matched point}
+\begin{figure}[ht]
+		\includegraphics[height=8cm,width=12cm]{dlm-compare.png}
+	\centering
+	\caption{Comparison of 2 modes tracked using aerodynamics interpolated with
+			combinations of 3 parameters}\label{fig:dlm-compare}
+\end{figure}
+
+% \section{Multivariate interpolation}\label{ex:dlm.fp}
+% This example shows how unsteady aerodynamic matrices can be interpolated
+% with respect to reduced frequency ($\bar{\omega}$),
+% reduced stability factor ($\bar{\sigma}$), and Mach number ($M$).
+% Using the same model as in \Sectref{ex:goland-vso} but with a collection of
+% generalized aero matrices at combinations of
+% 5 reduced frequencies,
+% 3 reduced stability factors,
+% and 3 Mach numbers, for a total of 45 matrices.
+
+% Example file \Code{dlm.fp} in the demo directory does 4 different interpolations
+% with these aero matrices:
+% \begin{enumerate}
+% \item interpolation with respect to reduced-frequency rf
+% 	($\bar{\omega}$) at rsf=0 and mach=0.51
+% \item interpolation with respect to reduced-frequency and
+% 	reduced stability-factor at mach=0.51
+% \item interpolation with respect to reduced-frequency and
+% 	 Mach number (mach) at rsf=0
+% \item interpolation with respect to reduced-frequency,
+% 	 reduced stability-factor, and mach number
+% \end{enumerate}
+
+% \begin{figure}[ht]
+% 		\includegraphics[height=5.5cm,width=12.5cm]{dlm.eps}
+%  	\centering
+%  	\caption{Aerodynamic matrix parameterizations}\label{fig:dlm}
+%  \end{figure}
+
+% Each interpolation is used in a \VSO flutter analysis
+% tracking only the first 2 modes, and the
+% results compared in \Figref{fig:dlm};
+% evidently Mach number parameterization
+% makes a bigger difference than reduced stability factor, although
+% the flutter speed changes very little.
+
 \section{Substructuring}\label{ex:substructure}
 Substructuring is also used to reduce the size of models, but more
 importantly for flutter is the ability to isolate parts of a structure
@@ -4912,45 +4978,13 @@ to accommodate control systems, nonlinearities, and parameter variations
 Example ss.fp compares 2 types of dynamic substructuring: Branch Mode
 Analysis (BMA) and Component Mode Synthesis (CMS).
 Whirl.fp and whirlnl.fp demonstrate BMA used for parameter variations
-and freeplay nonlinearities.
-
-\section{Multivariate interpolation}\label{ex:dlm.fp}
-\index{examples!dlm.fp}
-This example shows how unsteady aerodynamic matrices can be interpolated
-with respect to reduced frequency ($\bar{\omega}$),
-reduced stability factor ($\bar{\sigma}$), and Mach number ($M$).
-Using the same model as in \Sectref{ex:goland-vso} but with a collection of
-generalized aero matrices at combinations of
-5 reduced frequencies,
-3 reduced stability factors,
-and 3 Mach numbers, for a total of 45 matrices.
-
-Example file \Code{dlm.fp} in the demo directory does 4 different interpolations
-with these aero matrices:
-\begin{enumerate}
-\item interpolation with respect to reduced-frequency rf
-	($\bar{\omega}$) at rsf=0 and mach=0.51
-\item interpolation with respect to reduced-frequency and
-	reduced stability-factor at mach=0.51
-\item interpolation with respect to reduced-frequency and
-	 Mach number (mach) at rsf=0
-\item interpolation with respect to reduced-frequency,
-	 reduced stability-factor, and mach number
-\end{enumerate}
-
+and freeplay nonlinearities. \Figref{fig:ss-compare} is a comparison of the
+substructured models and the nodal model.
 \begin{figure}[ht]
-		\includegraphics[height=5.5cm,width=12.5cm]{dlm.eps}
-% 		\includegraphics[height=5.5cm,width=12.5cm]{dlm.pdf}
- 	\centering
- 	\caption{Aerodynamic matrix parameterizations}\label{fig:dlm}
- \end{figure}
-
-Each interpolation is used in a \VSO flutter analysis
-tracking only the first 2 modes, and the
-results compared in \Figref{fig:dlm};
-evidently Mach number parameterization
-makes a bigger difference than reduced stability factor, although
-the flutter speed changes very little.
+		\includegraphics[height=8cm,width=12cm]{ss-compare.png}
+	\centering
+	\caption{Comparison of BMA, CMS, and nodal-dof models}\label{fig:ss-compare}
+\end{figure}
 
 \newpage
 \section{Nonlinear flutter}\label{ex:nl1234}
@@ -5163,6 +5197,108 @@ other becoming neutrally stable, as shown in \Figref{fig:bifurcation}.
 \newpage
 \chapter{Appendix}\label{chap:appendices}
 
+\section{Rational-Function Approximation}\label{sect:rfa-theory}
+\par
+\index{s-plane approximation}
+\index{RFA}
+\index{aerodynamics!approximation}
+The \Cmd{pz} command can approximate generalized
+unsteady aerodynamic matrices using a rational-function
+approximation often referred to as \Newterm{s-plane approximation}
+aerodynamics, even though the approximation is done
+with respect to complex reduced-frequency $\bar{s} = s/V$,
+not the Laplace variable $s = \sigma + i\omega$.
+This approximation, due to Roger \cite{roger1977airplane},
+uses a least-squares fit of a rational-function polynomial
+to a set of complex matrices. Given a set of $m$
+unsteady aero matrices at various values of complex
+reduced frequency $\bar{s}$\footnote{this procedure is usually written
+in terms of only the imaginary part of $\bar{s}$, the reduced-frequency; here
+we allow for applying it to Laplace-domain aerodynamic matrices}.
+\begin{equation}
+\Matrix{A}_k = \Matrix{A}(\bar{s}_k) = \left[A_{ij,k}\right]
+			\hspace{5mm} (k = 1, m) \; \; \in \mathbb{C}^{n \times n},
+\end{equation}
+approximate $\Matrix{A}$ with an analytic function of $\bar{s}$ and a set of
+$\ell$ positive, real \emph{lag roots} $\beta_i, i=1,\ell$.
+Roger's approximation to the aero matrix has the form
+\begin{equation}
+  \Matrix{A}(\bar{s}) \approx \Matrix{R}_0 + \bar{s}\Matrix{R}_1 + \bar{s}^2 \Matrix{R}_2 +  \sum_{l=1}^{\ell} \frac{\bar{s}}{\bar{s} + \beta_l} \Matrix{R}_{l+2}
+\end{equation}
+where the $\ell + 3$ matrices
+$\Matrix{R}_0, \Matrix{R}_1, \ldots, \Matrix{R}_{\ell+2}$ are real.
+Each element
+\begin{displaymath}
+R_{ij,0}, R_{ij,1}, \ldots, R_{ij,\ell+2}
+\end{displaymath}
+is determined by $2m$ equations, comprising the real and imaginary parts
+of the $m$ $\Matrix{A}$ matrices:
+\begin{eqnarray}
+	\Re(R_{ij,0} + \bar{s}_k R_{ij,1}
+  		+ \bar{s}_k^2 R_{ij,2} +  \sum_{l=1}^{\ell} \frac{\bar{s}_k}{\bar{s}_k +
+			\beta_l} R_{ij,l+2}) &=& \Re(A_{ij,k}) \nonumber	\\
+	\Im(R_{ij,0} + \bar{s}_k R_{ij,1}
+  		+ \bar{s}_k^2 R_{ij,2} +  \sum_{l=1}^{\ell} \frac{\bar{s}_k}{\bar{s}_k +
+			\beta_l} R_{ij,l+2}) &=& \Im(A_{ij,k})	\nonumber
+\end{eqnarray}
+% \begin{eqnarray}
+% 	\Re(\Matrix{R}_0 + \bar{s}_k\Matrix{R}_1
+%   		+ \bar{s}_k^2 \Matrix{R}_2 +  \sum_{i=1}^{\ell} \frac{\bar{s}_k}{\bar{s}_k +
+% 			\beta_i} \Matrix{R}_{i+2}) &=& \Re(\Matrix{A}_k) \nonumber	\\
+% 	\Im(\Matrix{R}_0 + \bar{s}_k\Matrix{R}_1
+%   		+ \bar{s}_k^2 \Matrix{R}_2 +  \sum_{i=1}^{\ell} \frac{\bar{s}_k}{\bar{s}_k +
+% 			\beta_i} \Matrix{R}_{i+2}) &=& \Im(\Matrix{A}_k)
+% \end{eqnarray}
+from which we can determine the $(i,j)$ elements of the $\Matrix{R}$ matrices:
+$(\ell+3)$ unknowns. Provided $2m > \ell+3$ these equations are overdetermined
+and can be solved by least-squares:
+\begin{equation}
+\Matrix{S}\Vector{x} = \Vector{b}
+\end{equation}
+where
+\begin{displaymath}
+\Matrix{S} = \left[
+\begin{array}{cccccc}
+1 & \Re(\bar{s}_1) & \Re(\bar{s}_1^2) & \Re(\frac{\bar{s}_1}{\bar{s}_1 + \beta_1}) & \ldots & \Re(\frac{\bar{s}_1}{\bar{s}_1 + \beta_{\ell}}) \\
+0 & \Im(\bar{s}_1) & \Im(\bar{s}_1^2) & \Im(\frac{\bar{s}_1}{\bar{s}_1 + \beta_1}) & \ldots & \Im(\frac{\bar{s}_1}{\bar{s}_1 + \beta_{\ell}}) \\
+1 & \Re(\bar{s}_2) & \Re(\bar{s}_2^2) & \Re(\frac{\bar{s}_2}{\bar{s}_2 + \beta_1}) & \ldots & \Re(\frac{\bar{s}_2}{\bar{s}_2 + \beta_{\ell}}) \\
+0 & \Im(\bar{s}_2) & \Im(\bar{s}_2^2) & \Im(\frac{\bar{s}_2}{\bar{s}_2 + \beta_1}) & \ldots & \Im(\frac{\bar{s}_2}{\bar{s}_2 + \beta_{\ell}}) \\
+  &          &            &                                & \ddots &                           \\
+1 & \Re(\bar{s}_m) & \Re(\bar{s}_m^2) & \Re(\frac{\bar{s}_m}{\bar{s}_m + \beta_1}) & \ldots & \Re(\frac{\bar{s}_m}{\bar{s}_m + \beta_{\ell}}) \\
+0 & \Im(\bar{s}_m) & \Im(\bar{s}_m^2) & \Im(\frac{\bar{s}_m}{\bar{s}_m + \beta_1}) & \ldots & \Im(\frac{\bar{s}_m}{\bar{s}_m + \beta_{\ell}}) \\
+\end{array}
+\right]	\hspace{3mm} \in \mathbb{R}^{2m\times \ell+3}
+\end{displaymath}
+
+\begin{displaymath}
+\Matrix{x} = \left\{
+\begin{array}{c}
+R_{ij,0} \\
+R_{ij,1}  \\
+\ddots  \\
+R_{ij,\ell+2}
+\end{array}
+\right\}		\hspace{3mm} \in \mathbb{R}^{\ell+3}
+\end{displaymath}
+
+\begin{displaymath}
+ \Matrix{b} =
+\left\{
+\begin{array}{c}
+\Re(A_{ij,1}) \\
+\Im(A_{ij,1}) \\
+\Re(A_{ij,2}) \\
+\Im(A_{ij,2}) \\
+\ddots \\
+\Re(A_{ij,m}) \\
+\Im(A_{ij,m})
+\end{array}
+\right\}		\hspace{3mm} \in \mathbb{R}^{2m}
+\end{displaymath}
+The coefficient matrix $\Matrix{S}$ is the same for all elements of the
+$\Matrix{R}$ matrices so all $n^2$ elements can be computed simultaneously
+with, for example Lapack routine \Code{DGELSS} \cite{anderson1999lapack}.
+
 \section{Time domain formulation}\label{sect:timedomain}
 \index{time domain}
 Most numerical methods for solving systems of ordinary require the
@@ -5173,7 +5309,8 @@ aerodynamics. Unsteady aerodynamics are commonly in the frequency domain,
 functions of reduced frequency and possibly reduced stability factor (\Code{rsf}) and
 Mach number (\Code{M}); if dependence on \Code{rsf} and \Code{M} are not allowed,
 a rational-function approximation is a way to convert from the frequency domain to the
-time domain; Roger's approximation (\cite{roger1977airplane}) is a rational function
+time domain; Roger's approximation\cite{roger1977airplane}
+(\Sectref{sect:rfa-theory}) is a rational function
 in terms of \Code{s}, \Code{V} and real matrices, so the flutter equation can
 be written in terms of \Code{s}, \Code{V} and real matrices, then converted
 to the time domain with the inverse Laplace transform with \Code{s} as the Laplace
@@ -5183,7 +5320,7 @@ variable.
 To allow for unsteady aerodynamics
 we start with the characteristic equations of motion
 (frequency domain), cast them into a set of first-order equations
-(in the characteristic exponent \Code{s}, then convert to the time domain with the inverse
+(in the Laplace variable \Code{s}, then convert to the time domain with the inverse
 Laplace transform.
 
 Without structural damping and user-defined matrix ($\Matrix{T}$),
@@ -7192,113 +7329,6 @@ the dynamic matrix.
 \Cpp supports concurrent program in the standard \Cpp library; very little extra
 coding is necessary, and no extra libraries are needed.
 
-\section{Rational-Function Approximation}\label{sect:rfa-theory}
-\par
-\index{aerodynamics!approximation}
-\index{RFA}The \Cmd{pz} command can approximate generalized
-unsteady aerodynamic matrices using a rational-function
-approximation often referred to as \Newterm{s-plane approximation}
-aerodynamics, even though the approximation is done
-with respect to complex reduced-frequency $\bar{s}$, not $s$.
-This approximation, due to Roger \cite{roger1977airplane},
-uses a least-squares fit of a certain rational-polynomial
-to a set of complex matrices. Given a set of $m$
-unsteady aero matrices at various values of complex
-reduced frequency $\bar{s}$ 
-\begin{equation}
-\Matrix{A}_k = \Matrix{A}(\bar{s}_k) \; \; \; \; k = 1, m
-\end{equation}
-approximate $\Matrix{A}$ with an analytic function of $\bar{s}$.
-Roger's approximation to the aero matrix has the form
-\begin{equation}
-  \Matrix{A}(\bar{s}) \approx \Matrix{R}_0 + \bar{s}\Matrix{R}_1 + \bar{s}^2 \Matrix{R}_2 +  \sum_{i=1}^{\ell} \frac{\bar{s}}{\bar{s} + \beta_i} \Matrix{R}_{i+2}
-\end{equation}
-where the matrices $\Matrix{R}_i$ are real, and the $\beta_i$ are real.
-\par
-To determine the matrices $\Matrix{R}_i$, write $m$ equations, one for each
-aero matrix $\Matrix{A}_k$:
-\begin{displaymath}
-\left[
-\begin{array}{cccccc}
-1 & \bar{s}_1 & \bar{s}_1^2 & \frac{\bar{s}_1}{\bar{s}_1 + \beta_1} & \ldots & \frac{\bar{s}_1}{\bar{s}_1 + \beta_{\ell}} \\
-1 & \bar{s}_2 & \bar{s}_2^2 & \frac{\bar{s}_2}{\bar{s}_2 + \beta_1} & \ldots & \frac{\bar{s}_2}{\bar{s}_2 + \beta_{\ell}} \\
-  &     &       &                           & \ddots &                           \\
-1 & \bar{s}_m & \bar{s}_m^2 & \frac{\bar{s}_m}{\bar{s}_m + \beta_1} & \ldots & \frac{\bar{s}_m}{\bar{s}_m + \beta_{\ell}}
-\end{array}
-\right]
-\left[
-\begin{array}{cccc}
-r_{0,11}   & r_{0,21}   & \ldots & r_{0,nn} \\
-r_{1,11}   & r_{1,21}   & \ldots & r_{1,nn} \\
-           &            & \ddots &          \\
-r_{\ell+3,11} & r_{\ell+3,21} & \ldots & r_{\ell+3,nn}
-\end{array}
-\right]
-\end{displaymath}
-
-\begin{equation}
- =
-\left[
-\begin{array}{cccc}
-q_{0,11}   & q_{0,21}   & \ldots & q_{0,nn} \\
-q_{1,11}   & q_{1,21}   & \ldots & q_{1,nn} \\
-           &            & \ddots &          \\
-q_{m,11}   & q_{m,21}   & \ldots & q_{m,nn}
-\end{array}
-\right]
-\end{equation}
-where $r_{k,ij}$ is the $(i,j)$ element of the real $(n,n)$ matrix $\Matrix{R}_k$
-and $q_{k,ij}$ is the $(i,j)$ element of the complex $(n,n)$ matrix $\Matrix{A}_k$.
-\par
-Expanding the complex terms into real and imaginary gives a set of real
-linear equations
-\begin{equation}
-\Matrix{AX} = \Matrix{B}
-\end{equation}
-where
-\begin{displaymath}
-\Matrix{A} = \left[
-\begin{array}{cccccc}
-1 & \Re(\bar{s}_1) & \Re(\bar{s}_1^2) & \Re(\frac{\bar{s}_1}{\bar{s}_1 + \beta_1}) & \ldots & \Re(\frac{\bar{s}_1}{\bar{s}_1 + \beta_{\ell}}) \\
-0 & \Im(\bar{s}_1) & \Im(\bar{s}_1^2) & \Im(\frac{\bar{s}_1}{\bar{s}_1 + \beta_1}) & \ldots & \Im(\frac{\bar{s}_1}{\bar{s}_1 + \beta_{\ell}}) \\
-1 & \Re(\bar{s}_2) & \Re(\bar{s}_2^2) & \Re(\frac{\bar{s}_2}{\bar{s}_2 + \beta_1}) & \ldots & \Re(\frac{\bar{s}_2}{\bar{s}_2 + \beta_{\ell}}) \\
-0 & \Im(\bar{s}_2) & \Im(\bar{s}_2^2) & \Im(\frac{\bar{s}_2}{\bar{s}_2 + \beta_1}) & \ldots & \Im(\frac{\bar{s}_2}{\bar{s}_2 + \beta_{\ell}}) \\
-  &          &            &                                & \ddots &                           \\
-1 & \Re(\bar{s}_m) & \Re(\bar{s}_m^2) & \Re(\frac{\bar{s}_m}{\bar{s}_m + \beta_1}) & \ldots & \Re(\frac{\bar{s}_m}{\bar{s}_m + \beta_{\ell}}) \\
-0 & \Im(\bar{s}_m) & \Im(\bar{s}_m^2) & \Im(\frac{\bar{s}_m}{\bar{s}_m + \beta_1}) & \ldots & \Im(\frac{\bar{s}_m}{\bar{s}_m + \beta_{\ell}}) \\
-\end{array}
-\right]
-\end{displaymath}
-\begin{displaymath}
-\Matrix{X} = \left[
-\begin{array}{cccc}
-r_{0,11}   & r_{0,21}   & \ldots & r_{0,nn} \\
-r_{1,11}   & r_{1,21}   & \ldots & r_{1,nn} \\
-           &            & \ddots &          \\
-r_{\ell+3,11} & r_{\ell+3,21} & \ldots & r_{\ell+3,nn}
-\end{array}
-\right]
-\end{displaymath}
-
-\begin{equation}
- \Matrix{B} =
-\left[
-\begin{array}{cccc}
-\Re(q_{0,11})   & \Re(q_{0,21})   & \ldots & \Re(q_{0,nn}) \\
-\Im(q_{0,11})   & \Im(q_{0,21})   & \ldots & \Im(q_{0,nn}) \\
-\Re(q_{1,11})   & \Re(q_{1,21})   & \ldots & \Re(q_{1,nn}) \\
-\Im(q_{1,11})   & \Im(q_{1,21})   & \ldots & \Im(q_{1,nn}) \\
-                &                 & \ddots &          \\
-\Re(q_{m,11}) & \Re(q_{m,21}) & \ldots & \Re(q_{m,nn}) \\
-\Im(q_{m,11}) & \Im(q_{m,21}) & \ldots & \Im(q_{m,nn})
-\end{array}
-\right]
-\end{equation}
-$\Matrix{A}$ is $(2m, 3+\ell)$, $\Matrix{X}$ is $(3+\ell, n^2)$,
-and $\Matrix{B}$ is $(2m, n^2)$. These equations are overdetermined
-if $2m > 3+\ell$, that is if the number of matrices $\Matrix{A}_k$
-is greater than the number of $\beta_i$ plus three divided by 2.
-
 % ------------------------------------------------------------------
 \section{Extended convergence criteria}\label{sect:ecc}
 \index{convergence!extended}
@@ -7737,7 +7767,9 @@ Flaps is the evolution of a program I wrote at Boeing called Apex,
 which in turn is the evolution of a program I wrote for my thesis on
 flutter of a Darrieus wind turbine.
 The common thread here is treating flutter equations as a set of nonlinear
-equations instead of the traditional methods which treat them as
+equations instead of the traditional methods
+\cite{hassig1971approximate,quero2021generalized,chen2000damping,pitt1999new}.
+which treat them as
 eigenvalue problems. Flutter equations lend themselves very well to
 tracing them as a set of nonlinear equations, using numerical continuation.
 % the use and development of a numerical continuation
@@ -7754,7 +7786,7 @@ I feel confident that it is the most appropriate and versatile method available.
 
 \subsection{Thesis}
 Computing flutter on the Darrieus wind turbine using the traditional
-V-g formulation \footnote{I prefer call it a \emph{formulation} rather than a method;
+V-g formulation\footnote{I prefer to call it a \emph{formulation} rather than a method;
 various methods can be used to solve the formulation}(also known as the k-method or
 American method) showed some strange behavior, probably due to the gyroscopics;
 that and the need to connect the dots led me to implement a continuation method so
@@ -7817,10 +7849,10 @@ slightly fewer iterations and uses the more stable QR factorization.
 
 An early request was to include controls equations using equations
 coded by the users in Fortran. The difficulty was computing derivatives
-of the equations with respect to, for example frequency and velocity.
-The alternatives were to require the user to supply derivatives, use
-finite-differencing, or a programming technique called
-``automatic differentiation''.
+of the equations with respect to, for example, frequency and velocity.
+The alternatives were to require the user to supply derivatives, or use
+finite-differencing; neither option was attractive so I tried a programming
+technique I had heard of in school called ``automatic differentiation''.
 To save the user the effort of coding the derivatives, and to
 avoid the inaccuracies of finite-differencing, I implemented a system
 that transformed the user's equation to \Cpp where I could use automatic
@@ -7828,12 +7860,10 @@ differentiation to get exact derivatives along with the equations.
 
 One of the advantages to treating flutter equations as a parameterized
 system of nonlinear equations is that this is the most general way of
-looking at these equations.
-As a result it has been relatively easy to add new capabilities, such as
-controls equations, structural nonlinearities, and new formulations of the flutter
-equation
-\cite{hassig1971approximate},
-\cite{chen2000damping}, \cite{edwards2008flutter}.
+looking at these equations. As a result it has been relatively easy to add
+new capabilities, such as controls equations, structural nonlinearities,
+and new formulations of the flutter equation like the g-method\cite{chen2000damping},
+and Laplace-domain unsteady aerodynamics\cite{edwards2008flutter}.
 I believe that has been the key to its success.
 
 \subsection{Flaps}

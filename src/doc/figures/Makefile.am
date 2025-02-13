@@ -72,6 +72,7 @@ whirl-gaf.fig \
 whirl-lbar.fig
 
 # XXX eliminate eps? redundant
+# vso2d/vso2d.eps
 eps = \
 beta.eps \
 bif.eps \
@@ -96,7 +97,6 @@ ss-cms.eps \
 ss-km.eps \
 ss_phi.eps \
 viz-manip.eps \
-vso2d/vso2d.eps \
 whirl-vso.eps \
 whirl-gaf.eps \
 whirl-lbar.eps

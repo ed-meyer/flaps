@@ -1,7 +1,14 @@
+#!/bin/bash
 # Install packages necessary for building Flaps on Linux
 # Currently only Linux distros using rpm-format packages
 # (Red Hat, Fedora, Centos, SUSE,...) or deb-format packages
 # (Debian, Ubuntu, Linux Mint,...) are included here
+
+# Note: either Matlab or the open-source alternative Octave can be
+#       used to manipulate matrices with Flaps command Octlab, also
+#       some of the Flaps test scripts in the demo directory use this.
+#       If you do not need to run Matlab from within Flaps, ignore this
+
 # Usage:
 #   yes | sudo ./PACKAGES
 
@@ -18,14 +25,14 @@ if [[ -n $rpmbased ]];then
 	$dnfcmd install tcl-devel
 	$dnfcmd install tk-devel
 	$dnfcmd install wxGTK-devel
-fi
-
+elif [[ -n $debbased ]];then
 # packages for deb-based Linux (e.g. Debian, Ubuntu, Linux Mint)
-if [ -n $debbased ];then
 #	apt-get install octave			# necessary if matlab not installed
 	apt-get install liblapack-dev
 	apt-get install tk-dev
 	apt-get install tcl-dev
 	apt-get install libwxgtk3.2-dev
 	apt-get install libfftw3-dev
+else
+	echo "only rpm- and deb-based package managers are currently recognized"
 fi

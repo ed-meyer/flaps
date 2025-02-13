@@ -392,7 +392,7 @@ processfcn(Pac& from, Pac& to, bool& looped, Issue* issue) {
 				Par* pp = this->findp(tp->parname);
 				assert (pp != nullptr);
 				if (is_equal(pp->value(), tp->value, 3)) {
-					string msg{vastr(tp->parname," reached ",tp->value)};
+					string msg{vastr(tp->parname," reached ",tp->value*tp->convfactor)};
 					this->atlimit = msg;
 					add2msg(this->finished, msg);
 					T_(trc.dprint("returning 0: ",this->atlimit);)

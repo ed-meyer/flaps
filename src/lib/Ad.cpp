@@ -382,7 +382,7 @@ mag(complex<Ad> const& x) {
 //    complex Ad, idx -> complex
 
 bool
-extract (const vector<Ad>& from, std::string const& name, double* val) {
+extract (const vector<Ad>& from, std::string const& name, span<double> val) {
 // extract from "from" the derivative "name" or the value
 // if "name" is empty or "0" (zero), put the result in "val"
 	T_(Trace trc(2,"extract(Ad,string)");)

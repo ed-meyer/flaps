@@ -11,12 +11,17 @@ SUBDIRS = @subdirs@
 
 docdir=${prefix}/doc
 
-install-pdf:	manual.pdf
+all:
+	make install
+
+install:
+	make manual.pdf
 	mkdir -p ${prefix}/doc
 	cp -u manual.pdf ${prefix}/doc
 
-install:
-	make install-pdf
+# install-pdf:	manual.pdf
+# 	mkdir -p ${prefix}/doc
+# 	cp -u manual.pdf ${prefix}/doc
 
 # We must ignore errors from pdflatex because it always
 # returns with an exit status of 1 - I believe this is

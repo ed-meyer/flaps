@@ -133,7 +133,7 @@
       id=contour, source=opt,
       linearize
       indep=(gain, phase, freq),
-      vtas=(360,370,380,390,400,420,440)
+      vtas=(373,375,376,377,378,379,380,385,390,395,400)
    }
    viz {id=(contour,opt), x=gain, y=phase}
 end

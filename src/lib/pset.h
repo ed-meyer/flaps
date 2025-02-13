@@ -178,7 +178,7 @@ public:
 	//   operator<<       long summary of each parameter
 	std::string desc() const { return desc_; }
 	void desc(std::string const& des) { desc_ = des; }
-	std::string summary();
+	virtual std::string summary() const;
 	// one-line summary of current values
 	std::string values(std::vector<std::string> const& toprint, int maxchar=160);
 	// one-line summary of each set in the "solns" arrays

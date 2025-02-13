@@ -521,7 +521,7 @@ inrange() {
 
 std::string
 pset::
-summary () {
+summary () const {
 // description + number of parameters
 	string rval = vastr(this->desc(), "  ",this->size()," parameters");
 	return rval;

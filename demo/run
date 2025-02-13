@@ -4,7 +4,7 @@
 # An entry is made in a file (log) for each job run
 #
 # controls.fp needs work
-QUICK="bif contour goland lti1 nl1 nl2 nl3 nl4 reed vacm whirl"
+QUICK="bif contour controls goland lti1 nl1 nl2 nl3 nl4 reed vacm whirl"
 BIGUNS="latent dlm nacpv reduction ss whirlnl"
 ALL="$QUICK $BIGUNS"
 
